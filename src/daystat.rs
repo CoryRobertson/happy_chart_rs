@@ -1,10 +1,13 @@
 
 pub mod daystat {
 
+    use std::fmt;
+    use std::fmt::{Formatter, Write};
     use chrono::{DateTime, NaiveDateTime, Utc};
-    use serde::{Serialize, Serializer};
-    use serde::ser::SerializeStruct;
+    use serde::{Deserialize, Serialize, Serializer};
+    use serde::ser::{SerializeSeq, SerializeStruct};
 
+    #[derive(Deserialize)]
     pub struct DayStat {
         pub rating: f32,
         pub date: i64,
@@ -17,9 +20,21 @@ pub mod daystat {
         }
     }
 
-    impl ToString for DayStat {
-        fn to_string(&self) -> String {
-            self.getDateTime().to_string()
+    // impl ToString for DayStat {
+    //     fn to_string(&self) -> String {
+    //         self.getDateTime().to_string()
+    //     }
+    // }
+
+    impl fmt::Display for DayStat {
+        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+            //let mut str = "";
+
+            f.write_str(&self.getDateTime().to_string())?;
+            f.write_str("\t")?;
+            f.write_str(&self.rating.to_string())?;
+
+            Ok(())
         }
     }
     
@@ -34,6 +49,7 @@ pub mod daystat {
             state.end()
         }
     }
+
     
     
 }

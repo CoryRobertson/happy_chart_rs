@@ -1,12 +1,18 @@
 pub mod daystat;
 
 use std::collections::btree_map::Values;
+use std::fs::File;
+use std::io::{Read, Write};
 use eframe::egui;
 use chrono::{Date, DateTime, NaiveDate, NaiveDateTime, Utc};
 use eframe::emath::Pos2;
 use eframe::epaint::Color32;
 use egui::plot::{Line, Plot};
 use egui::{Align2, FontId, Stroke};
+use serde::{Serialize, Serializer};
+use serde::ser::SerializeSeq;
+use std::path::Path;
+
 // use chrono_tz::US::Pacific;
 use crate::daystat::daystat::DayStat;
 use crate::egui::Layout;
@@ -27,6 +33,7 @@ struct MyEguiApp {
     currentTime: DateTime<Utc>,
     rating: f64,
     days: Vec<DayStat>,
+    firstLoad: bool,
 }
 
 impl MyEguiApp {
@@ -35,15 +42,53 @@ impl MyEguiApp {
         // Restore app state using cc.storage (requires the "persistence" feature).
         // Use the cc.gl (a glow::Context) to create graphics shaders and buffers that you can use
         // for e.g. egui::PaintCallback.
-        Self::default()
+
+
+        Self{ currentTime: Default::default(), rating: 0.0, days: vec![], firstLoad: true}
+        // Self::default()
     }
 }
 
+fn readSaveFile() -> Vec<DayStat> {
+    let path = Path::new("save.ser");
+
+    let mut file = match File::open(path) {
+        Ok(f) => {f}
+        Err(_) => {
+            match File::create(path){
+                Ok(f) => {f}
+                Err(_) => {panic!("couldnt create save file")}
+            }
+        }
+    };
+
+
+    let mut s = String::new();
+    match file.read_to_string(&mut s) {
+        Ok(_) => {
+            println!("successfuly read save file");
+        }
+        Err(_) => {
+            println!("unable to read save file");
+            return vec![];
+        }
+    }
+    serde_json::from_str(&s).unwrap_or_default()
+}
 
 impl eframe::App for MyEguiApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+
+        if self.firstLoad == true {
+            self.firstLoad = false;
+            self.days = readSaveFile();
+        }
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Hello World!");
+
+
+
             self.currentTime = Utc::now();
             //frame.set_window_size(Vec2::new(300.0,300.0));
 
@@ -66,6 +111,8 @@ impl eframe::App for MyEguiApp {
             if ui.button("add day").clicked() {
                 self.days.push(DayStat{ rating: self.rating as f32, date: self.currentTime.timestamp() });
                 println!("day added with rating {} and date {}", self.rating, self.currentTime);
+                let day = &self.days.get(self.days.len() - 1).unwrap();
+                println!("{}", day);
             }
 
             let mousepos = match ctx.pointer_hover_pos() {
@@ -108,7 +155,8 @@ impl eframe::App for MyEguiApp {
 
             ui.with_layout(Layout::bottom_up(egui::Align::BOTTOM), |ui| {
                 if ui.button("Quit").clicked() {
-                    quit(frame);
+
+                    quit(frame, &self.days);
                 }
             });
 
@@ -116,6 +164,32 @@ impl eframe::App for MyEguiApp {
     }
 }
 
-fn quit(frame: &mut eframe::Frame) {
+
+fn quit(frame: &mut eframe::Frame, days: &Vec<DayStat>) {
+
+    let ser = serde_json::to_string(days).unwrap();
+    let deserialized: Vec<DayStat> = serde_json::from_str(&ser).unwrap();
+    let path = Path::new("save.ser");
+
+    let mut file = match File::create(path) {
+        Ok(f) => {f}
+        Err(_) => {panic!("unable to create save file")}
+    };
+
+    match file.write_all(ser.as_bytes()) {
+        Ok(_) => {println!("successfuly wrote to file!")}
+        Err(_) => {println!("failed to write to file")}
+    }
+
+
+    println!("{}", ser);
+
+    let mut i = 0;
+
+    for a in deserialized {
+        println!("{}: {}", i, a);
+        i = i + 1;
+    }
+
     frame.close();
 }
