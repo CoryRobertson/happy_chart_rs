@@ -33,8 +33,10 @@ pub mod daystat {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
             //let mut str = "";
 
+            f.write_str("Date: ")?;
             f.write_str(&self.get_date_time().to_string())?;
             f.write_str("\t")?;
+            f.write_str("Rating: ")?;
             f.write_str(&self.rating.to_string())?;
 
             Ok(())

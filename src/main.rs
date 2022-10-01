@@ -115,7 +115,11 @@ impl eframe::App for MyEguiApp {
                 }
             });
 
-            ui.add(egui::DragValue::new(&mut self.xoffset).speed(0.1));
+            ui.horizontal(|ui| {
+                ui.label("X Offset: ");
+                ui.add(egui::DragValue::new(&mut self.xoffset).speed(0.1));
+
+            });
 
             if ui.button("add day").clicked() {
                 self.days.push(DayStat{ rating: self.rating as f32, date: self.current_time.timestamp() });
@@ -124,13 +128,12 @@ impl eframe::App for MyEguiApp {
                 println!("{}", day);
             }
 
-            if ui.button("lmao").clicked() {
+            if ui.button("add sine wave").clicked() {
                 for a in 0..1000 {
                     let special_rating = (((a as f32 / 100.0).sin() * 100.0) + 100.0) / 2.0;
                     self.days.push(DayStat { rating: special_rating, date: self.current_time.timestamp() });
                 }
             }
-
 
             if ui.button("remove day").clicked() {
                 self.days.remove(self.days.len() - 1);
