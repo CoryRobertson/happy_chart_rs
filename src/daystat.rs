@@ -3,9 +3,11 @@ pub mod daystat {
 
     use std::fmt;
     use std::fmt::{Formatter};
-    use chrono::{DateTime, NaiveDateTime, Utc};
+    use chrono::{DateTime, NaiveDateTime, Utc, TimeZone};
     use serde::{Deserialize, Serialize, Serializer};
     use serde::ser::{SerializeStruct};
+    use chrono_tz::Tz;
+    use chrono_tz::US::Pacific;
 
     #[derive(Deserialize)]
     pub struct DayStat {
@@ -14,9 +16,10 @@ pub mod daystat {
     }
 
     impl DayStat {
-        //let dt = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(day.date, 0), Utc);
-        pub fn get_date_time(&self) -> DateTime<Utc> {
-            DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.date, 0), Utc)
+        pub fn get_date_time(&self) -> DateTime<Tz> {
+            // pacific time zone conversion
+            let utc = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.date, 0), Utc).naive_utc();
+            Pacific.from_utc_datetime(&utc)
         }
     }
 

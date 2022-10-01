@@ -1,6 +1,5 @@
 pub mod daystat;
 
-use std::fmt::Display;
 use std::fs::File;
 use std::io::{Read, Write};
 use eframe::egui;
