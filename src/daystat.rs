@@ -2,10 +2,10 @@
 pub mod daystat {
 
     use std::fmt;
-    use std::fmt::{Formatter, Write};
+    use std::fmt::{Formatter};
     use chrono::{DateTime, NaiveDateTime, Utc};
     use serde::{Deserialize, Serialize, Serializer};
-    use serde::ser::{SerializeSeq, SerializeStruct};
+    use serde::ser::{SerializeStruct};
 
     #[derive(Deserialize)]
     pub struct DayStat {
@@ -15,14 +15,14 @@ pub mod daystat {
 
     impl DayStat {
         //let dt = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(day.date, 0), Utc);
-        pub fn getDateTime(&self) -> DateTime<Utc> {
+        pub fn get_date_time(&self) -> DateTime<Utc> {
             DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.date, 0), Utc)
         }
     }
 
     // impl ToString for DayStat {
     //     fn to_string(&self) -> String {
-    //         self.getDateTime().to_string()
+    //         self.get_date_time().to_string()
     //     }
     // }
 
@@ -30,7 +30,7 @@ pub mod daystat {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
             //let mut str = "";
 
-            f.write_str(&self.getDateTime().to_string())?;
+            f.write_str(&self.get_date_time().to_string())?;
             f.write_str("\t")?;
             f.write_str(&self.rating.to_string())?;
 

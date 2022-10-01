@@ -1,16 +1,12 @@
 pub mod daystat;
 
-use std::collections::btree_map::Values;
 use std::fs::File;
 use std::io::{Read, Write};
 use eframe::egui;
-use chrono::{Date, DateTime, NaiveDate, NaiveDateTime, Utc};
+use chrono::{ DateTime, Utc};
 use eframe::emath::Pos2;
 use eframe::epaint::Color32;
-use egui::plot::{Line, Plot};
 use egui::{Align2, FontId, Stroke};
-use serde::{Serialize, Serializer};
-use serde::ser::SerializeSeq;
 use std::path::Path;
 
 // use chrono_tz::US::Pacific;
@@ -23,17 +19,20 @@ fn main() {
     println!("{}", a.date);
     let native_options = eframe::NativeOptions::default();
 
-    eframe::run_native("My egui App", native_options, Box::new(|cc| Box::new(MyEguiApp::new(cc))));
+    eframe::run_native("happy chart", native_options, Box::new(|cc| Box::new(MyEguiApp::new(cc))));
 
 }
 
 
 #[derive(Default)]
 struct MyEguiApp {
-    currentTime: DateTime<Utc>,
+    current_time: DateTime<Utc>,
     rating: f64,
     days: Vec<DayStat>,
-    firstLoad: bool,
+    first_load: bool,
+    graph_xscale: f32,
+    graph_yscale: f32,
+    xoffset: i32,
 }
 
 impl MyEguiApp {
@@ -44,12 +43,13 @@ impl MyEguiApp {
         // for e.g. egui::PaintCallback.
 
 
-        Self{ currentTime: Default::default(), rating: 0.0, days: vec![], firstLoad: true}
+        Self{ current_time: Default::default(), rating: 0.0, days: vec![], first_load: true, graph_xscale: 1.0, graph_yscale: 1.0, xoffset: 0 }
         // Self::default()
     }
 }
 
-fn readSaveFile() -> Vec<DayStat> {
+fn read_save_file() -> Vec<DayStat> {
+
     let path = Path::new("save.ser");
 
     let mut file = match File::open(path) {
@@ -57,16 +57,18 @@ fn readSaveFile() -> Vec<DayStat> {
         Err(_) => {
             match File::create(path){
                 Ok(f) => {f}
-                Err(_) => {panic!("couldnt create save file")}
+                Err(_) => {
+                    println!("couldnt create save file");
+                    return vec![];
+                }
             }
         }
     };
 
-
     let mut s = String::new();
     match file.read_to_string(&mut s) {
         Ok(_) => {
-            println!("successfuly read save file");
+            println!("successfully read save file");
         }
         Err(_) => {
             println!("unable to read save file");
@@ -79,40 +81,74 @@ fn readSaveFile() -> Vec<DayStat> {
 impl eframe::App for MyEguiApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
 
-        if self.firstLoad == true {
-            self.firstLoad = false;
-            self.days = readSaveFile();
+        if self.first_load == true {
+            self.first_load = false;
+            self.days = read_save_file();
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Hello World!");
+            // ui.heading("Hello World!");
 
 
 
-            self.currentTime = Utc::now();
+            self.current_time = Utc::now();
             //frame.set_window_size(Vec2::new(300.0,300.0));
 
 
 
-            ui.add(egui::Slider::new(&mut self.rating,0.0..=100.0));
 
-            if ui.button("print state").clicked() {
-                println!("current time: {}", self.currentTime);
-                println!("rating: {}", self.rating);
+            ui.horizontal(|ui| {
+                ui.label("Rating: ");
+                ui.add(egui::Slider::new(&mut self.rating,0.0..=100.0));
 
-                let mut count = 0;
-                for day in &self.days {
-                    println!("{}:{}, {}", count + 1, day.date, day.rating);
-                    count = count + 1;
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("Graph X Scale: ");
+                ui.add(egui::Slider::new(&mut self.graph_xscale, 0.1..=10.0));
+
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("Graph Y Scale: ");
+                ui.add(egui::Slider::new(&mut self.graph_yscale, 0.5..=10.0));
+
+            });
+
+            // if ui.button("print state").clicked() {
+            //     println!("current time: {}", self.current_time);
+            //     println!("rating: {}", self.rating);
+            //
+            //     let mut count = 0;
+            //     for day in &self.days {
+            //         println!("{}:{}, {}", count + 1, day.date, day.rating);
+            //         count = count + 1;
+            //     }
+            //
+            // }
+
+            ui.horizontal(|ui| {
+
+                if ui.button("shift left").clicked() {
+                    self.xoffset = self.xoffset - 10;
                 }
 
-            }
+                if ui.button("shift right").clicked() {
+                    self.xoffset = self.xoffset + 10;
+                }
+            });
+
+
 
             if ui.button("add day").clicked() {
-                self.days.push(DayStat{ rating: self.rating as f32, date: self.currentTime.timestamp() });
-                println!("day added with rating {} and date {}", self.rating, self.currentTime);
+                self.days.push(DayStat{ rating: self.rating as f32, date: self.current_time.timestamp() });
+                println!("day added with rating {} and date {}", self.rating, self.current_time);
                 let day = &self.days.get(self.days.len() - 1).unwrap();
                 println!("{}", day);
+            }
+
+            if ui.button("remove day").clicked() {
+                self.days.remove(self.days.len() - 1);
             }
 
             let mousepos = match ctx.pointer_hover_pos() {
@@ -129,8 +165,8 @@ impl eframe::App for MyEguiApp {
 
             for day in &self.days {
 
-                let x: f32 = i as f32 * 4.0;
-                let y: f32 = 500.0 - day.rating;
+                let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
+                let y: f32 = (500.0 - (day.rating * self.graph_yscale));
 
                 let points = [Pos2::new(prevx, prevy), Pos2::new(x,y)];
 
@@ -144,6 +180,7 @@ impl eframe::App for MyEguiApp {
 
                 ui.painter().circle_filled(Pos2::new(x, y), 4 as f32, Color32::from_rgb(100, 100, 100));
 
+                // TODO: make text only show up when mouse cursor is somewhat close to it for readability purposes
                 ui.painter().text(Pos2::new(x + 20.0,y),Align2::LEFT_CENTER,text,FontId::default(),Color32::from_rgb(100,100,100));
 
                 i = i + 1;
