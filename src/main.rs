@@ -80,22 +80,13 @@ fn read_save_file() -> Vec<DayStat> {
 
 impl eframe::App for MyEguiApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-
+        // load previous save on first load in
         if self.first_load == true {
             self.first_load = false;
             self.days = read_save_file();
         }
-
         egui::CentralPanel::default().show(ctx, |ui| {
-            // ui.heading("Hello World!");
-
-
-
             self.current_time = Utc::now();
-            //frame.set_window_size(Vec2::new(300.0,300.0));
-
-
-
 
             ui.horizontal(|ui| {
                 ui.label("Rating: ");
@@ -115,30 +106,14 @@ impl eframe::App for MyEguiApp {
 
             });
 
-            // if ui.button("print state").clicked() {
-            //     println!("current time: {}", self.current_time);
-            //     println!("rating: {}", self.rating);
-            //
-            //     let mut count = 0;
-            //     for day in &self.days {
-            //         println!("{}:{}, {}", count + 1, day.date, day.rating);
-            //         count = count + 1;
-            //     }
-            //
-            // }
-
             ui.horizontal(|ui| {
-
                 if ui.button("shift left").clicked() {
                     self.xoffset = self.xoffset - 10;
                 }
-
                 if ui.button("shift right").clicked() {
                     self.xoffset = self.xoffset + 10;
                 }
             });
-
-
 
             if ui.button("add day").clicked() {
                 self.days.push(DayStat{ rating: self.rating as f32, date: self.current_time.timestamp() });
@@ -157,7 +132,6 @@ impl eframe::App for MyEguiApp {
             };
 
             ctx.request_repaint();
-            //println!("{:?}",mousepos);
 
             let mut i = 0;
             let mut prevx = 0.0;
@@ -166,39 +140,63 @@ impl eframe::App for MyEguiApp {
             for day in &self.days {
 
                 let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
-                let y: f32 = (500.0 - (day.rating * self.graph_yscale));
+                let y: f32 = 500.0 - (day.rating * self.graph_yscale);
 
                 let points = [Pos2::new(prevx, prevy), Pos2::new(x,y)];
 
-                let text = day.to_string();
+                let text = day.get_date_time().to_string();
 
-                if (prevx != 0.0 && prevy != 0.0) || i == 1 {
+                let segment_color = Color32::from_rgb(100,100,100);
+                let text_color = Color32::from_rgb(100,100,100);
+                let circle_color = get_shape_color_from_rating(day.rating);
 
-                    ui.painter().line_segment(points,Stroke::new(8.0,Color32::from_rgb(255,0,0)));
-
+                if (prevx != 0.0 && prevy != 0.0) || i == 1 { // draw line segments connecting the dots
+                    ui.painter().line_segment(points,Stroke::new(2.0,segment_color));
                 }
+                if distance(&mousepos.x,&mousepos.y,&x,&y) < 20.0 { // draw text near by each coordinate point
+                    ui.painter().text(Pos2::new(x + 20.0,y),Align2::LEFT_CENTER,text,FontId::default(),text_color);
+                    //println!("{:?}",get_shape_color_from_rating(day.rating).to_tuple());
+                }
+                //draw circles on each coordinate point
 
-                ui.painter().circle_filled(Pos2::new(x, y), 4 as f32, Color32::from_rgb(100, 100, 100));
-
-                // TODO: make text only show up when mouse cursor is somewhat close to it for readability purposes
-                ui.painter().text(Pos2::new(x + 20.0,y),Align2::LEFT_CENTER,text,FontId::default(),Color32::from_rgb(100,100,100));
+                ui.painter().circle_filled(Pos2::new(x, y), 4 as f32, circle_color);
 
                 i = i + 1;
+
                 prevx = x;
                 prevy = y;
 
             }
 
 
+
+
+
             ui.with_layout(Layout::bottom_up(egui::Align::BOTTOM), |ui| {
                 if ui.button("Quit").clicked() {
-
                     quit(frame, &self.days);
                 }
             });
 
         });
     }
+}
+
+fn get_shape_color_from_rating(rating: f32) -> Color32 {
+
+    let new_rating = rating / 100.0;
+
+    let red: u8 = (100.0/new_rating) as u8;
+    let green: u8 = (new_rating * 255.0) as u8;
+    let blue: u8 = (new_rating * 50.0) as u8;
+
+    Color32::from_rgb(red,green,blue)
+}
+
+fn distance(x1: &f32, y1: &f32, x2: &f32, y2: &f32) -> f32 {
+    let g1 = (x2 - x1).powf(2.0);
+    let g2 = (y2 - y1).powf(2.0);
+    return (g1 + g2).sqrt();
 }
 
 
