@@ -1,5 +1,6 @@
 pub mod daystat;
 
+use std::fmt::Display;
 use std::fs::File;
 use std::io::{Read, Write};
 use eframe::egui;
@@ -115,12 +116,22 @@ impl eframe::App for MyEguiApp {
                 }
             });
 
+            ui.add(egui::DragValue::new(&mut self.xoffset).speed(0.1));
+
             if ui.button("add day").clicked() {
                 self.days.push(DayStat{ rating: self.rating as f32, date: self.current_time.timestamp() });
                 println!("day added with rating {} and date {}", self.rating, self.current_time);
                 let day = &self.days.get(self.days.len() - 1).unwrap();
                 println!("{}", day);
             }
+
+            if ui.button("lmao").clicked() {
+                for a in 0..1000 {
+                    let special_rating = (((a as f32 / 100.0).sin() * 100.0) + 100.0) / 2.0;
+                    self.days.push(DayStat { rating: special_rating, date: self.current_time.timestamp() });
+                }
+            }
+
 
             if ui.button("remove day").clicked() {
                 self.days.remove(self.days.len() - 1);
@@ -137,29 +148,18 @@ impl eframe::App for MyEguiApp {
             let mut prevx = 0.0;
             let mut prevy = 0.0;
 
-            for day in &self.days {
+            for day in &self.days { // draw lines loop, bottom layer
 
                 let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
                 let y: f32 = 500.0 - (day.rating * self.graph_yscale);
 
                 let points = [Pos2::new(prevx, prevy), Pos2::new(x,y)];
 
-                let text = day.get_date_time().to_string();
-
                 let segment_color = Color32::from_rgb(100,100,100);
-                let text_color = Color32::from_rgb(100,100,100);
-                let circle_color = get_shape_color_from_rating(day.rating);
 
                 if (prevx != 0.0 && prevy != 0.0) || i == 1 { // draw line segments connecting the dots
                     ui.painter().line_segment(points,Stroke::new(2.0,segment_color));
                 }
-                if distance(&mousepos.x,&mousepos.y,&x,&y) < 20.0 { // draw text near by each coordinate point
-                    ui.painter().text(Pos2::new(x + 20.0,y),Align2::LEFT_CENTER,text,FontId::default(),text_color);
-                    //println!("{:?}",get_shape_color_from_rating(day.rating).to_tuple());
-                }
-                //draw circles on each coordinate point
-
-                ui.painter().circle_filled(Pos2::new(x, y), 4 as f32, circle_color);
 
                 i = i + 1;
 
@@ -168,9 +168,44 @@ impl eframe::App for MyEguiApp {
 
             }
 
+            i = 0;
+            for day in &self.days { // draw circles loop, middle layer
 
+                let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
+                let y: f32 = 500.0 - (day.rating * self.graph_yscale);
 
+                let circle_color = get_shape_color_from_rating(day.rating);
 
+                //draw circles on each coordinate point
+
+                ui.painter().circle_filled(Pos2::new(x, y), 4 as f32, circle_color);
+
+                i = i + 1;
+
+            }
+
+            i = 0;
+            let mut moused_over = false; // boolean used to know if we are already showing mouse over text, if so, not to render it if this is true
+
+            for day in &self.days { // draw text loop, top most layer
+
+                let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
+                let y: f32 = 500.0 - (day.rating * self.graph_yscale);
+
+                let text = day.to_string();
+
+                let text_color = Color32::from_rgb(255,255,255);
+
+                let dist_max = ((5.0*self.graph_xscale) + (5.0*self.graph_yscale)) / 2.0;
+
+                if distance(&mousepos.x,&mousepos.y,&x,&y) < dist_max && moused_over == false { // draw text near by each coordinate point
+                    ui.painter().text(Pos2::new(x + 20.0,y),Align2::LEFT_CENTER,text,FontId::default(),text_color);
+                    moused_over = true;
+                }
+
+                i = i + 1;
+
+            }
 
             ui.with_layout(Layout::bottom_up(egui::Align::BOTTOM), |ui| {
                 if ui.button("Quit").clicked() {
