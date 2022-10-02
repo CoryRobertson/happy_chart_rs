@@ -13,7 +13,9 @@ pub mod daystat {
     pub struct DayStat {
         pub rating: f32,
         pub date: i64,
+        pub note: String,
     }
+    //TODO: add some system for storing a note written for each day stat, allowing the user to write a reasoning for the rating or a description.
 
     impl DayStat {
         pub fn get_date_time(&self) -> DateTime<Tz> {
@@ -46,6 +48,8 @@ pub mod daystat {
             f.write_str("\t")?;
             f.write_str("Rating: ")?;
             f.write_str(&self.rating.to_string())?;
+            f.write_str("\t")?;
+            f.write_str(&self.note)?;
 
             Ok(())
         }
@@ -59,6 +63,7 @@ pub mod daystat {
             let mut state = serializer.serialize_struct("DayStat",2)?;
             state.serialize_field("rating", &self.rating)?;
             state.serialize_field("date", &self.date)?;
+            state.serialize_field("note", &self.note)?;
             state.end()
         }
     }

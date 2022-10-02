@@ -17,7 +17,7 @@ use crate::egui::Layout;
 
 
 fn main() {
-    let a = DayStat{rating: 1.0, date: Utc::now().timestamp()};
+    let a = DayStat{rating: 1.0, date: Utc::now().timestamp(), note: "".to_string() };
     println!("{}", a.date);
     let native_options = eframe::NativeOptions::default();
 
@@ -35,6 +35,7 @@ struct MyEguiApp {
     graph_xscale: f32,
     graph_yscale: f32,
     xoffset: i32,
+    note_input: String,
 }
 
 impl MyEguiApp {
@@ -45,7 +46,7 @@ impl MyEguiApp {
         // for e.g. egui::PaintCallback.
 
 
-        Self{ current_time: Default::default(), rating: 0.0, days: vec![], first_load: true, graph_xscale: 1.0, graph_yscale: 1.0, xoffset: 0 }
+        Self{ current_time: Default::default(), rating: 0.0, days: vec![], first_load: true, graph_xscale: 1.0, graph_yscale: 1.0, xoffset: 0, note_input: "".to_string() }
         // Self::default()
     }
 }
@@ -126,19 +127,26 @@ impl eframe::App for MyEguiApp {
 
             });
 
+            ui.horizontal(|ui| {
+                ui.label("Note: ");
+                ui.text_edit_singleline(&mut self.note_input);
+
+            });
+
             if ui.button("add day").clicked() {
-                self.days.push(DayStat{ rating: self.rating as f32, date: self.current_time.timestamp() });
+                self.days.push(DayStat{ rating: self.rating as f32, date: self.current_time.timestamp(), note: self.note_input.clone() });
                 println!("day added with rating {} and date {}", self.rating, self.current_time);
                 let day = &self.days.get(self.days.len() - 1).unwrap();
                 println!("{}", day);
             }
 
-            if ui.button("add sine wave").clicked() {
-                for a in 0..1000 {
-                    let special_rating = (((a as f32 / 100.0).sin() * 100.0) + 100.0) / 2.0;
-                    self.days.push(DayStat { rating: special_rating, date: self.current_time.timestamp() });
-                }
-            }
+            // mostly for testing, not needed anymore
+            // if ui.button("add sine wave").clicked() {
+            //     for a in 0..1000 {
+            //         let special_rating = (((a as f32 / 100.0).sin() * 100.0) + 100.0) / 2.0;
+            //         self.days.push(DayStat { rating: special_rating, date: self.current_time.timestamp(), note: "".to_string() });
+            //     }
+            // }
 
             if ui.button("remove day").clicked() {
                 self.days.remove(self.days.len() - 1);
