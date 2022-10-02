@@ -4,6 +4,7 @@ pub mod daystat;
 
 use std::fs::File;
 use std::io::{Read, Write};
+use std::ops::Add;
 use eframe::egui;
 use chrono::{ DateTime, Utc};
 use eframe::emath::Pos2;
@@ -92,7 +93,7 @@ impl eframe::App for MyEguiApp {
 
             ui.horizontal(|ui| {
                 ui.label("Rating: ");
-                ui.add(egui::Slider::new(&mut self.rating,0.0..=100.0));
+                ui.add(egui::Slider::new(&mut self.rating,0.0..=20.0));
 
             });
 
@@ -104,7 +105,7 @@ impl eframe::App for MyEguiApp {
 
             ui.horizontal(|ui| {
                 ui.label("Graph Y Scale: ");
-                ui.add(egui::Slider::new(&mut self.graph_yscale, 0.5..=10.0));
+                ui.add(egui::Slider::new(&mut self.graph_yscale, 0.5..=6.0));
 
             });
 
@@ -154,7 +155,16 @@ impl eframe::App for MyEguiApp {
 
             for day in &self.days { // draw lines loop, bottom layer
 
-                let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
+                //let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
+                //todo make this a function instead of copying it each time
+                // let first_day;
+                // if i > 0 {
+                //     first_day = self.days.get(0).unwrap_or(&day);
+                // } else {
+                //     first_day = day;
+                // }
+                // let hours: f32 = (day.get_hour_difference(&first_day) as f32 / 3600.0); // number of hours compared to the previous point
+                let x: f32 = calculate_x(&self.days,&day,&self.graph_xscale,&self.graph_yscale);
                 let y: f32 = 500.0 - (day.rating * self.graph_yscale);
 
                 let points = [Pos2::new(prevx, prevy), Pos2::new(x,y)];
@@ -175,7 +185,16 @@ impl eframe::App for MyEguiApp {
             i = 0;
             for day in &self.days { // draw circles loop, middle layer
 
-                let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
+                // let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
+                //todo make this a function instead of copying it each time
+                let first_day;
+                if i > 0 {
+                    first_day = self.days.get(0).unwrap_or(&day);
+                } else {
+                    first_day = day;
+                }
+                let hours: f32 = (day.get_hour_difference(&first_day) as f32 / 3600.0); // number of hours compared to the previous point
+                let x: f32 = ((hours * self.graph_xscale) + self.xoffset as f32);
                 let y: f32 = 500.0 - (day.rating * self.graph_yscale);
 
                 let circle_color = get_shape_color_from_rating(day.rating);
@@ -193,18 +212,30 @@ impl eframe::App for MyEguiApp {
 
             for day in &self.days { // draw text loop, top most layer
 
-                let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
+                // let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
+                //todo make this a function instead of copying it each time
+                let first_day;
+                if i > 0 {
+                    first_day = self.days.get(0).unwrap_or(&day);
+                } else {
+                    first_day = day;
+                }
+                let hours: f32 = (day.get_hour_difference(&first_day) as f32 / 3600.0); // number of hours compared to the previous point
+                let x: f32 = ((hours * self.graph_xscale) + self.xoffset as f32);
                 let y: f32 = 500.0 - (day.rating * self.graph_yscale);
+
+                // println!("day: {},prevday: {},x: {}, diff: {}", day, first_day, x, hours);
 
                 let text = day.to_string();
 
                 let text_color = Color32::from_rgb(255,255,255);
 
-                let dist_max = ((5.0*self.graph_xscale) + (5.0*self.graph_yscale)) / 2.0;
+                let dist_max = 20.0; // maximum distance to consider a point being moused over
 
                 if distance(&mousepos.x,&mousepos.y,&x,&y) < dist_max && moused_over == false { // draw text near by each coordinate point
                     ui.painter().text(Pos2::new(x + 20.0,y),Align2::LEFT_CENTER,text,FontId::default(),text_color);
                     moused_over = true;
+                    // println!("day: {},prevday: {},x: {}, diff: {}", day, first_day, x, hours);
                 }
 
                 i = i + 1;
@@ -219,6 +250,14 @@ impl eframe::App for MyEguiApp {
 
         });
     }
+}
+
+fn calculate_x(days: &Vec<DayStat>,day: &DayStat, graph_xscale: &f32, xoffset: &f32) -> f32 {
+
+    let first_day = days.get(0).unwrap_or(&day);
+    let hours: f32 = (day.get_hour_difference(&first_day) as f32 / 3600.0); // number of hours compared to the previous point
+    let x: f32 = ((hours * graph_xscale) + xoffset);
+    return x;
 }
 
 fn get_shape_color_from_rating(rating: f32) -> Color32 {

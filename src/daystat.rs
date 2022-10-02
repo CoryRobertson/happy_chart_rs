@@ -21,6 +21,14 @@ pub mod daystat {
             let utc = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.date, 0), Utc).naive_utc();
             Pacific.from_utc_datetime(&utc)
         }
+
+        pub fn get_hour_difference(&self, compare_day_stat: &DayStat) -> i64 {
+
+            let difference = (self.date - compare_day_stat.date).abs();
+
+            return difference;
+        }
+
     }
 
     // impl ToString for DayStat {
