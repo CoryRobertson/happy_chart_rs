@@ -15,29 +15,22 @@ pub mod daystat {
         pub date: i64,
         pub note: String,
     }
-    //TODO: add some system for storing a note written for each day stat, allowing the user to write a reasoning for the rating or a description.
 
     impl DayStat {
+
+        /// Returns the date of this DayStat modified to pacific time, this can be made to support more time zones if needed.
         pub fn get_date_time(&self) -> DateTime<Tz> {
             // pacific time zone conversion
             let utc = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.date, 0), Utc).naive_utc();
             Pacific.from_utc_datetime(&utc)
         }
 
+        /// Returns the difference in hours in the form of an absolute value, bit of a bad name as it really just subtracts the utc values.
         pub fn get_hour_difference(&self, compare_day_stat: &DayStat) -> i64 {
-
-            let difference = (self.date - compare_day_stat.date).abs();
-
-            return difference;
+            (self.date - compare_day_stat.date).abs()
         }
 
     }
-
-    // impl ToString for DayStat {
-    //     fn to_string(&self) -> String {
-    //         self.get_date_time().to_string()
-    //     }
-    // }
 
     impl fmt::Display for DayStat {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {

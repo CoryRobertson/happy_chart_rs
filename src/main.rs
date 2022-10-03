@@ -1,17 +1,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 pub mod daystat;
+pub mod color_setting;
 
 use std::fs::File;
 use std::io::{Read, Write};
 use eframe::egui;
 use chrono::{ DateTime, Utc};
 use eframe::emath::Pos2;
-use eframe::epaint::Color32;
-use egui::{Align2, FontId, Stroke};
+use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
 use std::path::Path;
-
-// use chrono_tz::US::Pacific;
 use crate::daystat::daystat::DayStat;
 use crate::egui::Layout;
 
@@ -36,21 +34,17 @@ struct MyEguiApp {
     graph_yscale: f32,
     xoffset: i32,
     note_input: String,
+    starting_length: usize,
 }
 
 impl MyEguiApp {
     fn new(_cc: &eframe::CreationContext<'_>) -> Self {
-        // Customize egui here with cc.egui_ctx.set_fonts and cc.egui_ctx.set_visuals.
-        // Restore app state using cc.storage (requires the "persistence" feature).
-        // Use the cc.gl (a glow::Context) to create graphics shaders and buffers that you can use
-        // for e.g. egui::PaintCallback.
-
-
-        Self{ current_time: Default::default(), rating: 0.0, days: vec![], first_load: true, graph_xscale: 1.0, graph_yscale: 1.0, xoffset: 0, note_input: "".to_string() }
+        Self{ current_time: Default::default(), rating: 0.0, days: vec![], first_load: true, graph_xscale: 1.0, graph_yscale: 1.0, xoffset: 0, note_input: "".to_string(), starting_length: 0 }
         // Self::default()
     }
 }
 
+/// Reads the save file, if found, returns the vector full of all the DayStats
 fn read_save_file() -> Vec<DayStat> {
 
     let path = Path::new("save.ser");
@@ -81,14 +75,16 @@ fn read_save_file() -> Vec<DayStat> {
     serde_json::from_str(&s).unwrap_or_default()
 }
 
+/// Update loop for egui
 impl eframe::App for MyEguiApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
 
         // load previous save on first load in
-
         if self.first_load == true {
             self.first_load = false;
             self.days = read_save_file();
+            self.starting_length = self.days.len();
+
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -96,44 +92,45 @@ impl eframe::App for MyEguiApp {
 
             ui.horizontal(|ui| {
                 ui.label("Rating: ");
-                ui.add(egui::Slider::new(&mut self.rating,0.0..=100.0));
+                ui.add(egui::Slider::new(&mut self.rating,0.0..=100.0)).on_hover_text("The rating of the given day to be saved to the graph point.");
 
             });
 
             ui.horizontal(|ui| {
                 ui.label("Graph X Scale: ");
-                ui.add(egui::Slider::new(&mut self.graph_xscale, 0.1..=10.0));
+                ui.add(egui::Slider::new(&mut self.graph_xscale, 0.1..=10.0)).on_hover_text("Multiplier used to scale the graph on the X axis.");
 
             });
 
             ui.horizontal(|ui| {
                 ui.label("Graph Y Scale: ");
-                ui.add(egui::Slider::new(&mut self.graph_yscale, 0.5..=6.0));
+                ui.add(egui::Slider::new(&mut self.graph_yscale, 0.5..=5.0)).on_hover_text("Multiplier used to scale the graph on the Y axis.");
 
             });
 
-            ui.horizontal(|ui| {
-                if ui.button("shift left").clicked() {
-                    self.xoffset = self.xoffset - 10;
-                }
-                if ui.button("shift right").clicked() {
-                    self.xoffset = self.xoffset + 10;
-                }
-            });
+            // Probably dont need these any more.
+            // ui.horizontal(|ui| {
+            //     if ui.button("Shift left").clicked() {
+            //         self.xoffset = self.xoffset - 10;
+            //     }
+            //     if ui.button("shift right").clicked() {
+            //         self.xoffset = self.xoffset + 10;
+            //     }
+            // });
 
             ui.horizontal(|ui| {
                 ui.label("X Offset: ");
-                ui.add(egui::DragValue::new(&mut self.xoffset).speed(0.1));
+                ui.add(egui::DragValue::new(&mut self.xoffset).speed(0.1)).on_hover_text("Amount of units to shift the graph on the X axis.");
 
             });
 
             ui.horizontal(|ui| {
                 ui.label("Note: ");
-                ui.text_edit_singleline(&mut self.note_input);
+                ui.text_edit_singleline(&mut self.note_input).on_hover_text("The note to add to the next added graph point.");
 
             });
 
-            if ui.button("add day").clicked() {
+            if ui.button("Add day").clicked() {
                 self.days.push(DayStat{ rating: self.rating as f32, date: self.current_time.timestamp(), note: self.note_input.clone() });
                 println!("day added with rating {} and date {}", self.rating, self.current_time);
                 let day = &self.days.get(self.days.len() - 1).unwrap();
@@ -148,7 +145,7 @@ impl eframe::App for MyEguiApp {
             //     }
             // }
 
-            if ui.button("remove day").clicked() {
+            if ui.button("Remove day").clicked() {
                 self.days.remove(self.days.len() - 1);
             }
 
@@ -163,15 +160,17 @@ impl eframe::App for MyEguiApp {
             let mut prevx = 0.0;
             let mut prevy = 0.0;
 
+
+
             for day in &self.days { // draw lines loop, bottom layer
 
-                let x: f32 = calculate_x(&self.days,&day,&self.graph_xscale,&self.graph_yscale);
+                let x: f32 = calculate_x(&self.days,&day,&self.graph_xscale,&self.xoffset);
+
                 let y: f32 = 500.0 - (day.rating * self.graph_yscale);
                 let points = [Pos2::new(prevx, prevy), Pos2::new(x,y)];
-                let segment_color = Color32::from_rgb(100,100,100);
 
                 if (prevx != 0.0 && prevy != 0.0) || i == 1 { // draw line segments connecting the dots
-                    ui.painter().line_segment(points,Stroke::new(2.0,segment_color));
+                    ui.painter().line_segment(points,Stroke::new(2.0,color_setting::get_line_color()));
                 }
 
                 i = i + 1;
@@ -185,13 +184,12 @@ impl eframe::App for MyEguiApp {
             for day in &self.days { // draw circles loop, middle layer
 
                 // let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
-                let x: f32 = calculate_x(&self.days,&day,&self.graph_xscale,&self.graph_yscale);
-                let y: f32 = 500.0 - (day.rating * self.graph_yscale);
-                let circle_color = get_shape_color_from_rating(day.rating);
+                let x: f32 = calculate_x(&self.days,&day,&self.graph_xscale,&self.xoffset);
+                let y: f32 = 500.0 - (day.rating * &self.graph_yscale);
 
                 //draw circles on each coordinate point
 
-                ui.painter().circle_filled(Pos2::new(x, y), 4 as f32, circle_color);
+                ui.painter().circle_filled(Pos2::new(x, y), 4 as f32, color_setting::get_shape_color_from_rating(day.rating));
 
                 i = i + 1;
 
@@ -200,18 +198,35 @@ impl eframe::App for MyEguiApp {
             i = 0;
             let mut moused_over = false; // boolean used to know if we are already showing mouse over text, if so, not to render it if this is true
 
+
             for day in &self.days { // draw text loop, top most layer
 
-                let x: f32 = calculate_x(&self.days,&day,&self.graph_xscale,&self.graph_yscale);
+                let x: f32 = calculate_x(&self.days,&day,&self.graph_xscale,&self.xoffset);
                 let y: f32 = 500.0 - (day.rating * self.graph_yscale);
-
+                let rect_pos1 = Pos2::new(520.0, 10.0);
+                let rect_pos2 = Pos2::new(770.0, 180.0);
                 let text = day.to_string();
-                let text_color = Color32::from_rgb(255,255,255);
+
                 let dist_max = 20.0; // maximum distance to consider a point being moused over
 
                 if distance(&mousepos.x,&mousepos.y,&x,&y) < dist_max && moused_over == false { // draw text near by each coordinate point
-                    ui.painter().text(Pos2::new(x + 20.0,y),Align2::LEFT_CENTER,text,FontId::default(),text_color);
                     moused_over = true;
+
+                    ui.painter().text(Pos2::new(x + 20.0,y),Align2::LEFT_CENTER,&text,FontId::default(),color_setting::get_text_color());
+
+                    ui.painter().rect_filled(Rect::from_two_pos(rect_pos1, rect_pos2), Rounding::from(20.0), color_setting::get_info_window_color());
+                    ui.style_mut().visuals.override_text_color = Option::from(color_setting::get_text_color());
+
+                    // info text to display in top right window
+                    let mut info_text: String = day.get_date_time().to_string();
+                    info_text.push_str("\n");
+                    info_text.push_str(&day.rating.to_string());
+                    info_text.push_str("\n");
+                    info_text.push_str(&day.note);
+
+                    ui.put(Rect::from_two_pos(rect_pos1, rect_pos2),egui::widgets::Label::new(&info_text));
+
+
                     // println!("day: {},prevday: {},x: {}, diff: {}", day, first_day, x, hours);
                 }
 
@@ -219,8 +234,20 @@ impl eframe::App for MyEguiApp {
 
             }
 
+            //println!("{}, {}", mousepos.x,mousepos.y);
+
+
+
+
             ui.with_layout(Layout::bottom_up(egui::Align::BOTTOM), |ui| {
-                if ui.button("Quit").clicked() {
+
+                if self.starting_length != self.days.len() {
+                    ui.visuals_mut().override_text_color = Option::from(Color32::RED);
+                }
+
+                let quit_button = ui.button("Save & Quit").on_hover_text("Saves and closed the program, if text is red, changes are unsaved.");
+
+                if quit_button.clicked() {
                     quit(frame, &self.days);
                 }
             });
@@ -228,32 +255,23 @@ impl eframe::App for MyEguiApp {
     }
 }
 
-fn calculate_x(days: &Vec<DayStat>,day: &DayStat, graph_xscale: &f32, xoffset: &f32) -> f32 {
+/// Calculates the x coordinate for each graph point
+fn calculate_x(days: &Vec<DayStat>,day: &DayStat, graph_xscale: &f32, xoffset: &i32) -> f32 {
 
     let first_day = days.get(0).unwrap_or(&day);
     let hours: f32 = day.get_hour_difference(&first_day) as f32 / 3600.0; // number of hours compared to the previous point
-    let x: f32 = (hours * graph_xscale) + xoffset;
+    let x: f32 = (hours * graph_xscale) + *xoffset as f32;
     return x;
 }
 
-fn get_shape_color_from_rating(rating: f32) -> Color32 {
-
-    let new_rating = rating / 100.0;
-
-    let red: u8 = (100.0/new_rating) as u8;
-    let green: u8 = (new_rating * 255.0) as u8;
-    let blue: u8 = (new_rating * 50.0) as u8;
-
-    Color32::from_rgb(red,green,blue)
-}
-
+/// Returns the coordinate point distance between two points
 fn distance(x1: &f32, y1: &f32, x2: &f32, y2: &f32) -> f32 {
     let g1 = (x2 - x1).powf(2.0);
     let g2 = (y2 - y1).powf(2.0);
     return (g1 + g2).sqrt();
 }
 
-
+/// Quit function run when the user clicks the quit button
 fn quit(frame: &mut eframe::Frame, days: &Vec<DayStat>) {
 
     let ser = serde_json::to_string(days).unwrap();
@@ -266,10 +284,9 @@ fn quit(frame: &mut eframe::Frame, days: &Vec<DayStat>) {
     };
 
     match file.write_all(ser.as_bytes()) {
-        Ok(_) => {println!("successfuly wrote to file!")}
+        Ok(_) => {println!("successfully wrote to file!")}
         Err(_) => {println!("failed to write to file")}
     }
-
 
     println!("{}", ser);
 
