@@ -40,7 +40,6 @@ struct MyEguiApp {
 impl MyEguiApp {
     fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         Self{ current_time: Default::default(), rating: 0.0, days: vec![], first_load: true, graph_xscale: 1.0, graph_yscale: 1.0, xoffset: 0, note_input: "".to_string(), starting_length: 0 }
-        // Self::default()
     }
 }
 
@@ -108,16 +107,6 @@ impl eframe::App for MyEguiApp {
 
             });
 
-            // Probably dont need these any more.
-            // ui.horizontal(|ui| {
-            //     if ui.button("Shift left").clicked() {
-            //         self.xoffset = self.xoffset - 10;
-            //     }
-            //     if ui.button("shift right").clicked() {
-            //         self.xoffset = self.xoffset + 10;
-            //     }
-            // });
-
             ui.horizontal(|ui| {
                 ui.label("X Offset: ");
                 ui.add(egui::DragValue::new(&mut self.xoffset).speed(0.1)).on_hover_text("Amount of units to shift the graph on the X axis.");
@@ -137,14 +126,6 @@ impl eframe::App for MyEguiApp {
                 println!("{}", day);
             }
 
-            // mostly for testing, not needed anymore
-            // if ui.button("add sine wave").clicked() {
-            //     for a in 0..1000 {
-            //         let special_rating = (((a as f32 / 100.0).sin() * 100.0) + 100.0) / 2.0;
-            //         self.days.push(DayStat { rating: special_rating, date: self.current_time.timestamp(), note: "".to_string() });
-            //     }
-            // }
-
             if ui.button("Remove day").clicked() {
                 self.days.remove(self.days.len() - 1);
             }
@@ -154,13 +135,11 @@ impl eframe::App for MyEguiApp {
                 Some(a) => {a}
             };
 
-            ctx.request_repaint();
+            //ctx.request_repaint();
 
             let mut i = 0;
             let mut prevx = 0.0;
             let mut prevy = 0.0;
-
-
 
             for day in &self.days { // draw lines loop, bottom layer
 
@@ -174,10 +153,8 @@ impl eframe::App for MyEguiApp {
                 }
 
                 i = i + 1;
-
                 prevx = x;
                 prevy = y;
-
             }
 
             i = 0;
@@ -188,16 +165,13 @@ impl eframe::App for MyEguiApp {
                 let y: f32 = 500.0 - (day.rating * &self.graph_yscale);
 
                 //draw circles on each coordinate point
-
                 ui.painter().circle_filled(Pos2::new(x, y), 4 as f32, color_setting::get_shape_color_from_rating(day.rating));
 
                 i = i + 1;
-
             }
 
             i = 0;
             let mut moused_over = false; // boolean used to know if we are already showing mouse over text, if so, not to render it if this is true
-
 
             for day in &self.days { // draw text loop, top most layer
 
@@ -226,18 +200,10 @@ impl eframe::App for MyEguiApp {
 
                     ui.put(Rect::from_two_pos(rect_pos1, rect_pos2),egui::widgets::Label::new(&info_text));
 
-
-                    // println!("day: {},prevday: {},x: {}, diff: {}", day, first_day, x, hours);
                 }
 
                 i = i + 1;
-
             }
-
-            //println!("{}, {}", mousepos.x,mousepos.y);
-
-
-
 
             ui.with_layout(Layout::bottom_up(egui::Align::BOTTOM), |ui| {
 
