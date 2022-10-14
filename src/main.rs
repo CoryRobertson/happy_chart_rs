@@ -19,7 +19,7 @@ fn main() {
     println!("{}", a.date);
     let native_options = eframe::NativeOptions::default();
 
-    eframe::run_native("happy chart", native_options, Box::new(|cc| Box::new(MyEguiApp::new(cc))));
+    eframe::run_native("Happy Chart", native_options, Box::new(|cc| Box::new(MyEguiApp::new(cc))));
 
 }
 
@@ -35,11 +35,12 @@ struct MyEguiApp {
     xoffset: i32,
     note_input: String,
     starting_length: usize,
+    drawing_lines: bool,
 }
 
 impl MyEguiApp {
     fn new(_cc: &eframe::CreationContext<'_>) -> Self {
-        Self{ current_time: Default::default(), rating: 0.0, days: vec![], first_load: true, graph_xscale: 1.0, graph_yscale: 1.0, xoffset: 0, note_input: "".to_string(), starting_length: 0 }
+        Self{ current_time: Default::default(), rating: 0.0, days: vec![], first_load: true, graph_xscale: 1.0, graph_yscale: 1.0, xoffset: 0, note_input: "".to_string(), starting_length: 0, drawing_lines: false }
     }
 }
 
@@ -72,6 +73,31 @@ fn read_save_file() -> Vec<DayStat> {
         }
     }
     serde_json::from_str(&s).unwrap_or_default()
+}
+
+// thank you online example <3
+fn toggle_ui_compact(ui: &mut egui::Ui, on: &mut bool) -> egui::Response {
+    let desired_size = ui.spacing().interact_size.y * egui::vec2(2.0, 1.0);
+    let (rect, mut response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
+    if response.clicked() {
+        *on = !*on;
+        response.mark_changed();
+    }
+    response.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::Checkbox, *on, ""));
+
+    if ui.is_rect_visible(rect) {
+        let how_on = ui.ctx().animate_bool(response.id, *on);
+        let visuals = ui.style().interact_selectable(&response, *on);
+        let rect = rect.expand(visuals.expansion);
+        let radius = 0.5 * rect.height();
+        ui.painter()
+            .rect(rect, radius, visuals.bg_fill, visuals.bg_stroke);
+        let circle_x = egui::lerp((rect.left() + radius)..=(rect.right() - radius), how_on);
+        let center = egui::pos2(circle_x, rect.center().y);
+        ui.painter()
+            .circle(center, 0.75 * radius, visuals.bg_fill, visuals.fg_stroke);
+    }
+    response
 }
 
 /// Update loop for egui
@@ -114,6 +140,13 @@ impl eframe::App for MyEguiApp {
             });
 
             ui.horizontal(|ui| {
+                ui.label("Display day lines: ");
+
+                toggle_ui_compact(ui,&mut self.drawing_lines);
+
+            });
+
+            ui.horizontal(|ui| {
                 ui.label("Note: ");
                 ui.text_edit_singleline(&mut self.note_input).on_hover_text("The note to add to the next added graph point.");
 
@@ -126,7 +159,7 @@ impl eframe::App for MyEguiApp {
                 println!("{}", day);
             }
 
-            if ui.button("Remove day").clicked() {
+            if ui.button("Remove day").clicked() && self.days.len() > 0 {
                 self.days.remove(self.days.len() - 1);
             }
 
@@ -136,6 +169,33 @@ impl eframe::App for MyEguiApp {
             };
 
             //ctx.request_repaint();
+
+            if self.drawing_lines && self.days.len() > 1 {
+                // range for calculating how many lines in both directions on the x axis
+                let range = {
+                    if self.xoffset > 5000 { self.xoffset } else { 5000 }
+                };
+
+                for i2 in -range..range {
+                    // make a fake day with the first day on the list as the first day, and add 24 hours to it each time in utc time to calculate where each line goes
+                    let line_points: [Pos2; 2] = {
+                        let fake_day = DayStat {
+                            rating: 0.0,
+                            date: self.days.get(0).unwrap().date + 86400, // 86400 = how many seconds in a day, so we are creating a fake day that starts from where the first day is
+                            note: "".to_string()
+                        };
+                        let y: f32 = 200.0;
+                        let x = {
+                            let first_day = self.days.get(0).unwrap_or(&fake_day);
+                            let hours: f32 = fake_day.get_hour_difference(&first_day) as f32 / 3600.0; // number of hours compared to the previous point
+                            let x: f32 = (hours * self.graph_xscale) * i2 as f32;
+                             x + self.xoffset as f32
+                        };
+                        [Pos2::new(x, y), Pos2::new(x, 800.0)]
+                    };
+                    ui.painter().line_segment(line_points, Stroke::new(2.0, color_setting::get_day_line_color()));
+                }
+            }
 
             let mut i = 0;
             let mut prevx = 0.0;

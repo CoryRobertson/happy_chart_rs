@@ -28,3 +28,8 @@ pub fn get_shape_color_from_rating(rating: f32) -> Color32 {
 
     Color32::from_rgb(red,green,blue)
 }
+
+/// Color for the lines that show each day, when they are turned on.
+pub fn get_day_line_color() -> Color32 {
+    Color32::from_rgba_unmultiplied(50,50,50,100)
+}
