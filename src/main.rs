@@ -2,6 +2,7 @@
 
 pub mod daystat;
 pub mod color_setting;
+mod last_session;
 
 use std::fs::File;
 use std::io::{Read, Write};
@@ -12,7 +13,10 @@ use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
 use std::path::Path;
 use crate::daystat::daystat::DayStat;
 use crate::egui::Layout;
+use crate::last_session::LastSession;
 
+static SAVE_FILE_NAME: &str = "save.ser";
+static LAST_SESSION_FILE_NAME: &str = "happy_chart_last_session.ser";
 
 fn main() {
     let a = DayStat{rating: 1.0, date: Utc::now().timestamp(), note: "".to_string() };
@@ -22,7 +26,6 @@ fn main() {
     eframe::run_native("Happy Chart", native_options, Box::new(|cc| Box::new(MyEguiApp::new(cc))));
 
 }
-
 
 #[derive(Default)]
 struct MyEguiApp {
@@ -43,11 +46,40 @@ impl MyEguiApp {
         Self{ current_time: Default::default(), rating: 0.0, days: vec![], first_load: true, graph_xscale: 1.0, graph_yscale: 1.0, xoffset: 0, note_input: "".to_string(), starting_length: 0, drawing_lines: false }
     }
 }
+/// Reads the last session file, if exists, returns the deserialized contents, if it doesnt exist, returns a default LastSession struct.
+fn read_last_session_save_file() -> LastSession {
+    let path = Path::new(LAST_SESSION_FILE_NAME);
+
+    let mut file = match File::open(path) { // try to open save file
+        Ok(f) => {f}
+        Err(_) => {
+            match File::create(path) { // save file wasn't found, make one
+                Ok(f) => {
+                    println!("last session save file not found, creating one");
+                    f
+                }
+                Err(_) => { // cant make save file, return a default last session just incase
+                    return LastSession::default();
+                }
+            }
+        }
+    };
+    let mut s = String::new();
+    match file.read_to_string(&mut s) { // try to read the file into a string
+        Ok(_) => {
+            println!("read last session save file successfully");
+        }
+        Err(_) => { // fail to read file as string, return a default last session just incase, this should only happen if invalid utf-8 exists in the save file.
+            return LastSession::default();
+        }
+    }
+    serde_json::from_str(&s).unwrap_or_default() // return the deserialized struct
+}
 
 /// Reads the save file, if found, returns the vector full of all the DayStats
 fn read_save_file() -> Vec<DayStat> {
 
-    let path = Path::new("save.ser");
+    let path = Path::new(SAVE_FILE_NAME);
 
     let mut file = match File::open(path) {
         Ok(f) => {f}
@@ -109,6 +141,11 @@ impl eframe::App for MyEguiApp {
             self.first_load = false;
             self.days = read_save_file();
             self.starting_length = self.days.len();
+            let ls = read_last_session_save_file();
+            self.xoffset = ls.xoffset;
+            self.graph_xscale = ls.graph_xscale;
+            self.graph_yscale = ls.graph_yscale;
+            self.drawing_lines = ls.displaying_day_lines;
 
         }
 
@@ -261,10 +298,10 @@ impl eframe::App for MyEguiApp {
                     ui.put(Rect::from_two_pos(rect_pos1, rect_pos2),egui::widgets::Label::new(&info_text));
 
                 }
-
                 i = i + 1;
             }
 
+            // quit button layout
             ui.with_layout(Layout::bottom_up(egui::Align::BOTTOM), |ui| {
 
                 if self.starting_length != self.days.len() {
@@ -274,7 +311,7 @@ impl eframe::App for MyEguiApp {
                 let quit_button = ui.button("Save & Quit").on_hover_text("Saves and closed the program, if text is red, changes are unsaved.");
 
                 if quit_button.clicked() {
-                    quit(frame, &self.days);
+                    quit(frame, &self);
                 }
             });
         });
@@ -298,29 +335,42 @@ fn distance(x1: &f32, y1: &f32, x2: &f32, y2: &f32) -> f32 {
 }
 
 /// Quit function run when the user clicks the quit button
-fn quit(frame: &mut eframe::Frame, days: &Vec<DayStat>) {
+fn quit(frame: &mut eframe::Frame, app: &MyEguiApp) {
 
-    let ser = serde_json::to_string(days).unwrap();
-    let deserialized: Vec<DayStat> = serde_json::from_str(&ser).unwrap();
-    let path = Path::new("save.ser");
+    let days = &app.days;
 
-    let mut file = match File::create(path) {
-        Ok(f) => {f}
-        Err(_) => {panic!("unable to create save file")}
+    let last_session = LastSession{
+        graph_xscale: app.graph_xscale,
+        graph_yscale: app.graph_yscale,
+        xoffset: app.xoffset,
+        displaying_day_lines: app.drawing_lines,
     };
 
-    match file.write_all(ser.as_bytes()) {
-        Ok(_) => {println!("successfully wrote to file!")}
-        Err(_) => {println!("failed to write to file")}
+    let session_ser = serde_json::to_string(&last_session).unwrap();
+    let last_session_path = Path::new(LAST_SESSION_FILE_NAME);
+
+    let mut last_session_save_file = match File::create(last_session_path) {
+        Ok(f) => {f}
+        Err(_) => {panic!("unable to create last_session_save_file")}
+    };
+
+    match last_session_save_file.write_all(session_ser.as_bytes()) {
+        Ok(_) => {println!("successfuly wrote to last_session_save")}
+        Err(_) => {println!("failed to write to last_session_save")}
     }
 
-    println!("{}", ser);
+    let ser = serde_json::to_string(days).unwrap();
+    // let deserialized: Vec<DayStat> = serde_json::from_str(&ser).unwrap();
+    let save_path = Path::new(SAVE_FILE_NAME);
 
-    let mut i = 0;
+    let mut save_file = match File::create(save_path) {
+        Ok(f) => {f}
+        Err(_) => {panic!("unable to create save save_file")}
+    };
 
-    for a in deserialized {
-        println!("{}: {}", i, a);
-        i = i + 1;
+    match save_file.write_all(ser.as_bytes()) {
+        Ok(_) => {println!("successfully wrote to save_file!")}
+        Err(_) => {println!("failed to write to save_file")}
     }
 
     frame.close();
