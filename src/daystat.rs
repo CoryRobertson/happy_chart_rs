@@ -1,13 +1,12 @@
-
 pub mod daystat {
 
-    use std::fmt;
-    use std::fmt::{Formatter};
-    use chrono::{DateTime, NaiveDateTime, Utc, TimeZone};
-    use serde::{Deserialize, Serialize, Serializer};
-    use serde::ser::{SerializeStruct};
+    use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
     use chrono_tz::Tz;
     use chrono_tz::US::Pacific;
+    use serde::ser::SerializeStruct;
+    use serde::{Deserialize, Serialize, Serializer};
+    use std::fmt;
+    use std::fmt::Formatter;
 
     #[derive(Deserialize)]
     pub struct DayStat {
@@ -17,11 +16,11 @@ pub mod daystat {
     }
 
     impl DayStat {
-
         /// Returns the date of this DayStat modified to pacific time, this can be made to support more time zones if needed.
         pub fn get_date_time(&self) -> DateTime<Tz> {
             // pacific time zone conversion
-            let utc = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.date, 0), Utc).naive_utc();
+            let utc = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.date, 0), Utc)
+                .naive_utc();
             Pacific.from_utc_datetime(&utc)
         }
 
@@ -29,7 +28,6 @@ pub mod daystat {
         pub fn get_hour_difference(&self, compare_day_stat: &DayStat) -> i64 {
             (self.date - compare_day_stat.date).abs()
         }
-
     }
 
     impl fmt::Display for DayStat {
@@ -47,20 +45,17 @@ pub mod daystat {
             Ok(())
         }
     }
-    
+
     impl Serialize for DayStat {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: Serializer,
+        where
+            S: Serializer,
         {
-            let mut state = serializer.serialize_struct("DayStat",2)?;
+            let mut state = serializer.serialize_struct("DayStat", 2)?;
             state.serialize_field("rating", &self.rating)?;
             state.serialize_field("date", &self.date)?;
             state.serialize_field("note", &self.note)?;
             state.end()
         }
     }
-
-    
-    
 }
