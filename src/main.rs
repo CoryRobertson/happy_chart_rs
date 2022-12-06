@@ -156,7 +156,7 @@ fn toggle_ui_compact(ui: &mut egui::Ui, on: &mut bool) -> egui::Response {
 impl eframe::App for MyEguiApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         // load previous save on first load in
-        if self.first_load == true {
+        if self.first_load {
             self.first_load = false;
             self.days = read_save_file();
             self.starting_length = self.days.len();
@@ -216,11 +216,11 @@ impl eframe::App for MyEguiApp {
                     "day added with rating {} and date {}",
                     self.rating, self.current_time
                 );
-                let day = &self.days.get(self.days.len() - 1).unwrap();
+                let day = &self.days.last().unwrap();
                 println!("{}", day);
             }
 
-            if ui.button("Remove day").clicked() && self.days.len() > 0 {
+            if ui.button("Remove day").clicked() && !self.days.is_empty() {
                 self.days.remove(self.days.len() - 1);
             }
 
@@ -253,7 +253,7 @@ impl eframe::App for MyEguiApp {
                         let x = {
                             let first_day = self.days.get(0).unwrap_or(&fake_day);
                             let hours: f32 =
-                                fake_day.get_hour_difference(&first_day) as f32 / 3600.0; // number of hours compared to the previous point
+                                fake_day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
                             let x: f32 = (hours * self.graph_xscale) * i2 as f32;
                             x + self.xoffset as f32
                         };
@@ -273,7 +273,7 @@ impl eframe::App for MyEguiApp {
             for day in &self.days {
                 // draw lines loop, bottom layer
 
-                let x: f32 = calculate_x(&self.days, &day, &self.graph_xscale, &self.xoffset);
+                let x: f32 = calculate_x(&self.days, day, &self.graph_xscale, &self.xoffset);
 
                 let y: f32 = 500.0 - (day.rating * self.graph_yscale);
                 let points = [Pos2::new(prevx, prevy), Pos2::new(x, y)];
@@ -284,7 +284,7 @@ impl eframe::App for MyEguiApp {
                         .line_segment(points, Stroke::new(2.0, color_setting::get_line_color()));
                 }
 
-                i = i + 1;
+                i += 1;
                 prevx = x;
                 prevy = y;
             }
@@ -294,17 +294,17 @@ impl eframe::App for MyEguiApp {
                 // draw circles loop, middle layer
 
                 // let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
-                let x: f32 = calculate_x(&self.days, &day, &self.graph_xscale, &self.xoffset);
+                let x: f32 = calculate_x(&self.days, day, &self.graph_xscale, &self.xoffset);
                 let y: f32 = 500.0 - (day.rating * &self.graph_yscale);
 
                 //draw circles on each coordinate point
                 ui.painter().circle_filled(
                     Pos2::new(x, y),
-                    4 as f32,
+                    4_f32,
                     color_setting::get_shape_color_from_rating(day.rating),
                 );
 
-                i = i + 1;
+                i += 1;
             }
 
             i = 0;
@@ -313,7 +313,7 @@ impl eframe::App for MyEguiApp {
             for day in &self.days {
                 // draw text loop, top most layer
 
-                let x: f32 = calculate_x(&self.days, &day, &self.graph_xscale, &self.xoffset);
+                let x: f32 = calculate_x(&self.days, day, &self.graph_xscale, &self.xoffset);
                 let y: f32 = 500.0 - (day.rating * self.graph_yscale);
                 let rect_pos1 = Pos2::new(520.0, 10.0);
                 let rect_pos2 = Pos2::new(770.0, 180.0);
@@ -321,7 +321,7 @@ impl eframe::App for MyEguiApp {
 
                 let dist_max = 20.0; // maximum distance to consider a point being moused over
 
-                if distance(&mousepos.x, &mousepos.y, &x, &y) < dist_max && moused_over == false {
+                if distance(&mousepos.x, &mousepos.y, &x, &y) < dist_max && !moused_over {
                     // draw text near by each coordinate point
                     moused_over = true;
 
@@ -343,9 +343,9 @@ impl eframe::App for MyEguiApp {
 
                     // info text to display in top right window
                     let mut info_text: String = day.get_date_time().to_string();
-                    info_text.push_str("\n");
+                    info_text.push('\n');
                     info_text.push_str(&day.rating.to_string());
-                    info_text.push_str("\n");
+                    info_text.push('\n');
                     info_text.push_str(&day.note);
 
                     ui.put(
@@ -353,7 +353,7 @@ impl eframe::App for MyEguiApp {
                         egui::widgets::Label::new(&info_text),
                     );
                 }
-                i = i + 1;
+                i += 1;
             }
 
             // quit button layout
@@ -367,7 +367,7 @@ impl eframe::App for MyEguiApp {
                 );
 
                 if quit_button.clicked() {
-                    quit(frame, &self);
+                    quit(frame, self);
                 }
             });
         });
@@ -376,17 +376,17 @@ impl eframe::App for MyEguiApp {
 
 /// Calculates the x coordinate for each graph point
 fn calculate_x(days: &Vec<DayStat>, day: &DayStat, graph_xscale: &f32, xoffset: &i32) -> f32 {
-    let first_day = days.get(0).unwrap_or(&day);
-    let hours: f32 = day.get_hour_difference(&first_day) as f32 / 3600.0; // number of hours compared to the previous point
+    let first_day = days.get(0).unwrap_or(day);
+    let hours: f32 = day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
     let x: f32 = (hours * graph_xscale) + *xoffset as f32;
-    return x;
+    x
 }
 
 /// Returns the coordinate point distance between two points
 fn distance(x1: &f32, y1: &f32, x2: &f32, y2: &f32) -> f32 {
     let g1 = (x2 - x1).powf(2.0);
     let g2 = (y2 - y1).powf(2.0);
-    return (g1 + g2).sqrt();
+    (g1 + g2).sqrt()
 }
 
 /// Quit function run when the user clicks the quit button
