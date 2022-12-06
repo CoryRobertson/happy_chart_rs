@@ -19,8 +19,11 @@ pub mod daystat {
         /// Returns the date of this DayStat modified to pacific time, this can be made to support more time zones if needed.
         pub fn get_date_time(&self) -> DateTime<Tz> {
             // pacific time zone conversion
-            let utc = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.date, 0), Utc)
-                .naive_utc();
+            let utc = DateTime::<Utc>::from_utc(
+                NaiveDateTime::from_timestamp_opt(self.date, 0).unwrap_or_default(),
+                Utc,
+            )
+            .naive_utc();
             Pacific.from_utc_datetime(&utc)
         }
 

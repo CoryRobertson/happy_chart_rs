@@ -19,7 +19,7 @@ lto = true
 [dependencies]
 eframe = "0.19.0"
 egui = "0.19.0"
-serde = { version = "1.0.145", features = ["derive"] }
-chrono = "0.4.22"
-chrono-tz = { version = "0.8.0", features = ["serde"] }
+serde = { version = "1.0.146", features = ["derive"] }
+chrono = "0.4.23"
+chrono-tz = { version = "0.8.1", features = ["serde"] }
 serde_json = "1.0.85"
