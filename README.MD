@@ -13,4 +13,4 @@ If anyone uses this program, I would absolutly love to know if there are any fea
 I would also love to know if anyone uses this program, and what they do and don't like about it, as I personally love using it, and its really movitvating to hear people enjoying things I have made. :)
 
 <3
-![image](https://i.imgur.com/KT9FfoB.png)
+![image](https://imgur.com/a/4Mh6JxY)
