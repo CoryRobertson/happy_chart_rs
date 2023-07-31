@@ -5,6 +5,10 @@ mod daystat;
 mod improved_daystat;
 mod last_session;
 
+// TODO: add program icon
+
+// TODO: make program show version number somewhere on the screen ??
+
 #[allow(deprecated)]
 use crate::daystat::DayStat;
 use crate::egui::Layout;
