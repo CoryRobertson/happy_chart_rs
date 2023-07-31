@@ -1,48 +1,47 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-pub mod color_setting;
-pub mod daystat;
+mod color_setting;
+mod daystat;
+mod improved_daystat;
 mod last_session;
 
-use crate::daystat::daystat::DayStat;
+#[allow(deprecated)]
+use crate::daystat::DayStat;
 use crate::egui::Layout;
+use crate::improved_daystat::ImprovedDayStat;
 use crate::last_session::LastSession;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Days, Local, Utc};
 use eframe::egui;
 use eframe::emath::Pos2;
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
 use std::fs::File;
 use std::io::{Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-static SAVE_FILE_NAME: &str = "save.ser";
-static LAST_SESSION_FILE_NAME: &str = "happy_chart_last_session.ser";
+const SAVE_FILE_NAME: &str = "save.ser";
+const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
+const LAST_SESSION_FILE_NAME: &str = "happy_chart_last_session.ser";
 
 fn main() {
-    let a = DayStat {
-        rating: 1.0,
-        date: Utc::now().timestamp(),
-        note: "".to_string(),
-    };
-    println!("{}", a.date);
     let native_options = eframe::NativeOptions::default();
 
     eframe::run_native(
         "Happy Chart",
         native_options,
         Box::new(|cc| Box::new(MyEguiApp::new(cc))),
-    );
+    )
+    .expect("Failed to run egui app");
 }
 
 #[derive(Default)]
 struct MyEguiApp {
     current_time: DateTime<Utc>,
     rating: f64,
-    days: Vec<DayStat>,
+    days: Vec<ImprovedDayStat>,
     first_load: bool,
-    graph_xscale: f32,
-    graph_yscale: f32,
-    xoffset: i32,
+    graph_x_scale: f32,
+    graph_y_scale: f32,
+    x_offset: i32,
     note_input: String,
     starting_length: usize,
     drawing_lines: bool,
@@ -55,9 +54,9 @@ impl MyEguiApp {
             rating: 0.0,
             days: vec![],
             first_load: true,
-            graph_xscale: 1.0,
-            graph_yscale: 1.0,
-            xoffset: 0,
+            graph_x_scale: 1.0,
+            graph_y_scale: 1.0,
+            x_offset: 0,
             note_input: "".to_string(),
             starting_length: 0,
             drawing_lines: false,
@@ -100,31 +99,61 @@ fn read_last_session_save_file() -> LastSession {
 }
 
 /// Reads the save file, if found, returns the vector full of all the DayStats
-fn read_save_file() -> Vec<DayStat> {
+fn read_save_file() -> Vec<ImprovedDayStat> {
+    let new_path = PathBuf::from(NEW_SAVE_FILE_NAME);
     let path = Path::new(SAVE_FILE_NAME);
 
-    let mut file = match File::open(path) {
+    let mut file = match File::open(&new_path) {
         Ok(f) => f,
-        Err(_) => match File::create(path) {
+        Err(_) => match File::open(path) {
             Ok(f) => f,
-            Err(_) => {
-                println!("couldnt create save file");
-                return vec![];
-            }
+            Err(_) => match File::create(new_path) {
+                Ok(f) => f,
+                Err(err) => {
+                    panic!("cant create new save file: {}", err);
+                }
+            },
         },
     };
 
     let mut s = String::new();
-    match file.read_to_string(&mut s) {
-        Ok(_) => {
+    let read_len = match file.read_to_string(&mut s) {
+        Ok(read_len) => {
             println!("successfully read save file");
+            read_len
         }
         Err(_) => {
             println!("unable to read save file");
             return vec![];
         }
+    };
+
+    // attempt to read old save file format
+    match serde_json::from_str::<Vec<ImprovedDayStat>>(&s[0..read_len]) {
+        Ok(vec) => {
+            println!("found modern save file");
+            // new save file format found, return it
+            vec
+        }
+        Err(_) => {
+            // not old save file format, attempt to read it as new save file format
+            //
+            #[allow(deprecated)]
+            match serde_json::from_str::<Vec<DayStat>>(&s[0..read_len]) {
+                Ok(v) => {
+                    println!("found legacy save file, converting");
+                    // old save file format found, convert it into new save file format
+                    v.into_iter()
+                        .map(|old_day_stat| old_day_stat.into())
+                        .collect::<Vec<ImprovedDayStat>>()
+                }
+                Err(_) => {
+                    // cant read old or new save file format, so empty vec.
+                    vec![]
+                }
+            }
+        }
     }
-    serde_json::from_str(&s).unwrap_or_default()
 }
 
 // thank you online example <3
@@ -161,9 +190,9 @@ impl eframe::App for MyEguiApp {
             self.days = read_save_file();
             self.starting_length = self.days.len();
             let ls = read_last_session_save_file();
-            self.xoffset = ls.xoffset;
-            self.graph_xscale = ls.graph_xscale;
-            self.graph_yscale = ls.graph_yscale;
+            self.x_offset = ls.xoffset;
+            self.graph_x_scale = ls.graph_xscale;
+            self.graph_y_scale = ls.graph_yscale;
             self.drawing_lines = ls.displaying_day_lines;
         }
 
@@ -178,19 +207,19 @@ impl eframe::App for MyEguiApp {
 
             ui.horizontal(|ui| {
                 ui.label("Graph X Scale: ");
-                ui.add(egui::Slider::new(&mut self.graph_xscale, 0.1..=10.0))
+                ui.add(egui::Slider::new(&mut self.graph_x_scale, 0.1..=10.0))
                     .on_hover_text("Multiplier used to scale the graph on the X axis.");
             });
 
             ui.horizontal(|ui| {
                 ui.label("Graph Y Scale: ");
-                ui.add(egui::Slider::new(&mut self.graph_yscale, 0.5..=5.0))
+                ui.add(egui::Slider::new(&mut self.graph_y_scale, 0.5..=5.0))
                     .on_hover_text("Multiplier used to scale the graph on the Y axis.");
             });
 
             ui.horizontal(|ui| {
                 ui.label("X Offset: ");
-                ui.add(egui::DragValue::new(&mut self.xoffset).speed(0.1))
+                ui.add(egui::DragValue::new(&mut self.x_offset).speed(0.1))
                     .on_hover_text("Amount of units to shift the graph on the X axis.");
             });
 
@@ -202,29 +231,28 @@ impl eframe::App for MyEguiApp {
 
             ui.horizontal(|ui| {
                 ui.label("Note: ");
-                ui.text_edit_singleline(&mut self.note_input)
+                ui.text_edit_multiline(&mut self.note_input)
                     .on_hover_text("The note to add to the next added graph point.");
             });
 
             if ui.button("Add day").clicked() {
-                self.days.push(DayStat {
+                self.days.push(ImprovedDayStat {
                     rating: self.rating as f32,
-                    date: self.current_time.timestamp(),
+                    date: self.current_time.with_timezone(&Local),
                     note: self.note_input.clone(),
                 });
                 println!(
                     "day added with rating {} and date {}",
                     self.rating, self.current_time
                 );
-                let day = &self.days.last().unwrap();
-                println!("{}", day);
+                // let day = &self.days.last().unwrap();
             }
 
             if ui.button("Remove day").clicked() && !self.days.is_empty() {
                 self.days.remove(self.days.len() - 1);
             }
 
-            let mousepos = match ctx.pointer_hover_pos() {
+            let mouse_pos = match ctx.pointer_hover_pos() {
                 None => Pos2::new(0.0, 0.0),
                 Some(a) => a,
             };
@@ -234,8 +262,8 @@ impl eframe::App for MyEguiApp {
             if self.drawing_lines && self.days.len() > 1 {
                 // range for calculating how many lines in both directions on the x axis
                 let range = {
-                    if self.xoffset > 5000 {
-                        self.xoffset
+                    if self.x_offset > 5000 {
+                        self.x_offset
                     } else {
                         5000
                     }
@@ -244,18 +272,21 @@ impl eframe::App for MyEguiApp {
                 for i2 in -range..range {
                     // make a fake day with the first day on the list as the first day, and add 24 hours to it each time in utc time to calculate where each line goes
                     let line_points: [Pos2; 2] = {
-                        let fake_day = DayStat {
+                        let d = self.days.get(0).unwrap();
+
+                        let fake_day = ImprovedDayStat {
                             rating: 0.0,
-                            date: self.days.get(0).unwrap().date + 86400, // 86400 = how many seconds in a day, so we are creating a fake day that starts from where the first day is
+                            date: d.date.checked_add_days(Days::new(1)).unwrap_or_default(), // fake day that starts from where the first day is, with one day added
                             note: "".to_string(),
                         };
                         let y: f32 = 200.0;
                         let x = {
-                            let first_day = self.days.get(0).unwrap_or(&fake_day);
+                            let first_day = d;
                             let hours: f32 =
                                 fake_day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
-                            let x: f32 = (hours * self.graph_xscale) * i2 as f32;
-                            x + self.xoffset as f32
+
+                            let x: f32 = (hours * self.graph_x_scale) * i2 as f32;
+                            x + self.x_offset as f32
                         };
                         [Pos2::new(x, y), Pos2::new(x, 800.0)]
                     };
@@ -267,35 +298,37 @@ impl eframe::App for MyEguiApp {
             }
 
             let mut i = 0;
-            let mut prevx = 0.0;
-            let mut prevy = 0.0;
+            let mut prev_x = 0.0;
+            let mut prev_y = 0.0;
 
             for day in &self.days {
                 // draw lines loop, bottom layer
 
-                let x: f32 = calculate_x(&self.days, day, &self.graph_xscale, &self.xoffset);
+                let x: f32 =
+                    improved_calculate_x(&self.days, day, &self.graph_x_scale, &self.x_offset);
 
-                let y: f32 = 500.0 - (day.rating * self.graph_yscale);
-                let points = [Pos2::new(prevx, prevy), Pos2::new(x, y)];
+                let y: f32 = 500.0 - (day.rating * self.graph_y_scale);
+                let points = [Pos2::new(prev_x, prev_y), Pos2::new(x, y)];
 
-                if (prevx != 0.0 && prevy != 0.0) || i == 1 {
+                if (prev_x != 0.0 && prev_y != 0.0) || i == 1 {
                     // draw line segments connecting the dots
                     ui.painter()
                         .line_segment(points, Stroke::new(2.0, color_setting::get_line_color()));
                 }
 
                 i += 1;
-                prevx = x;
-                prevy = y;
+                prev_x = x;
+                prev_y = y;
             }
 
             i = 0;
-            for day in &self.days {
+            for day in &self.days.clone() {
                 // draw circles loop, middle layer
 
                 // let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
-                let x: f32 = calculate_x(&self.days, day, &self.graph_xscale, &self.xoffset);
-                let y: f32 = 500.0 - (day.rating * &self.graph_yscale);
+                let x: f32 =
+                    improved_calculate_x(&self.days, day, &self.graph_x_scale, &self.x_offset);
+                let y: f32 = 500.0 - (day.rating * self.graph_y_scale);
 
                 //draw circles on each coordinate point
                 ui.painter().circle_filled(
@@ -313,15 +346,16 @@ impl eframe::App for MyEguiApp {
             for day in &self.days {
                 // draw text loop, top most layer
 
-                let x: f32 = calculate_x(&self.days, day, &self.graph_xscale, &self.xoffset);
-                let y: f32 = 500.0 - (day.rating * self.graph_yscale);
+                let x: f32 =
+                    improved_calculate_x(&self.days, day, &self.graph_x_scale, &self.x_offset);
+                let y: f32 = 500.0 - (day.rating * self.graph_y_scale);
                 let rect_pos1 = Pos2::new(520.0, 10.0);
                 let rect_pos2 = Pos2::new(770.0, 180.0);
                 let text = day.to_string();
 
                 let dist_max = 20.0; // maximum distance to consider a point being moused over
 
-                if distance(&mousepos.x, &mousepos.y, &x, &y) < dist_max && !moused_over {
+                if distance(&mouse_pos.x, &mouse_pos.y, &x, &y) < dist_max && !moused_over {
                     // draw text near by each coordinate point
                     moused_over = true;
 
@@ -342,11 +376,7 @@ impl eframe::App for MyEguiApp {
                         Option::from(color_setting::get_text_color());
 
                     // info text to display in top right window
-                    let mut info_text: String = day.get_date_time().to_string();
-                    info_text.push('\n');
-                    info_text.push_str(&day.rating.to_string());
-                    info_text.push('\n');
-                    info_text.push_str(&day.note);
+                    let info_text: String = day.to_string();
 
                     ui.put(
                         Rect::from_two_pos(rect_pos1, rect_pos2),
@@ -375,10 +405,25 @@ impl eframe::App for MyEguiApp {
 }
 
 /// Calculates the x coordinate for each graph point
-fn calculate_x(days: &Vec<DayStat>, day: &DayStat, graph_xscale: &f32, xoffset: &i32) -> f32 {
+#[deprecated]
+#[allow(dead_code, deprecated)]
+fn calculate_x(days: &[DayStat], day: &DayStat, graph_xscale: &f32, xoffset: &i32) -> f32 {
     let first_day = days.get(0).unwrap_or(day);
     let hours: f32 = day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
     let x: f32 = (hours * graph_xscale) + *xoffset as f32;
+    x
+}
+
+/// Calculates the x coordinate for each graph point
+fn improved_calculate_x(
+    days: &[ImprovedDayStat],
+    day: &ImprovedDayStat,
+    graph_x_scale: &f32,
+    x_offset: &i32,
+) -> f32 {
+    let first_day = days.get(0).unwrap_or(day);
+    let hours: f32 = day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
+    let x: f32 = (hours * graph_x_scale) + *x_offset as f32;
     x
 }
 
@@ -394,9 +439,9 @@ fn quit(frame: &mut eframe::Frame, app: &MyEguiApp) {
     let days = &app.days;
 
     let last_session = LastSession {
-        graph_xscale: app.graph_xscale,
-        graph_yscale: app.graph_yscale,
-        xoffset: app.xoffset,
+        graph_xscale: app.graph_x_scale,
+        graph_yscale: app.graph_y_scale,
+        xoffset: app.x_offset,
         displaying_day_lines: app.drawing_lines,
     };
 
@@ -412,7 +457,7 @@ fn quit(frame: &mut eframe::Frame, app: &MyEguiApp) {
 
     match last_session_save_file.write_all(session_ser.as_bytes()) {
         Ok(_) => {
-            println!("successfuly wrote to last_session_save")
+            println!("successfully wrote to last_session_save")
         }
         Err(_) => {
             println!("failed to write to last_session_save")
@@ -421,21 +466,21 @@ fn quit(frame: &mut eframe::Frame, app: &MyEguiApp) {
 
     let ser = serde_json::to_string(days).unwrap();
     // let deserialized: Vec<DayStat> = serde_json::from_str(&ser).unwrap();
-    let save_path = Path::new(SAVE_FILE_NAME);
+    let save_path = Path::new(NEW_SAVE_FILE_NAME);
 
     let mut save_file = match File::create(save_path) {
         Ok(f) => f,
         Err(_) => {
-            panic!("unable to create save save_file")
+            panic!("unable to create save {:?}", save_path.file_name().unwrap_or_default())
         }
     };
 
     match save_file.write_all(ser.as_bytes()) {
         Ok(_) => {
-            println!("successfully wrote to save_file!")
+            println!("successfully wrote to {:?}!", save_path.file_name().unwrap_or_default())
         }
         Err(_) => {
-            println!("failed to write to save_file")
+            println!("failed to write to {:?}", save_path.file_name().unwrap_or_default())
         }
     }
 
