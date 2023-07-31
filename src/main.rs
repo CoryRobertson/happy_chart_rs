@@ -9,16 +9,14 @@ mod last_session;
 
 // TODO: make program show version number somewhere on the screen ??
 
-// TODO: make program open with same window size every time using the last session struct
-
 #[allow(deprecated)]
 use crate::daystat::DayStat;
 use crate::egui::Layout;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::last_session::LastSession;
 use chrono::{DateTime, Days, Local, Utc};
-use eframe::egui;
 use eframe::emath::Pos2;
+use eframe::{egui, NativeOptions};
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
 use std::fs::File;
 use std::io::{Read, Write};
@@ -29,7 +27,10 @@ const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
 const LAST_SESSION_FILE_NAME: &str = "happy_chart_last_session.ser";
 
 fn main() {
-    let native_options = eframe::NativeOptions::default();
+    let native_options = NativeOptions {
+        initial_window_size: Some(read_last_session_save_file().window_size.into()),
+        ..Default::default()
+    };
 
     eframe::run_native(
         "Happy Chart",
@@ -200,6 +201,8 @@ impl eframe::App for MyEguiApp {
             self.graph_x_scale = ls.graph_xscale;
             self.graph_y_scale = ls.graph_yscale;
             self.drawing_lines = ls.displaying_day_lines;
+
+            dbg!(ls);
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -449,6 +452,7 @@ fn quit(frame: &mut eframe::Frame, app: &MyEguiApp) {
         graph_yscale: app.graph_y_scale,
         xoffset: app.x_offset,
         displaying_day_lines: app.drawing_lines,
+        window_size: frame.info().window_info.size.into(),
     };
 
     let session_ser = serde_json::to_string(&last_session).unwrap();
@@ -477,16 +481,25 @@ fn quit(frame: &mut eframe::Frame, app: &MyEguiApp) {
     let mut save_file = match File::create(save_path) {
         Ok(f) => f,
         Err(_) => {
-            panic!("unable to create save {:?}", save_path.file_name().unwrap_or_default())
+            panic!(
+                "unable to create save {:?}",
+                save_path.file_name().unwrap_or_default()
+            )
         }
     };
 
     match save_file.write_all(ser.as_bytes()) {
         Ok(_) => {
-            println!("successfully wrote to {:?}!", save_path.file_name().unwrap_or_default())
+            println!(
+                "successfully wrote to {:?}!",
+                save_path.file_name().unwrap_or_default()
+            )
         }
         Err(_) => {
-            println!("failed to write to {:?}", save_path.file_name().unwrap_or_default())
+            println!(
+                "failed to write to {:?}",
+                save_path.file_name().unwrap_or_default()
+            )
         }
     }
 
