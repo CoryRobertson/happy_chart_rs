@@ -5,8 +5,6 @@ mod daystat;
 mod improved_daystat;
 mod last_session;
 
-// TODO: add program icon
-
 // TODO: make program show version number somewhere on the screen ??
 
 // TODO: make program open with same window size every time using the last session struct
@@ -477,16 +475,25 @@ fn quit(frame: &mut eframe::Frame, app: &MyEguiApp) {
     let mut save_file = match File::create(save_path) {
         Ok(f) => f,
         Err(_) => {
-            panic!("unable to create save {:?}", save_path.file_name().unwrap_or_default())
+            panic!(
+                "unable to create save {:?}",
+                save_path.file_name().unwrap_or_default()
+            )
         }
     };
 
     match save_file.write_all(ser.as_bytes()) {
         Ok(_) => {
-            println!("successfully wrote to {:?}!", save_path.file_name().unwrap_or_default())
+            println!(
+                "successfully wrote to {:?}!",
+                save_path.file_name().unwrap_or_default()
+            )
         }
         Err(_) => {
-            println!("failed to write to {:?}", save_path.file_name().unwrap_or_default())
+            println!(
+                "failed to write to {:?}",
+                save_path.file_name().unwrap_or_default()
+            )
         }
     }
 
