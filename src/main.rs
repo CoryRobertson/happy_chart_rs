@@ -201,8 +201,6 @@ impl eframe::App for MyEguiApp {
             self.graph_x_scale = ls.graph_xscale;
             self.graph_y_scale = ls.graph_yscale;
             self.drawing_lines = ls.displaying_day_lines;
-
-            dbg!(ls);
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -216,7 +214,7 @@ impl eframe::App for MyEguiApp {
 
             ui.horizontal(|ui| {
                 ui.label("Graph X Scale: ");
-                ui.add(egui::Slider::new(&mut self.graph_x_scale, 0.1..=10.0))
+                ui.add(egui::Slider::new(&mut self.graph_x_scale, 0.01..=10.0))
                     .on_hover_text("Multiplier used to scale the graph on the X axis.");
             });
 
