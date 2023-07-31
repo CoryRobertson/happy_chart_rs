@@ -5,6 +5,12 @@ mod daystat;
 mod improved_daystat;
 mod last_session;
 
+// TODO: add program icon
+
+// TODO: make program show version number somewhere on the screen ??
+
+// TODO: make program open with same window size every time using the last session struct
+
 #[allow(deprecated)]
 use crate::daystat::DayStat;
 use crate::egui::Layout;
