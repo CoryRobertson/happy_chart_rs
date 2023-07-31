@@ -5,9 +5,10 @@ mod daystat;
 mod improved_daystat;
 mod last_session;
 
-// TODO: add program icon
+const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
+const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
-// TODO: make program show version number somewhere on the screen ??
+// TODO: add program icon
 
 #[allow(deprecated)]
 use crate::daystat::DayStat;
@@ -144,7 +145,6 @@ fn read_save_file() -> Vec<ImprovedDayStat> {
         }
         Err(_) => {
             // not old save file format, attempt to read it as new save file format
-            //
             #[allow(deprecated)]
             match serde_json::from_str::<Vec<DayStat>>(&s[0..read_len]) {
                 Ok(v) => {
@@ -401,12 +401,18 @@ impl eframe::App for MyEguiApp {
                     ui.visuals_mut().override_text_color = Option::from(Color32::RED);
                 }
 
-                let quit_button = ui.button("Save & Quit").on_hover_text(
-                    "Saves and closed the program, if text is red, changes are unsaved.",
-                );
+                let quit_button = ui.button("Save & Quit");
 
                 if quit_button.clicked() {
                     quit(frame, self);
+                }
+                if quit_button.hovered() {
+                    ui.label(
+                        egui::RichText::new(BUILD_TIMESTAMP).color(Color32::from_rgb(80, 80, 80)),
+                    );
+                    ui.label(
+                        egui::RichText::new(GIT_DESCRIBE).color(Color32::from_rgb(80, 80, 80)),
+                    );
                 }
             });
         });
