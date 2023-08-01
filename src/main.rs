@@ -8,8 +8,6 @@ mod last_session;
 const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
-// TODO: add program icon
-
 #[allow(deprecated)]
 use crate::daystat::DayStat;
 use crate::egui::Layout;
@@ -479,7 +477,6 @@ fn quit(frame: &mut eframe::Frame, app: &MyEguiApp) {
     }
 
     let ser = serde_json::to_string(days).unwrap();
-    // let deserialized: Vec<DayStat> = serde_json::from_str(&ser).unwrap();
     let save_path = Path::new(NEW_SAVE_FILE_NAME);
 
     let mut save_file = match File::create(save_path) {
@@ -506,6 +503,5 @@ fn quit(frame: &mut eframe::Frame, app: &MyEguiApp) {
             )
         }
     }
-
     frame.close();
 }
