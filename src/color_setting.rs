@@ -1,17 +1,17 @@
 use eframe::epaint::Color32;
 
 /// Color getter for text when displayed dynamically, not including font color for ui text.
-pub fn get_text_color() -> Color32 {
+pub const fn get_text_color() -> Color32 {
     Color32::from_rgb(255, 255, 255)
 }
 
 /// Color getter for line color for graph between points
-pub fn get_line_color() -> Color32 {
+pub const fn get_line_color() -> Color32 {
     Color32::from_rgb(100, 100, 100)
 }
 
 /// Color getter for info window that shows up when the user mouses over a point on the graph
-pub fn get_info_window_color() -> Color32 {
+pub const fn get_info_window_color() -> Color32 {
     Color32::from_rgb(100, 100, 100)
 }
 

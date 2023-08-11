@@ -89,7 +89,6 @@ impl Display for ImprovedDayStat {
 }
 
 impl ImprovedDayStat {
-
     pub fn get_current_time_system() -> DateTime<Local> {
         Local::now()
     }

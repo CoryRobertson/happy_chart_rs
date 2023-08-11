@@ -15,7 +15,7 @@ use crate::egui::Layout;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::last_session::LastSession;
 use crate::program_options::ProgramOptions;
-use chrono::{DateTime, Days, Utc};
+use chrono::Days;
 use eframe::emath::Pos2;
 use eframe::{egui, NativeOptions};
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
@@ -36,14 +36,13 @@ fn main() {
     eframe::run_native(
         "Happy Chart",
         native_options,
-        Box::new(|cc| Box::new(MyEguiApp::new(cc))),
+        Box::new(|cc| Box::new(HappyChartState::new(cc))),
     )
     .expect("Failed to run egui app");
 }
 
 #[derive(Default)]
-struct MyEguiApp {
-    current_time: DateTime<Utc>,
+struct HappyChartState {
     rating: f64,
     days: Vec<ImprovedDayStat>,
     first_load: bool,
@@ -53,10 +52,9 @@ struct MyEguiApp {
     program_options: ProgramOptions,
 }
 
-impl MyEguiApp {
+impl HappyChartState {
     fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         Self {
-            current_time: Default::default(),
             rating: 0.0,
             days: vec![],
             first_load: true,
@@ -185,7 +183,7 @@ fn toggle_ui_compact(ui: &mut egui::Ui, on: &mut bool) -> egui::Response {
 }
 
 /// Update loop for egui
-impl eframe::App for MyEguiApp {
+impl eframe::App for HappyChartState {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         // load previous save on first load in
         if self.first_load {
@@ -197,8 +195,6 @@ impl eframe::App for MyEguiApp {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            self.current_time = Utc::now();
-
             ui.horizontal(|ui| {
                 ui.label("Rating: ");
                 ui.add(egui::Slider::new(&mut self.rating, 0.0..=100.0))
@@ -207,14 +203,20 @@ impl eframe::App for MyEguiApp {
 
             ui.horizontal(|ui| {
                 ui.label("Graph X Scale: ");
-                ui.add(egui::Slider::new(&mut self.program_options.graph_x_scale, 0.01..=10.0))
-                    .on_hover_text("Multiplier used to scale the graph on the X axis.");
+                ui.add(egui::Slider::new(
+                    &mut self.program_options.graph_x_scale,
+                    0.01..=10.0,
+                ))
+                .on_hover_text("Multiplier used to scale the graph on the X axis.");
             });
 
             ui.horizontal(|ui| {
                 ui.label("Graph Y Scale: ");
-                ui.add(egui::Slider::new(&mut self.program_options.graph_y_scale, 0.5..=5.0))
-                    .on_hover_text("Multiplier used to scale the graph on the Y axis.");
+                ui.add(egui::Slider::new(
+                    &mut self.program_options.graph_y_scale,
+                    0.5..=5.0,
+                ))
+                .on_hover_text("Multiplier used to scale the graph on the Y axis.");
             });
 
             ui.horizontal(|ui| {
@@ -246,7 +248,8 @@ impl eframe::App for MyEguiApp {
                 });
                 println!(
                     "day added with rating {} and date {}",
-                    self.rating, self.current_time
+                    self.rating,
+                    ImprovedDayStat::get_current_time_system()
                 );
                 // let day = &self.days.last().unwrap();
             }
@@ -306,10 +309,16 @@ impl eframe::App for MyEguiApp {
 
             // draw lines loop, bottom layer
             for day in &self.days {
-                let x: f32 =
-                    improved_calculate_x(&self.days, day, &self.program_options.graph_x_scale, &self.program_options.x_offset);
+                let x: f32 = improved_calculate_x(
+                    &self.days,
+                    day,
+                    &self.program_options.graph_x_scale,
+                    &self.program_options.x_offset,
+                );
 
-                let y: f32 = (500.0 - (day.rating * self.program_options.graph_y_scale))
+                let y: f32 = day
+                    .rating
+                    .mul_add(-self.program_options.graph_y_scale, 500.0)
                     - self.program_options.day_stat_height_offset;
                 let points = [Pos2::new(prev_x, prev_y), Pos2::new(x, y)];
 
@@ -327,9 +336,15 @@ impl eframe::App for MyEguiApp {
             i = 0;
             // draw circles loop, middle layer
             for day in &self.days.clone() {
-                let x: f32 =
-                    improved_calculate_x(&self.days, day, &self.program_options.graph_x_scale, &self.program_options.x_offset);
-                let y: f32 = (500.0 - (day.rating * self.program_options.graph_y_scale))
+                let x: f32 = improved_calculate_x(
+                    &self.days,
+                    day,
+                    &self.program_options.graph_x_scale,
+                    &self.program_options.x_offset,
+                );
+                let y: f32 = day
+                    .rating
+                    .mul_add(-self.program_options.graph_y_scale, 500.0)
                     - self.program_options.day_stat_height_offset;
 
                 //draw circles on each coordinate point
@@ -347,9 +362,16 @@ impl eframe::App for MyEguiApp {
 
             // draw text loop, top most layer
             for day in &self.days {
-                let x: f32 =
-                    improved_calculate_x(&self.days, day, &self.program_options.graph_x_scale, &self.program_options.x_offset);
-                let y: f32 = (500.0 - (day.rating * self.program_options.graph_y_scale)) - self.program_options.day_stat_height_offset;
+                let x: f32 = improved_calculate_x(
+                    &self.days,
+                    day,
+                    &self.program_options.graph_x_scale,
+                    &self.program_options.x_offset,
+                );
+                let y: f32 = day
+                    .rating
+                    .mul_add(-self.program_options.graph_y_scale, 500.0)
+                    - self.program_options.day_stat_height_offset;
                 let rect_pos1 = Pos2::new(520.0, 10.0);
                 let rect_pos2 = Pos2::new(770.0, 180.0);
                 let text = day.to_string();
@@ -484,13 +506,13 @@ fn improved_calculate_x(
 
 /// Returns the coordinate point distance between two points
 fn distance(x1: &f32, y1: &f32, x2: &f32, y2: &f32) -> f32 {
-    let g1 = (x2 - x1).powf(2.0);
-    let g2 = (y2 - y1).powf(2.0);
+    let g1 = (x2 - x1).powi(2);
+    let g2 = (y2 - y1).powi(2);
     (g1 + g2).sqrt()
 }
 
 /// Quit function run when the user clicks the quit button
-fn quit(frame: &mut eframe::Frame, app: &MyEguiApp) {
+fn quit(frame: &mut eframe::Frame, app: &HappyChartState) {
     let days = &app.days;
 
     let last_session = LastSession {

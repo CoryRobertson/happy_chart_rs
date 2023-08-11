@@ -11,7 +11,7 @@ pub struct LastSession {
 
 impl Default for LastSession {
     fn default() -> Self {
-        LastSession {
+        Self {
             window_size: [800.0, 600.0],
             program_options: ProgramOptions::default(),
         }
