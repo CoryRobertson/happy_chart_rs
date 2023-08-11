@@ -4,6 +4,7 @@ mod color_setting;
 mod daystat;
 mod improved_daystat;
 mod last_session;
+mod program_options;
 
 const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
@@ -13,6 +14,7 @@ use crate::daystat::DayStat;
 use crate::egui::Layout;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::last_session::LastSession;
+use crate::program_options::ProgramOptions;
 use chrono::{DateTime, Days, Local, Utc};
 use eframe::emath::Pos2;
 use eframe::{egui, NativeOptions};
@@ -51,6 +53,8 @@ struct MyEguiApp {
     note_input: String,
     starting_length: usize,
     drawing_lines: bool,
+    showing_options_menu: bool,
+    program_options: ProgramOptions,
 }
 
 impl MyEguiApp {
@@ -66,6 +70,8 @@ impl MyEguiApp {
             note_input: "".to_string(),
             starting_length: 0,
             drawing_lines: false,
+            showing_options_menu: false,
+            program_options: ProgramOptions::default(),
         }
     }
 }
@@ -84,7 +90,7 @@ fn read_last_session_save_file() -> LastSession {
                     f
                 }
                 Err(_) => {
-                    // cant make save file, return a default last session just incase
+                    // cant make save file, return a default last session just encase
                     return LastSession::default();
                 }
             }
@@ -97,7 +103,7 @@ fn read_last_session_save_file() -> LastSession {
             println!("read last session save file successfully");
         }
         Err(_) => {
-            // fail to read file as string, return a default last session just incase, this should only happen if invalid utf-8 exists in the save file.
+            // fail to read file as string, return a default last session just encase, this should only happen if invalid utf-8 exists in the save file.
             return LastSession::default();
         }
     }
@@ -199,6 +205,7 @@ impl eframe::App for MyEguiApp {
             self.graph_x_scale = ls.graph_xscale;
             self.graph_y_scale = ls.graph_yscale;
             self.drawing_lines = ls.displaying_day_lines;
+            self.program_options = ls.program_options;
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -224,8 +231,11 @@ impl eframe::App for MyEguiApp {
 
             ui.horizontal(|ui| {
                 ui.label("X Offset: ");
-                ui.add(egui::DragValue::new(&mut self.x_offset).speed(0.1))
-                    .on_hover_text("Amount of units to shift the graph on the X axis.");
+                ui.add(
+                    egui::DragValue::new(&mut self.x_offset)
+                        .speed(self.program_options.x_offset_slider_speed),
+                )
+                .on_hover_text("Amount of units to shift the graph on the X axis.");
             });
 
             ui.horizontal(|ui| {
@@ -284,7 +294,7 @@ impl eframe::App for MyEguiApp {
                             date: d.date.checked_add_days(Days::new(1)).unwrap_or_default(), // fake day that starts from where the first day is, with one day added
                             note: "".to_string(),
                         };
-                        let y: f32 = 200.0;
+                        let y: f32 = 220.0 - self.program_options.day_line_height_offset;
                         let x = {
                             let first_day = d;
                             let hours: f32 =
@@ -306,13 +316,13 @@ impl eframe::App for MyEguiApp {
             let mut prev_x = 0.0;
             let mut prev_y = 0.0;
 
+            // draw lines loop, bottom layer
             for day in &self.days {
-                // draw lines loop, bottom layer
-
                 let x: f32 =
                     improved_calculate_x(&self.days, day, &self.graph_x_scale, &self.x_offset);
 
-                let y: f32 = 500.0 - (day.rating * self.graph_y_scale);
+                let y: f32 = (500.0 - (day.rating * self.graph_y_scale))
+                    - self.program_options.day_stat_height_offset;
                 let points = [Pos2::new(prev_x, prev_y), Pos2::new(x, y)];
 
                 if (prev_x != 0.0 && prev_y != 0.0) || i == 1 {
@@ -327,13 +337,12 @@ impl eframe::App for MyEguiApp {
             }
 
             i = 0;
+            // draw circles loop, middle layer
             for day in &self.days.clone() {
-                // draw circles loop, middle layer
-
-                // let x: f32 = ((i as f32 * 4.0) * self.graph_xscale) + self.xoffset as f32;
                 let x: f32 =
                     improved_calculate_x(&self.days, day, &self.graph_x_scale, &self.x_offset);
-                let y: f32 = 500.0 - (day.rating * self.graph_y_scale);
+                let y: f32 = (500.0 - (day.rating * self.graph_y_scale))
+                    - self.program_options.day_stat_height_offset;
 
                 //draw circles on each coordinate point
                 ui.painter().circle_filled(
@@ -348,17 +357,16 @@ impl eframe::App for MyEguiApp {
             i = 0;
             let mut moused_over = false; // boolean used to know if we are already showing mouse over text, if so, not to render it if this is true
 
+            // draw text loop, top most layer
             for day in &self.days {
-                // draw text loop, top most layer
-
                 let x: f32 =
                     improved_calculate_x(&self.days, day, &self.graph_x_scale, &self.x_offset);
-                let y: f32 = 500.0 - (day.rating * self.graph_y_scale);
+                let y: f32 = (500.0 - (day.rating * self.graph_y_scale)) - self.program_options.day_stat_height_offset;
                 let rect_pos1 = Pos2::new(520.0, 10.0);
                 let rect_pos2 = Pos2::new(770.0, 180.0);
                 let text = day.to_string();
 
-                let dist_max = 20.0; // maximum distance to consider a point being moused over
+                let dist_max = self.program_options.mouse_over_radius; // maximum distance to consider a point being moused over
 
                 if distance(&mouse_pos.x, &mouse_pos.y, &x, &y) < dist_max && !moused_over {
                     // draw text near by each coordinate point
@@ -395,6 +403,9 @@ impl eframe::App for MyEguiApp {
             ui.with_layout(Layout::bottom_up(egui::Align::BOTTOM), |ui| {
                 if self.starting_length != self.days.len() {
                     ui.visuals_mut().override_text_color = Option::from(Color32::RED);
+                } else {
+                    ui.style_mut().visuals.override_text_color =
+                        Option::from(color_setting::get_text_color());
                 }
 
                 let quit_button = ui.button("Save & Quit");
@@ -402,6 +413,11 @@ impl eframe::App for MyEguiApp {
                 if quit_button.clicked() {
                     quit(frame, self);
                 }
+
+                if !self.showing_options_menu && ui.button("Options").clicked() {
+                    self.showing_options_menu = true;
+                }
+
                 if quit_button.hovered() {
                     ui.label(
                         egui::RichText::new(BUILD_TIMESTAMP).color(Color32::from_rgb(80, 80, 80)),
@@ -412,6 +428,46 @@ impl eframe::App for MyEguiApp {
                 }
             });
         });
+
+        if self.showing_options_menu {
+            egui::Window::new("Options").show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("X offset slider speed:");
+                    ui.add(
+                        egui::DragValue::new(&mut self.program_options.x_offset_slider_speed)
+                            .speed(0.1),
+                    );
+                });
+
+                ui.horizontal(|ui| {
+                    ui.label("Stat height offset:");
+                    ui.add(
+                        egui::DragValue::new(&mut self.program_options.day_stat_height_offset)
+                            .speed(0.1),
+                    );
+                });
+
+                ui.horizontal(|ui| {
+                    ui.label("Day line height:");
+                    ui.add(
+                        egui::DragValue::new(&mut self.program_options.day_line_height_offset)
+                            .speed(0.1),
+                    );
+                });
+
+                ui.horizontal(|ui| {
+                    ui.label("Stat mouse over radius:");
+                    ui.add(
+                        egui::DragValue::new(&mut self.program_options.mouse_over_radius)
+                            .speed(0.1),
+                    );
+                });
+
+                if ui.button("Close Options Menu").clicked() {
+                    self.showing_options_menu = false;
+                }
+            });
+        }
     }
 }
 
@@ -455,6 +511,7 @@ fn quit(frame: &mut eframe::Frame, app: &MyEguiApp) {
         xoffset: app.x_offset,
         displaying_day_lines: app.drawing_lines,
         window_size: frame.info().window_info.size.into(),
+        program_options: app.program_options.clone(),
     };
 
     let session_ser = serde_json::to_string(&last_session).unwrap();
