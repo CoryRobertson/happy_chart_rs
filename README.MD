@@ -12,5 +12,10 @@ Happy chart is an idea I had, where I wanted to graph the subjective quality of 
 If anyone uses this program, I would absolutely love to know if there are any features that would make the program better. 
 I would also love to know if anyone uses this program, and what they do and don't like about it, as I personally love using it, and it's really motivating to hear people enjoying things I have made. :)
 
+### Features:
+- JSON based stat saving locally relative to the program executable
+- JSON based program settings saved relative to program executable
+- _somewhat_ pretty stat visualization
+
 <3
 ![image](https://i.imgur.com/QHpn7mU.png)
