@@ -15,7 +15,7 @@ use crate::egui::Layout;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::last_session::LastSession;
 use crate::program_options::ProgramOptions;
-use chrono::{DateTime, Days, Local, Utc};
+use chrono::{DateTime, Days, Utc};
 use eframe::emath::Pos2;
 use eframe::{egui, NativeOptions};
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
@@ -47,12 +47,8 @@ struct MyEguiApp {
     rating: f64,
     days: Vec<ImprovedDayStat>,
     first_load: bool,
-    graph_x_scale: f32,
-    graph_y_scale: f32,
-    x_offset: i32,
     note_input: String,
     starting_length: usize,
-    drawing_lines: bool,
     showing_options_menu: bool,
     program_options: ProgramOptions,
 }
@@ -64,12 +60,8 @@ impl MyEguiApp {
             rating: 0.0,
             days: vec![],
             first_load: true,
-            graph_x_scale: 1.0,
-            graph_y_scale: 1.0,
-            x_offset: 0,
             note_input: "".to_string(),
             starting_length: 0,
-            drawing_lines: false,
             showing_options_menu: false,
             program_options: ProgramOptions::default(),
         }
@@ -201,10 +193,6 @@ impl eframe::App for MyEguiApp {
             self.days = read_save_file();
             self.starting_length = self.days.len();
             let ls = read_last_session_save_file();
-            self.x_offset = ls.xoffset;
-            self.graph_x_scale = ls.graph_xscale;
-            self.graph_y_scale = ls.graph_yscale;
-            self.drawing_lines = ls.displaying_day_lines;
             self.program_options = ls.program_options;
         }
 
@@ -219,20 +207,20 @@ impl eframe::App for MyEguiApp {
 
             ui.horizontal(|ui| {
                 ui.label("Graph X Scale: ");
-                ui.add(egui::Slider::new(&mut self.graph_x_scale, 0.01..=10.0))
+                ui.add(egui::Slider::new(&mut self.program_options.graph_x_scale, 0.01..=10.0))
                     .on_hover_text("Multiplier used to scale the graph on the X axis.");
             });
 
             ui.horizontal(|ui| {
                 ui.label("Graph Y Scale: ");
-                ui.add(egui::Slider::new(&mut self.graph_y_scale, 0.5..=5.0))
+                ui.add(egui::Slider::new(&mut self.program_options.graph_y_scale, 0.5..=5.0))
                     .on_hover_text("Multiplier used to scale the graph on the Y axis.");
             });
 
             ui.horizontal(|ui| {
                 ui.label("X Offset: ");
                 ui.add(
-                    egui::DragValue::new(&mut self.x_offset)
+                    egui::DragValue::new(&mut self.program_options.x_offset)
                         .speed(self.program_options.x_offset_slider_speed),
                 )
                 .on_hover_text("Amount of units to shift the graph on the X axis.");
@@ -241,7 +229,7 @@ impl eframe::App for MyEguiApp {
             ui.horizontal(|ui| {
                 ui.label("Display day lines: ");
 
-                toggle_ui_compact(ui, &mut self.drawing_lines);
+                toggle_ui_compact(ui, &mut self.program_options.drawing_lines);
             });
 
             ui.horizontal(|ui| {
@@ -253,7 +241,7 @@ impl eframe::App for MyEguiApp {
             if ui.button("Add day").clicked() {
                 self.days.push(ImprovedDayStat {
                     rating: self.rating as f32,
-                    date: self.current_time.with_timezone(&Local),
+                    date: ImprovedDayStat::get_current_time_system(),
                     note: self.note_input.clone(),
                 });
                 println!(
@@ -274,11 +262,11 @@ impl eframe::App for MyEguiApp {
 
             //ctx.request_repaint();
 
-            if self.drawing_lines && self.days.len() > 1 {
+            if self.program_options.drawing_lines && self.days.len() > 1 {
                 // range for calculating how many lines in both directions on the x axis
                 let range = {
-                    if self.x_offset > 5000 {
-                        self.x_offset
+                    if self.program_options.x_offset > 5000 {
+                        self.program_options.x_offset
                     } else {
                         5000
                     }
@@ -300,8 +288,8 @@ impl eframe::App for MyEguiApp {
                             let hours: f32 =
                                 fake_day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
 
-                            let x: f32 = (hours * self.graph_x_scale) * i2 as f32;
-                            x + self.x_offset as f32
+                            let x: f32 = (hours * self.program_options.graph_x_scale) * i2 as f32;
+                            x + self.program_options.x_offset as f32
                         };
                         [Pos2::new(x, y), Pos2::new(x, 800.0)]
                     };
@@ -319,9 +307,9 @@ impl eframe::App for MyEguiApp {
             // draw lines loop, bottom layer
             for day in &self.days {
                 let x: f32 =
-                    improved_calculate_x(&self.days, day, &self.graph_x_scale, &self.x_offset);
+                    improved_calculate_x(&self.days, day, &self.program_options.graph_x_scale, &self.program_options.x_offset);
 
-                let y: f32 = (500.0 - (day.rating * self.graph_y_scale))
+                let y: f32 = (500.0 - (day.rating * self.program_options.graph_y_scale))
                     - self.program_options.day_stat_height_offset;
                 let points = [Pos2::new(prev_x, prev_y), Pos2::new(x, y)];
 
@@ -340,8 +328,8 @@ impl eframe::App for MyEguiApp {
             // draw circles loop, middle layer
             for day in &self.days.clone() {
                 let x: f32 =
-                    improved_calculate_x(&self.days, day, &self.graph_x_scale, &self.x_offset);
-                let y: f32 = (500.0 - (day.rating * self.graph_y_scale))
+                    improved_calculate_x(&self.days, day, &self.program_options.graph_x_scale, &self.program_options.x_offset);
+                let y: f32 = (500.0 - (day.rating * self.program_options.graph_y_scale))
                     - self.program_options.day_stat_height_offset;
 
                 //draw circles on each coordinate point
@@ -360,8 +348,8 @@ impl eframe::App for MyEguiApp {
             // draw text loop, top most layer
             for day in &self.days {
                 let x: f32 =
-                    improved_calculate_x(&self.days, day, &self.graph_x_scale, &self.x_offset);
-                let y: f32 = (500.0 - (day.rating * self.graph_y_scale)) - self.program_options.day_stat_height_offset;
+                    improved_calculate_x(&self.days, day, &self.program_options.graph_x_scale, &self.program_options.x_offset);
+                let y: f32 = (500.0 - (day.rating * self.program_options.graph_y_scale)) - self.program_options.day_stat_height_offset;
                 let rect_pos1 = Pos2::new(520.0, 10.0);
                 let rect_pos2 = Pos2::new(770.0, 180.0);
                 let text = day.to_string();
@@ -506,10 +494,6 @@ fn quit(frame: &mut eframe::Frame, app: &MyEguiApp) {
     let days = &app.days;
 
     let last_session = LastSession {
-        graph_xscale: app.graph_x_scale,
-        graph_yscale: app.graph_y_scale,
-        xoffset: app.x_offset,
-        displaying_day_lines: app.drawing_lines,
         window_size: frame.info().window_info.size.into(),
         program_options: app.program_options.clone(),
     };
