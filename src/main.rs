@@ -17,7 +17,7 @@ use crate::last_session::LastSession;
 use crate::program_options::ProgramOptions;
 use chrono::Days;
 use eframe::emath::Pos2;
-use eframe::{egui, NativeOptions};
+use eframe::{egui, Frame, NativeOptions};
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
 use std::fs::File;
 use std::io::{Read, Write};
@@ -184,7 +184,7 @@ fn toggle_ui_compact(ui: &mut egui::Ui, on: &mut bool) -> egui::Response {
 
 /// Update loop for egui
 impl eframe::App for HappyChartState {
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut Frame) {
         // load previous save on first load in
         if self.first_load {
             self.first_load = false;
@@ -418,29 +418,40 @@ impl eframe::App for HappyChartState {
                         Option::from(color_setting::get_text_color());
                 }
 
-                let quit_button = ui.button("Save & Quit");
+                ui.horizontal(|ui| {
+                    let quit_button = ui.button("Save & Quit");
 
-                if quit_button.clicked() {
-                    quit(frame, self);
-                }
+                    if quit_button.clicked() {
+                        quit(frame, self);
+                    }
 
-                if !self.showing_options_menu && ui.button("Options").clicked() {
-                    self.showing_options_menu = true;
-                }
+                    ui.style_mut().visuals.override_text_color =
+                        Option::from(color_setting::get_text_color());
 
-                if quit_button.hovered() {
-                    ui.label(
-                        egui::RichText::new(BUILD_TIMESTAMP).color(Color32::from_rgb(80, 80, 80)),
-                    );
-                    ui.label(
-                        egui::RichText::new(GIT_DESCRIBE).color(Color32::from_rgb(80, 80, 80)),
-                    );
-                }
+                    if !self.showing_options_menu && ui.button("Options").clicked() {
+                        self.showing_options_menu = true;
+                    }
+
+                    if ui.button("Save Screenshot").clicked() {
+                        frame.request_screenshot();
+                    }
+
+                    if quit_button.hovered() {
+                        ui.label(
+                            egui::RichText::new(BUILD_TIMESTAMP)
+                                .color(Color32::from_rgb(80, 80, 80)),
+                        );
+                        ui.label(
+                            egui::RichText::new(GIT_DESCRIBE).color(Color32::from_rgb(80, 80, 80)),
+                        );
+                    }
+                });
             });
         });
 
         if self.showing_options_menu {
             egui::Window::new("Options").show(ctx, |ui| {
+                // x offset slider speed
                 ui.horizontal(|ui| {
                     ui.label("X offset slider speed:");
                     ui.add(
@@ -449,6 +460,7 @@ impl eframe::App for HappyChartState {
                     );
                 });
 
+                // stat height offset
                 ui.horizontal(|ui| {
                     ui.label("Stat height offset:");
                     ui.add(
@@ -457,6 +469,7 @@ impl eframe::App for HappyChartState {
                     );
                 });
 
+                // day line height
                 ui.horizontal(|ui| {
                     ui.label("Day line height:");
                     ui.add(
@@ -465,6 +478,7 @@ impl eframe::App for HappyChartState {
                     );
                 });
 
+                // mouse over radius
                 ui.horizontal(|ui| {
                     ui.label("Stat mouse over radius:");
                     ui.add(
@@ -477,6 +491,24 @@ impl eframe::App for HappyChartState {
                     self.showing_options_menu = false;
                 }
             });
+        }
+    }
+
+    fn post_rendering(&mut self, window_size_px: [u32; 2], frame: &Frame) {
+        if let Some(ss) = frame.screenshot() {
+            if let Some(path) = rfd::FileDialog::new()
+                .add_filter("Image", &["png", "jpeg", "jpg", "bmp", "tiff"])
+                .save_file()
+            {
+                image::save_buffer(
+                    path,
+                    ss.as_raw(),
+                    window_size_px[0],
+                    window_size_px[1],
+                    image::ColorType::Rgba8,
+                )
+                .unwrap();
+            }
         }
     }
 }
@@ -512,7 +544,7 @@ fn distance(x1: &f32, y1: &f32, x2: &f32, y2: &f32) -> f32 {
 }
 
 /// Quit function run when the user clicks the quit button
-fn quit(frame: &mut eframe::Frame, app: &HappyChartState) {
+fn quit(frame: &mut Frame, app: &HappyChartState) {
     let days = &app.days;
 
     let last_session = LastSession {
