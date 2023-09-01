@@ -231,7 +231,7 @@ impl eframe::App for HappyChartState {
             ui.horizontal(|ui| {
                 ui.label("Display day lines: ");
 
-                toggle_ui_compact(ui, &mut self.program_options.drawing_lines);
+                toggle_ui_compact(ui, &mut self.program_options.draw_day_lines);
             });
 
             ui.horizontal(|ui| {
@@ -265,7 +265,7 @@ impl eframe::App for HappyChartState {
 
             //ctx.request_repaint();
 
-            if self.program_options.drawing_lines && self.days.len() > 1 {
+            if self.program_options.draw_day_lines && self.days.len() > 1 {
                 // range for calculating how many lines in both directions on the x axis
                 let range = {
                     if self.program_options.x_offset > 5000 {
@@ -308,53 +308,62 @@ impl eframe::App for HappyChartState {
             let mut prev_y = 0.0;
 
             // draw lines loop, bottom layer
-            for day in &self.days {
-                let x: f32 = improved_calculate_x(
-                    &self.days,
-                    day,
-                    &self.program_options.graph_x_scale,
-                    &self.program_options.x_offset,
-                );
+            if self.program_options.draw_daystat_lines {
+                for day in &self.days {
+                    let x: f32 = improved_calculate_x(
+                        &self.days,
+                        day,
+                        &self.program_options.graph_x_scale,
+                        &self.program_options.x_offset,
+                    );
 
-                let y: f32 = day
-                    .rating
-                    .mul_add(-self.program_options.graph_y_scale, 500.0)
-                    - self.program_options.day_stat_height_offset;
-                let points = [Pos2::new(prev_x, prev_y), Pos2::new(x, y)];
+                    let y: f32 = day
+                        .rating
+                        .mul_add(-self.program_options.graph_y_scale, 500.0)
+                        - self.program_options.day_stat_height_offset;
+                    let points = [Pos2::new(prev_x, prev_y), Pos2::new(x, y)];
 
-                if (prev_x != 0.0 && prev_y != 0.0) || i == 1 {
-                    // draw line segments connecting the dots
-                    ui.painter()
-                        .line_segment(points, Stroke::new(2.0, color_setting::get_line_color()));
+                    if (prev_x != 0.0 && prev_y != 0.0) || i == 1 {
+                        // draw line segments connecting the dots
+                        ui.painter()
+                            .line_segment(points, Stroke::new(2.0, color_setting::get_line_color()));
+                    }
+
+                    i += 1;
+                    prev_x = x;
+                    prev_y = y;
                 }
-
-                i += 1;
-                prev_x = x;
-                prev_y = y;
             }
 
             i = 0;
             // draw circles loop, middle layer
-            for day in &self.days.clone() {
-                let x: f32 = improved_calculate_x(
-                    &self.days,
-                    day,
-                    &self.program_options.graph_x_scale,
-                    &self.program_options.x_offset,
-                );
-                let y: f32 = day
-                    .rating
-                    .mul_add(-self.program_options.graph_y_scale, 500.0)
-                    - self.program_options.day_stat_height_offset;
+            if self.program_options.draw_daystat_circles {
+                for day in &self.days.clone() {
+                    let x: f32 = improved_calculate_x(
+                        &self.days,
+                        day,
+                        &self.program_options.graph_x_scale,
+                        &self.program_options.x_offset,
+                    );
+                    let y: f32 = day
+                        .rating
+                        .mul_add(-self.program_options.graph_y_scale, 500.0)
+                        - self.program_options.day_stat_height_offset;
 
-                //draw circles on each coordinate point
-                ui.painter().circle_filled(
-                    Pos2::new(x, y),
-                    4_f32,
-                    color_setting::get_shape_color_from_rating(day.rating),
-                );
+                    //draw circles on each coordinate point
+                    ui.painter().circle_filled(
+                        Pos2::new(x, y),
+                        self.program_options.daystat_circle_outline_radius,
+                        Color32::BLACK,
+                    );
+                    ui.painter().circle_filled(
+                        Pos2::new(x, y),
+                        self.program_options.daystat_circle_size,
+                        color_setting::get_shape_color_from_rating(day.rating),
+                    );
 
-                i += 1;
+                    i += 1;
+                }
             }
 
             i = 0;
@@ -485,6 +494,26 @@ impl eframe::App for HappyChartState {
                         egui::DragValue::new(&mut self.program_options.mouse_over_radius)
                             .speed(0.1),
                     );
+                });
+
+                // day stat circle sizes
+                ui.horizontal(|ui| {
+                    ui.label("Stat circle radius:");
+                    ui.add(
+                        egui::DragValue::new(&mut self.program_options.daystat_circle_size)
+                            .speed(0.1),
+                    );
+                });
+                ui.horizontal(|ui| {
+                    ui.label("Stat circle outline radius:");
+                    ui.add(
+                        egui::DragValue::new(&mut self.program_options.daystat_circle_outline_radius)
+                            .speed(0.1),
+                    );
+                });
+                ui.horizontal(|ui| {
+                    ui.checkbox(&mut self.program_options.draw_daystat_circles, "Draw stat circles");
+                    ui.checkbox(&mut self.program_options.draw_daystat_lines, "Draw stat lines");
                 });
 
                 if ui.button("Close Options Menu").clicked() {

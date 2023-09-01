@@ -6,11 +6,15 @@ pub struct ProgramOptions {
     pub graph_x_scale: f32,
     pub graph_y_scale: f32,
     pub x_offset: i32,
-    pub drawing_lines: bool,
+    pub draw_day_lines: bool,
     pub x_offset_slider_speed: f32,
     pub day_line_height_offset: f32,
     pub day_stat_height_offset: f32,
     pub mouse_over_radius: f32,
+    pub daystat_circle_outline_radius: f32,
+    pub daystat_circle_size: f32,
+    pub draw_daystat_circles: bool,
+    pub draw_daystat_lines: bool,
 }
 
 impl Default for ProgramOptions {
@@ -19,11 +23,15 @@ impl Default for ProgramOptions {
             graph_x_scale: 1.0,
             graph_y_scale: 1.0,
             x_offset: 0,
-            drawing_lines: false,
+            draw_day_lines: false,
             x_offset_slider_speed: 0.1,
             day_line_height_offset: 0.0,
             day_stat_height_offset: 0.0,
             mouse_over_radius: 20.0,
+            daystat_circle_outline_radius: 5.0,
+            daystat_circle_size: 4.0,
+            draw_daystat_circles: true,
+            draw_daystat_lines: true,
         }
     }
 }
