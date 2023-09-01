@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct ProgramOptions {
     pub graph_x_scale: f32,
     pub graph_y_scale: f32,
-    pub x_offset: i32,
+    pub x_offset: f32,
     pub draw_day_lines: bool,
     pub x_offset_slider_speed: f32,
     pub day_line_height_offset: f32,
@@ -22,7 +22,7 @@ impl Default for ProgramOptions {
         Self {
             graph_x_scale: 1.0,
             graph_y_scale: 1.0,
-            x_offset: 0,
+            x_offset: 0.0,
             draw_day_lines: false,
             x_offset_slider_speed: 0.1,
             day_line_height_offset: 0.0,

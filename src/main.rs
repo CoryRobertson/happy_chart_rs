@@ -195,6 +195,8 @@ impl eframe::App for HappyChartState {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
+            let pointer_interact_pos = ctx.pointer_interact_pos();
+
             ui.horizontal(|ui| {
                 ui.label("Rating: ");
                 ui.add(egui::Slider::new(&mut self.rating, 0.0..=100.0))
@@ -263,13 +265,57 @@ impl eframe::App for HappyChartState {
                 Some(a) => a,
             };
 
-            //ctx.request_repaint();
+            // click drag and zoom detection and handling
+            {
+                let within_day_lines = {
+                    let min_y: f32 = 220.0 - self.program_options.day_line_height_offset;
+                    match pointer_interact_pos {
+                        None => {
+                            false
+                        }
+                        Some(pos) => {
+                            pos.y >= min_y
+                        }
+                    }
+                };
+
+                if within_day_lines {
+
+                    let right_click_down = ui.input(|i| {
+                        i.pointer.secondary_down()
+                    });
+
+                    let left_click_down = ui.input(|i| {
+                        i.pointer.primary_down()
+                    });
+
+                    // if right click is down, allow the xoffset to be moved
+                    if right_click_down {
+
+                        let drag_delta = ui.input(|i| {
+                            i.pointer.delta()
+                        });
+
+                        self.program_options.x_offset += drag_delta.x;
+
+                        // if both right click and left click are down, then we allow the x scale to be changed so the user can quickly zoom into areas on the graph
+                        if left_click_down {
+                            self.program_options.graph_x_scale += -drag_delta.y / 1000.0;
+                            self.program_options.x_offset += drag_delta.y * (10.0);
+                        }
+
+                        if self.program_options.graph_x_scale.is_sign_negative() {
+                            self.program_options.graph_x_scale = 0.001;
+                        }
+                    }
+                }
+            }
 
             if self.program_options.draw_day_lines && self.days.len() > 1 {
                 // range for calculating how many lines in both directions on the x axis
                 let range = {
-                    if self.program_options.x_offset > 5000 {
-                        self.program_options.x_offset
+                    if self.program_options.x_offset > 5000.0 {
+                        self.program_options.x_offset as i32
                     } else {
                         5000
                     }
@@ -292,7 +338,7 @@ impl eframe::App for HappyChartState {
                                 fake_day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
 
                             let x: f32 = (hours * self.program_options.graph_x_scale) * i2 as f32;
-                            x + self.program_options.x_offset as f32
+                            x + self.program_options.x_offset
                         };
                         [Pos2::new(x, y), Pos2::new(x, 800.0)]
                     };
@@ -557,11 +603,11 @@ fn improved_calculate_x(
     days: &[ImprovedDayStat],
     day: &ImprovedDayStat,
     graph_x_scale: &f32,
-    x_offset: &i32,
+    x_offset: &f32,
 ) -> f32 {
     let first_day = days.get(0).unwrap_or(day);
     let hours: f32 = day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
-    let x: f32 = (hours * graph_x_scale) + *x_offset as f32;
+    let x: f32 = (hours * graph_x_scale) + *x_offset;
     x
 }
 
