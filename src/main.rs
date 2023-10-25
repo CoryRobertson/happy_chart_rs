@@ -59,6 +59,7 @@ struct HappyChartState {
     program_options: ProgramOptions,
     update_status: AutoUpdateStatus,
     update_thread: Cell<Option<JoinHandle<Result<Status, String>>>>,
+    open_modulus: i32,
 }
 
 
@@ -75,6 +76,7 @@ impl HappyChartState {
             program_options: ProgramOptions::default(),
             update_status: AutoUpdateStatus::NotChecked,
             update_thread: Cell::new(None),
+            open_modulus: 0,
         }
     }
 }
@@ -204,7 +206,13 @@ impl eframe::App for HappyChartState {
             self.days = read_save_file();
             self.starting_length = self.days.len();
             let ls = read_last_session_save_file();
+            self.open_modulus = ls.open_modulus;
             self.program_options = ls.program_options;
+            if self.open_modulus % self.program_options.update_modulus == 0 && self.program_options.update_modulus >= 1 {
+                self.update_thread.replace(Some(update_program()));
+                self.open_modulus = 0;
+            }
+            
         }
 
 
@@ -532,6 +540,14 @@ impl eframe::App for HappyChartState {
                 }
 
                 ui.horizontal(|ui| {
+                    ui.label("Update rate: ");
+                    ui.add(
+                        egui::DragValue::new(&mut self.program_options.update_modulus)
+                    )
+                        .on_hover_text("Automatically try to update the program every X times the program opens");
+                });
+
+                ui.horizontal(|ui| {
                     ui.label("Display day lines: ");
 
                     toggle_ui_compact(ui, &mut self.program_options.draw_day_lines);
@@ -683,6 +699,7 @@ fn quit(frame: &mut Frame, app: &HappyChartState) {
     let last_session = LastSession {
         window_size: frame.info().window_info.size.into(),
         program_options: app.program_options.clone(),
+        open_modulus: app.open_modulus + 1,
     };
 
     let session_ser = serde_json::to_string(&last_session).unwrap();

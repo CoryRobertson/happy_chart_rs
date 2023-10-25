@@ -15,6 +15,7 @@ pub struct ProgramOptions {
     pub daystat_circle_size: f32,
     pub draw_daystat_circles: bool,
     pub draw_daystat_lines: bool,
+    pub update_modulus: i32,
 }
 
 impl Default for ProgramOptions {
@@ -32,6 +33,7 @@ impl Default for ProgramOptions {
             daystat_circle_size: 4.0,
             draw_daystat_circles: true,
             draw_daystat_lines: true,
+            update_modulus: 2,
         }
     }
 }

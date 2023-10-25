@@ -7,6 +7,8 @@ pub struct LastSession {
     pub window_size: [f32; 2],
     #[serde(default)]
     pub program_options: ProgramOptions,
+    #[serde(default)]
+    pub open_modulus: i32,
 }
 
 impl Default for LastSession {
@@ -14,6 +16,7 @@ impl Default for LastSession {
         Self {
             window_size: [800.0, 600.0],
             program_options: ProgramOptions::default(),
+            open_modulus: 0,
         }
     }
 }
