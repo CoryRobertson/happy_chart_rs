@@ -1,5 +1,3 @@
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-
 mod color_setting;
 mod daystat;
 mod improved_daystat;
