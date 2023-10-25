@@ -11,7 +11,7 @@ mod auto_update_status;
 const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
-use std::cell::Cell;
+use crate::auto_update_status::AutoUpdateStatus;
 #[allow(deprecated)]
 use crate::daystat::DayStat;
 use crate::egui::Layout;
@@ -22,13 +22,13 @@ use chrono::Days;
 use eframe::emath::Pos2;
 use eframe::{egui, Frame, NativeOptions};
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
+use self_update::{cargo_crate_version, Status};
+use std::cell::Cell;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::thread::JoinHandle;
-use self_update::{cargo_crate_version, Status};
-use crate::auto_update_status::AutoUpdateStatus;
 
 const SAVE_FILE_NAME: &str = "save.ser";
 const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
@@ -61,8 +61,6 @@ struct HappyChartState {
     update_thread: Cell<Option<JoinHandle<Result<Status, String>>>>,
     open_modulus: i32,
 }
-
-
 
 impl HappyChartState {
     fn new(_cc: &eframe::CreationContext<'_>) -> Self {
@@ -208,14 +206,13 @@ impl eframe::App for HappyChartState {
             let ls = read_last_session_save_file();
             self.open_modulus = ls.open_modulus;
             self.program_options = ls.program_options;
-            if self.open_modulus % self.program_options.update_modulus == 0 && self.program_options.update_modulus >= 1 {
+            if self.open_modulus % self.program_options.update_modulus == 0
+                && self.program_options.update_modulus >= 1
+            {
                 self.update_thread.replace(Some(update_program()));
                 self.open_modulus = 0;
             }
-            
         }
-
-
 
         egui::CentralPanel::default().show(ctx, |ui| {
             let pointer_interact_pos = ctx.pointer_interact_pos();
@@ -225,7 +222,6 @@ impl eframe::App for HappyChartState {
                 ui.add(egui::Slider::new(&mut self.rating, 0.0..=100.0))
                     .on_hover_text("The rating of the given day to be saved to the graph point.");
             });
-
 
             ui.horizontal(|ui| {
                 ui.label("Note: ");
@@ -261,31 +257,19 @@ impl eframe::App for HappyChartState {
                 let within_day_lines = {
                     let min_y: f32 = 220.0 - self.program_options.day_line_height_offset;
                     match pointer_interact_pos {
-                        None => {
-                            false
-                        }
-                        Some(pos) => {
-                            pos.y >= min_y
-                        }
+                        None => false,
+                        Some(pos) => pos.y >= min_y,
                     }
                 };
 
                 if within_day_lines {
+                    let right_click_down = ui.input(|i| i.pointer.secondary_down());
 
-                    let right_click_down = ui.input(|i| {
-                        i.pointer.secondary_down()
-                    });
-
-                    let left_click_down = ui.input(|i| {
-                        i.pointer.primary_down()
-                    });
+                    let left_click_down = ui.input(|i| i.pointer.primary_down());
 
                     // if right click is down, allow the xoffset to be moved
                     if right_click_down {
-
-                        let drag_delta = ui.input(|i| {
-                            i.pointer.delta()
-                        });
+                        let drag_delta = ui.input(|i| i.pointer.delta());
 
                         self.program_options.x_offset += drag_delta.x;
 
@@ -362,8 +346,10 @@ impl eframe::App for HappyChartState {
 
                     if (prev_x != 0.0 && prev_y != 0.0) || i == 1 {
                         // draw line segments connecting the dots
-                        ui.painter()
-                            .line_segment(points, Stroke::new(2.0, color_setting::get_line_color()));
+                        ui.painter().line_segment(
+                            points,
+                            Stroke::new(2.0, color_setting::get_line_color()),
+                        );
                     }
 
                     i += 1;
@@ -497,7 +483,6 @@ impl eframe::App for HappyChartState {
 
         if self.showing_options_menu {
             egui::Window::new("Options").show(ctx, |ui| {
-
                 {
                     let update_thread = self.update_thread.replace(None);
                     match update_thread {
@@ -505,26 +490,21 @@ impl eframe::App for HappyChartState {
                         Some(thread) => {
                             if thread.is_finished() {
                                 match thread.join() {
-                                    Ok(res) => {
-                                        match res {
-                                            Ok(status) => {
-                                                match status {
-                                                    Status::UpToDate(ver) => {
-                                                        self.update_status = AutoUpdateStatus::UpToDate(ver);
-                                                    }
-                                                    Status::Updated(ver) => {
-                                                        self.update_status = AutoUpdateStatus::Updated(ver);
-                                                    }
-                                                }
+                                    Ok(res) => match res {
+                                        Ok(status) => match status {
+                                            Status::UpToDate(ver) => {
+                                                self.update_status =
+                                                    AutoUpdateStatus::UpToDate(ver);
                                             }
-                                            Err(err) => {
-                                                self.update_status = AutoUpdateStatus::Error(err);
+                                            Status::Updated(ver) => {
+                                                self.update_status = AutoUpdateStatus::Updated(ver);
                                             }
+                                        },
+                                        Err(err) => {
+                                            self.update_status = AutoUpdateStatus::Error(err);
                                         }
-                                    }
-                                    Err(_) => {
-
-                                    }
+                                    },
+                                    Err(_) => {}
                                 }
                             } else {
                                 self.update_thread.replace(Some(thread));
@@ -535,16 +515,22 @@ impl eframe::App for HappyChartState {
                     }
                 }
 
-                if ui.button("Check for updates").on_hover_text(self.update_status.to_text()).clicked() {
+                if ui
+                    .button("Check for updates")
+                    .on_hover_text(self.update_status.to_text())
+                    .clicked()
+                {
                     self.update_thread.replace(Some(update_program()));
                 }
 
                 ui.horizontal(|ui| {
                     ui.label("Update rate: ");
-                    ui.add(
-                        egui::DragValue::new(&mut self.program_options.update_modulus)
-                    )
-                        .on_hover_text("Automatically try to update the program every X times the program opens");
+                    ui.add(egui::DragValue::new(
+                        &mut self.program_options.update_modulus,
+                    ))
+                    .on_hover_text(
+                        "Automatically try to update the program every X times the program opens",
+                    );
                 });
 
                 ui.horizontal(|ui| {
@@ -559,7 +545,7 @@ impl eframe::App for HappyChartState {
                         &mut self.program_options.graph_x_scale,
                         0.01..=10.0,
                     ))
-                        .on_hover_text("Multiplier used to scale the graph on the X axis.");
+                    .on_hover_text("Multiplier used to scale the graph on the X axis.");
                 });
 
                 ui.horizontal(|ui| {
@@ -568,7 +554,7 @@ impl eframe::App for HappyChartState {
                         &mut self.program_options.graph_y_scale,
                         0.5..=5.0,
                     ))
-                        .on_hover_text("Multiplier used to scale the graph on the Y axis.");
+                    .on_hover_text("Multiplier used to scale the graph on the Y axis.");
                 });
 
                 ui.horizontal(|ui| {
@@ -577,7 +563,7 @@ impl eframe::App for HappyChartState {
                         egui::DragValue::new(&mut self.program_options.x_offset)
                             .speed(self.program_options.x_offset_slider_speed),
                     )
-                        .on_hover_text("Amount of units to shift the graph on the X axis.");
+                    .on_hover_text("Amount of units to shift the graph on the X axis.");
                 });
 
                 // x offset slider speed
@@ -627,13 +613,21 @@ impl eframe::App for HappyChartState {
                 ui.horizontal(|ui| {
                     ui.label("Stat circle outline radius:");
                     ui.add(
-                        egui::DragValue::new(&mut self.program_options.daystat_circle_outline_radius)
-                            .speed(0.1),
+                        egui::DragValue::new(
+                            &mut self.program_options.daystat_circle_outline_radius,
+                        )
+                        .speed(0.1),
                     );
                 });
                 ui.horizontal(|ui| {
-                    ui.checkbox(&mut self.program_options.draw_daystat_circles, "Draw stat circles");
-                    ui.checkbox(&mut self.program_options.draw_daystat_lines, "Draw stat lines");
+                    ui.checkbox(
+                        &mut self.program_options.draw_daystat_circles,
+                        "Draw stat circles",
+                    );
+                    ui.checkbox(
+                        &mut self.program_options.draw_daystat_lines,
+                        "Draw stat lines",
+                    );
                 });
 
                 if ui.button("Close Options Menu").clicked() {
@@ -759,20 +753,13 @@ fn update_program() -> JoinHandle<Result<Status, String>> {
             .bin_name("happy_chart_rs")
             .show_download_progress(true)
             .current_version(cargo_crate_version!())
-            .build() {
-            Ok(updater) => {
-                match updater.update() {
-                    Ok(status) => {
-                        Ok(status)
-                    }
-                    Err(err) => {
-                        Err(err.to_string())
-                    }
-                }
-            }
-            Err(err) => {
-                Err(err.to_string())
-            }
+            .build()
+        {
+            Ok(updater) => match updater.update() {
+                Ok(status) => Ok(status),
+                Err(err) => Err(err.to_string()),
+            },
+            Err(err) => Err(err.to_string()),
         }
     })
 }

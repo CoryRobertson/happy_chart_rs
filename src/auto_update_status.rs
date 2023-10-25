@@ -15,11 +15,17 @@ impl Default for AutoUpdateStatus {
 impl AutoUpdateStatus {
     pub fn to_text(&self) -> String {
         match self {
-            AutoUpdateStatus::Checking => { "Checking".to_string() }
-            AutoUpdateStatus::NotChecked => { "NotChecked".to_string() }
-            AutoUpdateStatus::UpToDate(ver) => { format!("Up to date: {}", ver) }
-            AutoUpdateStatus::Updated(ver) => { format!("Updated: {}", ver) }
-            AutoUpdateStatus::Error(err) => { format!("Error: {}", err) }
+            AutoUpdateStatus::Checking => "Checking".to_string(),
+            AutoUpdateStatus::NotChecked => "NotChecked".to_string(),
+            AutoUpdateStatus::UpToDate(ver) => {
+                format!("Up to date: {}", ver)
+            }
+            AutoUpdateStatus::Updated(ver) => {
+                format!("Updated: {}", ver)
+            }
+            AutoUpdateStatus::Error(err) => {
+                format!("Error: {}", err)
+            }
         }
     }
 }
