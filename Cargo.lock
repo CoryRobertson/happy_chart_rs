@@ -1566,7 +1566,7 @@ dependencies = [
 
 [[package]]
 name = "happy_chart_rs"
-version = "1.10.0"
+version = "1.10.1"
 dependencies = [
  "chrono",
  "chrono-tz",
