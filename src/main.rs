@@ -6,9 +6,12 @@ mod improved_daystat;
 mod last_session;
 mod program_options;
 
+mod auto_update_status;
+
 const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
+use std::cell::Cell;
 #[allow(deprecated)]
 use crate::daystat::DayStat;
 use crate::egui::Layout;
@@ -22,6 +25,10 @@ use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::thread;
+use std::thread::JoinHandle;
+use self_update::{cargo_crate_version, Status};
+use crate::auto_update_status::AutoUpdateStatus;
 
 const SAVE_FILE_NAME: &str = "save.ser";
 const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
@@ -50,7 +57,11 @@ struct HappyChartState {
     starting_length: usize,
     showing_options_menu: bool,
     program_options: ProgramOptions,
+    update_status: AutoUpdateStatus,
+    update_thread: Cell<Option<JoinHandle<Result<Status, String>>>>,
 }
+
+
 
 impl HappyChartState {
     fn new(_cc: &eframe::CreationContext<'_>) -> Self {
@@ -62,6 +73,8 @@ impl HappyChartState {
             starting_length: 0,
             showing_options_menu: false,
             program_options: ProgramOptions::default(),
+            update_status: AutoUpdateStatus::NotChecked,
+            update_thread: Cell::new(None),
         }
     }
 }
@@ -193,6 +206,8 @@ impl eframe::App for HappyChartState {
             let ls = read_last_session_save_file();
             self.program_options = ls.program_options;
         }
+
+
 
         egui::CentralPanel::default().show(ctx, |ui| {
             let pointer_interact_pos = ctx.pointer_interact_pos();
@@ -474,6 +489,48 @@ impl eframe::App for HappyChartState {
 
         if self.showing_options_menu {
             egui::Window::new("Options").show(ctx, |ui| {
+
+                {
+                    let update_thread = self.update_thread.replace(None);
+                    match update_thread {
+                        None => {}
+                        Some(thread) => {
+                            if thread.is_finished() {
+                                match thread.join() {
+                                    Ok(res) => {
+                                        match res {
+                                            Ok(status) => {
+                                                match status {
+                                                    Status::UpToDate(ver) => {
+                                                        self.update_status = AutoUpdateStatus::UpToDate(ver);
+                                                    }
+                                                    Status::Updated(ver) => {
+                                                        self.update_status = AutoUpdateStatus::Updated(ver);
+                                                    }
+                                                }
+                                            }
+                                            Err(err) => {
+                                                self.update_status = AutoUpdateStatus::Error(err);
+                                            }
+                                        }
+                                    }
+                                    Err(_) => {
+
+                                    }
+                                }
+                            } else {
+                                self.update_thread.replace(Some(thread));
+                                self.update_status = AutoUpdateStatus::Checking;
+                                ui.spinner();
+                            }
+                        }
+                    }
+                }
+
+                if ui.button("Check for updates").on_hover_text(self.update_status.to_text()).clicked() {
+                    self.update_thread.replace(Some(update_program()));
+                }
+
                 ui.horizontal(|ui| {
                     ui.label("Display day lines: ");
 
@@ -675,4 +732,30 @@ fn quit(frame: &mut Frame, app: &HappyChartState) {
         }
     }
     frame.close();
+}
+
+fn update_program() -> JoinHandle<Result<Status, String>> {
+    thread::spawn(|| {
+        match self_update::backends::github::UpdateBuilder::new()
+            .repo_owner("CoryRobertson")
+            .repo_name("happy_chart_rs")
+            .bin_name("happy_chart_rs")
+            .show_download_progress(true)
+            .current_version(cargo_crate_version!())
+            .build() {
+            Ok(updater) => {
+                match updater.update() {
+                    Ok(status) => {
+                        Ok(status)
+                    }
+                    Err(err) => {
+                        Err(err.to_string())
+                    }
+                }
+            }
+            Err(err) => {
+                Err(err.to_string())
+            }
+        }
+    })
 }
