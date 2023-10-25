@@ -203,38 +203,6 @@ impl eframe::App for HappyChartState {
                     .on_hover_text("The rating of the given day to be saved to the graph point.");
             });
 
-            ui.horizontal(|ui| {
-                ui.label("Graph X Scale: ");
-                ui.add(egui::Slider::new(
-                    &mut self.program_options.graph_x_scale,
-                    0.01..=10.0,
-                ))
-                .on_hover_text("Multiplier used to scale the graph on the X axis.");
-            });
-
-            ui.horizontal(|ui| {
-                ui.label("Graph Y Scale: ");
-                ui.add(egui::Slider::new(
-                    &mut self.program_options.graph_y_scale,
-                    0.5..=5.0,
-                ))
-                .on_hover_text("Multiplier used to scale the graph on the Y axis.");
-            });
-
-            ui.horizontal(|ui| {
-                ui.label("X Offset: ");
-                ui.add(
-                    egui::DragValue::new(&mut self.program_options.x_offset)
-                        .speed(self.program_options.x_offset_slider_speed),
-                )
-                .on_hover_text("Amount of units to shift the graph on the X axis.");
-            });
-
-            ui.horizontal(|ui| {
-                ui.label("Display day lines: ");
-
-                toggle_ui_compact(ui, &mut self.program_options.draw_day_lines);
-            });
 
             ui.horizontal(|ui| {
                 ui.label("Note: ");
@@ -506,6 +474,39 @@ impl eframe::App for HappyChartState {
 
         if self.showing_options_menu {
             egui::Window::new("Options").show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Display day lines: ");
+
+                    toggle_ui_compact(ui, &mut self.program_options.draw_day_lines);
+                });
+
+                ui.horizontal(|ui| {
+                    ui.label("Graph X Scale: ");
+                    ui.add(egui::Slider::new(
+                        &mut self.program_options.graph_x_scale,
+                        0.01..=10.0,
+                    ))
+                        .on_hover_text("Multiplier used to scale the graph on the X axis.");
+                });
+
+                ui.horizontal(|ui| {
+                    ui.label("Graph Y Scale: ");
+                    ui.add(egui::Slider::new(
+                        &mut self.program_options.graph_y_scale,
+                        0.5..=5.0,
+                    ))
+                        .on_hover_text("Multiplier used to scale the graph on the Y axis.");
+                });
+
+                ui.horizontal(|ui| {
+                    ui.label("X Offset: ");
+                    ui.add(
+                        egui::DragValue::new(&mut self.program_options.x_offset)
+                            .speed(self.program_options.x_offset_slider_speed),
+                    )
+                        .on_hover_text("Amount of units to shift the graph on the X axis.");
+                });
+
                 // x offset slider speed
                 ui.horizontal(|ui| {
                     ui.label("X offset slider speed:");
