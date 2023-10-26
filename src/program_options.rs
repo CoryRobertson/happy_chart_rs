@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::color_setting::ColorSettings;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
@@ -16,6 +17,7 @@ pub struct ProgramOptions {
     pub draw_daystat_circles: bool,
     pub draw_daystat_lines: bool,
     pub update_modulus: i32,
+    pub color_settings: ColorSettings,
 }
 
 impl Default for ProgramOptions {
@@ -33,7 +35,8 @@ impl Default for ProgramOptions {
             daystat_circle_size: 4.0,
             draw_daystat_circles: true,
             draw_daystat_lines: true,
-            update_modulus: 2,
+            update_modulus: 5,
+            color_settings: Default::default(),
         }
     }
 }

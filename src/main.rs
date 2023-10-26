@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 mod color_setting;
 mod daystat;
 mod improved_daystat;
@@ -27,6 +29,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::thread::JoinHandle;
+use crate::color_setting::ColorSettings;
 
 const SAVE_FILE_NAME: &str = "save.ser";
 const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
@@ -204,6 +207,7 @@ impl eframe::App for HappyChartState {
             let ls = read_last_session_save_file();
             self.open_modulus = ls.open_modulus;
             self.program_options = ls.program_options;
+            #[cfg(not(debug_assertions))]
             if self.open_modulus % self.program_options.update_modulus == 0
                 && self.program_options.update_modulus >= 1
             {
@@ -317,7 +321,7 @@ impl eframe::App for HappyChartState {
                     };
                     ui.painter().line_segment(
                         line_points,
-                        Stroke::new(2.0, color_setting::get_day_line_color()),
+                        Stroke::new(2.0, self.program_options.color_settings.day_line_color),
                     );
                 }
             }
@@ -346,7 +350,7 @@ impl eframe::App for HappyChartState {
                         // draw line segments connecting the dots
                         ui.painter().line_segment(
                             points,
-                            Stroke::new(2.0, color_setting::get_line_color()),
+                            Stroke::new(2.0, self.program_options.color_settings.line_color),
                         );
                     }
 
@@ -417,16 +421,17 @@ impl eframe::App for HappyChartState {
                         Align2::LEFT_CENTER,
                         &text,
                         FontId::default(),
-                        color_setting::get_text_color(),
+                        self.program_options.color_settings.text_color
+                        // color_setting::get_text_color(),
                     );
 
                     ui.painter().rect_filled(
                         Rect::from_two_pos(rect_pos1, rect_pos2),
                         Rounding::from(20.0),
-                        color_setting::get_info_window_color(),
+                        self.program_options.color_settings.info_window_color
                     );
                     ui.style_mut().visuals.override_text_color =
-                        Option::from(color_setting::get_text_color());
+                        Option::from(self.program_options.color_settings.text_color);
 
                     // info text to display in top right window
                     let info_text: String = day.to_string();
@@ -445,7 +450,7 @@ impl eframe::App for HappyChartState {
                     ui.visuals_mut().override_text_color = Option::from(Color32::RED);
                 } else {
                     ui.style_mut().visuals.override_text_color =
-                        Option::from(color_setting::get_text_color());
+                        Option::from(self.program_options.color_settings.text_color);
                 }
 
                 ui.horizontal(|ui| {
@@ -456,7 +461,7 @@ impl eframe::App for HappyChartState {
                     }
 
                     ui.style_mut().visuals.override_text_color =
-                        Option::from(color_setting::get_text_color());
+                        Option::from(self.program_options.color_settings.text_color);
 
                     if !self.showing_options_menu && ui.button("Options").clicked() {
                         self.showing_options_menu = true;
@@ -481,6 +486,7 @@ impl eframe::App for HappyChartState {
 
         if self.showing_options_menu {
             egui::Window::new("Options").show(ctx, |ui| {
+                // update thread block, handles showing spinner, and checking if the update is done
                 {
                     let update_thread = self.update_thread.replace(None);
                     match update_thread {
@@ -538,12 +544,23 @@ impl eframe::App for HappyChartState {
                 });
 
                 ui.horizontal(|ui| {
+                    ui.color_edit_button_srgba(&mut self.program_options.color_settings.line_color).on_hover_text("Line color");
+                    ui.color_edit_button_srgba(&mut self.program_options.color_settings.day_line_color).on_hover_text("Day line color");
+                    // TODO: text color doesnt work cause we use the foreground color for this, probably not a good idea to let the user change this normally yet until I think of a way to do it in a pretty way
+                    // ui.color_edit_button_srgba(&mut self.program_options.color_settings.text_color).on_hover_text("Text Color");
+                    ui.color_edit_button_srgba(&mut self.program_options.color_settings.info_window_color).on_hover_text("Info window color");
+                });
+                if ui.button("Reset colors to defaults").clicked() {
+                    self.program_options.color_settings = ColorSettings::default();
+                }
+
+                ui.horizontal(|ui| {
                     ui.label("Graph X Scale: ");
                     ui.add(egui::Slider::new(
                         &mut self.program_options.graph_x_scale,
                         0.01..=10.0,
                     ))
-                    .on_hover_text("Multiplier used to scale the graph on the X axis.");
+                        .on_hover_text("Multiplier used to scale the graph on the X axis.");
                 });
 
                 ui.horizontal(|ui| {
@@ -750,6 +767,7 @@ fn update_program() -> JoinHandle<Result<Status, String>> {
             .repo_name("happy_chart_rs")
             .bin_name("happy_chart_rs")
             .show_download_progress(true)
+            .no_confirm(true)
             .current_version(cargo_crate_version!())
             .build()
         {
