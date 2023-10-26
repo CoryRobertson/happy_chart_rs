@@ -35,7 +35,7 @@ impl Default for ProgramOptions {
             daystat_circle_size: 4.0,
             draw_daystat_circles: true,
             draw_daystat_lines: true,
-            update_modulus: 5,
+            update_modulus: -1,
             color_settings: Default::default(),
         }
     }

@@ -2,6 +2,7 @@ pub enum AutoUpdateStatus {
     Checking,
     NotChecked,
     UpToDate(String),
+    OutOfDate,
     Updated(String),
     Error(String),
 }
@@ -25,6 +26,9 @@ impl AutoUpdateStatus {
             }
             AutoUpdateStatus::Error(err) => {
                 format!("Error: {}", err)
+            }
+            AutoUpdateStatus::OutOfDate => {
+                "Out of date".to_string()
             }
         }
     }

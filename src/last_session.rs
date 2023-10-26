@@ -1,3 +1,4 @@
+use chrono::{DateTime, Local};
 use crate::program_options::ProgramOptions;
 use serde::{Deserialize, Serialize};
 
@@ -9,6 +10,10 @@ pub struct LastSession {
     pub program_options: ProgramOptions,
     #[serde(default)]
     pub open_modulus: i32,
+    #[serde(default)]
+    pub last_open_date: DateTime<Local>,
+    #[serde(default)]
+    pub last_version_checked: Option<String>,
 }
 
 impl Default for LastSession {
@@ -17,6 +22,8 @@ impl Default for LastSession {
             window_size: [800.0, 600.0],
             program_options: ProgramOptions::default(),
             open_modulus: 0,
+            last_open_date: Local::now(),
+            last_version_checked: None,
         }
     }
 }

@@ -5,6 +5,9 @@ Happy chart is a program I wrote using:
 - serde
 - serde_json
 - chrono
+- image
+- rfd
+- self_update
 
 ### Purpose:
 Happy chart is an idea I had, where I wanted to graph the subjective quality of each day, at the time I used a spreadsheet software but realized it would be a really fun programming project to make in rust, which I'm trying to practice anyway.
@@ -16,6 +19,12 @@ I would also love to know if anyone uses this program, and what they do and don'
 - JSON based stat saving locally relative to the program executable
 - JSON based program settings saved relative to program executable
 - _somewhat_ pretty stat visualization
+- Automagic updating
+- Screenshotting system
+- Mild amount of customization and settings to play with
+
+### Contributions and suggestions:
+I love working on this program, if you have any ideas, please feel free to send a pull request, or create an issue. I will always consider them!
 
 <3
 ![image](https://i.imgur.com/QHpn7mU.png)

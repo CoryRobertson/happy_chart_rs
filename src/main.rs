@@ -17,18 +17,15 @@ const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
 use crate::auto_update_status::AutoUpdateStatus;
 use crate::color_setting::ColorSettings;
-use crate::common::{
-    distance, improved_calculate_x, quit, read_last_session_save_file, read_save_file,
-    toggle_ui_compact, update_program,
-};
+use crate::common::{distance, get_release_list, improved_calculate_x, quit, read_last_session_save_file, read_save_file, toggle_ui_compact, update_program};
 use crate::egui::Layout;
 use crate::happy_chart_state::HappyChartState;
 use crate::improved_daystat::ImprovedDayStat;
-use chrono::Days;
+use chrono::{Days, Local};
 use eframe::emath::Pos2;
 use eframe::{egui, Frame, NativeOptions};
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
-use self_update::Status;
+use self_update::{cargo_crate_version, Status};
 
 const SAVE_FILE_NAME: &str = "save.ser";
 const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
@@ -59,6 +56,31 @@ impl eframe::App for HappyChartState {
             let ls = read_last_session_save_file();
             self.open_modulus = ls.open_modulus;
             self.program_options = ls.program_options;
+            self.last_open_date = ls.last_open_date;
+            if let Some(ver) = ls.last_version_checked {
+                self.auto_update_seen_version = Some(ver);
+            }
+            if Local::now().signed_duration_since(ls.last_open_date).num_hours() >= 12 {
+                match get_release_list() {
+                    Ok(list) => {
+                        if let Some(release) = list.first() {
+                            if let Ok(greater_bump) = self_update::version::bump_is_greater(cargo_crate_version!(), &release.version) {
+                                if greater_bump {
+                                    println!("Update available! {} {} {}", release.name,release.version,release.date);
+                                    self.update_available = Some(release.clone());
+                                    self.update_status = AutoUpdateStatus::OutOfDate;
+                                }
+                                else {
+                                    println!("No update available.");
+                                    self.update_status = AutoUpdateStatus::UpToDate(cargo_crate_version!().to_string());
+                                }
+                            }
+                        }
+                    }
+                    Err(_) => {}
+                }
+            }
+
             #[cfg(not(debug_assertions))]
             if self.open_modulus % self.program_options.update_modulus == 0
                 && self.program_options.update_modulus >= 1
@@ -246,7 +268,7 @@ impl eframe::App for HappyChartState {
             i = 0;
             let mut moused_over = false; // boolean used to know if we are already showing mouse over text, if so, not to render it if this is true
 
-            // draw text loop, top most layer
+            // draw text loop, top most layer (mostly)
             for day in &self.days {
                 let x: f32 = improved_calculate_x(
                     &self.days,
@@ -293,6 +315,42 @@ impl eframe::App for HappyChartState {
                     );
                 }
                 i += 1;
+            }
+
+            // block for displaying update available message to user
+            // contains dismiss update button as well
+            {
+                if let Some(release) = &self.update_available {
+                    let should_show_update = match &self.auto_update_seen_version {
+                        None => {
+                            true
+                        }
+                        Some(ver) => {
+                            self_update::version::bump_is_greater(ver,&release.version).unwrap_or(true)
+                        }
+                    };
+                    if should_show_update {
+                        if ui.button("Dismiss update").clicked() {
+                            self.auto_update_seen_version = Some(release.version.to_string());
+                        }
+                        let mid_point_x = (ctx.screen_rect().width() / 2.0) - (250.0/2.0);
+                        let quarter_point_y = ctx.screen_rect().height() / 4.0;
+
+                        ui.painter().rect_filled(
+                            Rect::from_two_pos(Pos2::new(mid_point_x, quarter_point_y), Pos2::new(mid_point_x + 250.0, quarter_point_y + 120.0)),
+                            Rounding::from(4.0),
+                            self.program_options.color_settings.info_window_color,
+                        );
+                        ui.style_mut().visuals.override_text_color =
+                            Option::from(self.program_options.color_settings.text_color);
+
+                        ui.put(
+                            Rect::from_two_pos(Pos2::new(mid_point_x, quarter_point_y), Pos2::new(mid_point_x + 250.0, quarter_point_y + 120.0)),
+                            egui::widgets::Label::new(format!("Update available:\n{}\nCurrent version:\nv{}\nGo to options, and click \"Check for updates & update program\" to automagically update\nThis message will not display on next launch", release.name,cargo_crate_version!())),
+                        );
+
+                    }
+                }
             }
 
             // quit button layout
@@ -371,7 +429,7 @@ impl eframe::App for HappyChartState {
                 }
 
                 if ui
-                    .button("Check for updates")
+                    .button("Check for updates & update program")
                     .on_hover_text(self.update_status.to_text())
                     .clicked()
                 {
@@ -384,7 +442,7 @@ impl eframe::App for HappyChartState {
                         &mut self.program_options.update_modulus,
                     ))
                     .on_hover_text(
-                        "Automatically try to update the program every X times the program opens",
+                        "Automatically try to update the program every X times the program opens, -1 for disabled, 1 for every launch",
                     );
                 });
 

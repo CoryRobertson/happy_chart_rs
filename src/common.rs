@@ -11,6 +11,8 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::thread::JoinHandle;
+use chrono::Local;
+use self_update::update::Release;
 
 /// Calculates the x coordinate for each graph point
 #[deprecated]
@@ -50,6 +52,14 @@ pub fn quit(frame: &mut Frame, app: &HappyChartState) {
         window_size: frame.info().window_info.size.into(),
         program_options: app.program_options.clone(),
         open_modulus: app.open_modulus + 1,
+        last_open_date: Local::now(),
+        last_version_checked: {
+            match &app.auto_update_seen_version {
+            None => { None }
+            Some(version) => {
+                Some(version.to_string())
+            }
+        }},
     };
 
     let session_ser = serde_json::to_string(&last_session).unwrap();
@@ -119,6 +129,16 @@ pub fn update_program() -> JoinHandle<Result<Status, String>> {
             Err(err) => Err(err.to_string()),
         }
     })
+}
+
+pub fn get_release_list() -> Result<Vec<Release>,Box<dyn std::error::Error>> {
+    let list = self_update::backends::github::ReleaseList::configure()
+        .repo_owner("CoryRobertson")
+        .repo_name("happy_chart_rs")
+        .build()?.fetch()?;
+    #[cfg(debug_assertions)]
+    println!("{:?}", list);
+        Ok(list)
 }
 
 /// Reads the last session file, if exists, returns the deserialized contents, if it doesnt exist, returns a default LastSession struct.
