@@ -12,6 +12,7 @@ const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
 use crate::auto_update_status::AutoUpdateStatus;
+use crate::color_setting::ColorSettings;
 #[allow(deprecated)]
 use crate::daystat::DayStat;
 use crate::egui::Layout;
@@ -29,7 +30,6 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::thread::JoinHandle;
-use crate::color_setting::ColorSettings;
 
 const SAVE_FILE_NAME: &str = "save.ser";
 const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
@@ -421,14 +421,13 @@ impl eframe::App for HappyChartState {
                         Align2::LEFT_CENTER,
                         &text,
                         FontId::default(),
-                        self.program_options.color_settings.text_color
-                        // color_setting::get_text_color(),
+                        self.program_options.color_settings.text_color, // color_setting::get_text_color(),
                     );
 
                     ui.painter().rect_filled(
                         Rect::from_two_pos(rect_pos1, rect_pos2),
                         Rounding::from(20.0),
-                        self.program_options.color_settings.info_window_color
+                        self.program_options.color_settings.info_window_color,
                     );
                     ui.style_mut().visuals.override_text_color =
                         Option::from(self.program_options.color_settings.text_color);
@@ -544,11 +543,18 @@ impl eframe::App for HappyChartState {
                 });
 
                 ui.horizontal(|ui| {
-                    ui.color_edit_button_srgba(&mut self.program_options.color_settings.line_color).on_hover_text("Line color");
-                    ui.color_edit_button_srgba(&mut self.program_options.color_settings.day_line_color).on_hover_text("Day line color");
+                    ui.color_edit_button_srgba(&mut self.program_options.color_settings.line_color)
+                        .on_hover_text("Line color");
+                    ui.color_edit_button_srgba(
+                        &mut self.program_options.color_settings.day_line_color,
+                    )
+                    .on_hover_text("Day line color");
                     // TODO: text color doesnt work cause we use the foreground color for this, probably not a good idea to let the user change this normally yet until I think of a way to do it in a pretty way
                     // ui.color_edit_button_srgba(&mut self.program_options.color_settings.text_color).on_hover_text("Text Color");
-                    ui.color_edit_button_srgba(&mut self.program_options.color_settings.info_window_color).on_hover_text("Info window color");
+                    ui.color_edit_button_srgba(
+                        &mut self.program_options.color_settings.info_window_color,
+                    )
+                    .on_hover_text("Info window color");
                 });
                 if ui.button("Reset colors to defaults").clicked() {
                     self.program_options.color_settings = ColorSettings::default();
@@ -560,7 +566,7 @@ impl eframe::App for HappyChartState {
                         &mut self.program_options.graph_x_scale,
                         0.01..=10.0,
                     ))
-                        .on_hover_text("Multiplier used to scale the graph on the X axis.");
+                    .on_hover_text("Multiplier used to scale the graph on the X axis.");
                 });
 
                 ui.horizontal(|ui| {

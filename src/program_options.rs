@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::color_setting::ColorSettings;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
