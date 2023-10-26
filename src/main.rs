@@ -333,6 +333,9 @@ impl eframe::App for HappyChartState {
                         if ui.button("Dismiss update").clicked() {
                             self.auto_update_seen_version = Some(release.version.to_string());
                         }
+                        if ui.button("Update happy chart").clicked() {
+                            self.update_thread.replace(Some(update_program()));
+                        }
                         let mid_point_x = (ctx.screen_rect().width() / 2.0) - (250.0/2.0);
                         let quarter_point_y = ctx.screen_rect().height() / 4.0;
 
@@ -346,7 +349,7 @@ impl eframe::App for HappyChartState {
 
                         ui.put(
                             Rect::from_two_pos(Pos2::new(mid_point_x, quarter_point_y), Pos2::new(mid_point_x + 250.0, quarter_point_y + 120.0)),
-                            egui::widgets::Label::new(format!("Update available:\n{}\nCurrent version:\nv{}\nGo to options, and click \"Check for updates & update program\" to automagically update\nThis message will not display on next launch", release.name,cargo_crate_version!())),
+                            egui::widgets::Label::new(format!("Update available:\n{}\nCurrent version:\nv{}\n\"Update happy chart\" to automagically update\nThis message will not display on next launch", release.name,cargo_crate_version!())),
                         );
 
                     }
