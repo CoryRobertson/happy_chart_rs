@@ -28,6 +28,7 @@ image = "0.24.7"
 # example file name:
 # happy_chart_rs-v1.10.2-x86_64-pc-windows-msvc.zip
 self_update = { version = "0.39.0", features = ["archive-zip","compression-flate2","compression-zip-bzip2","compression-zip-deflate"]}
+zip = "0.6.6"
 
 [build-dependencies]
 vergen = { version = "8.2.4", features = ["build","git","gitcl"] }

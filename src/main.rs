@@ -15,17 +15,21 @@ mod happy_chart_state;
 const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
+use std::fs::File;
+use std::io::{Read, Write};
 use crate::auto_update_status::AutoUpdateStatus;
 use crate::color_setting::ColorSettings;
 use crate::common::{distance, get_release_list, improved_calculate_x, quit, read_last_session_save_file, read_save_file, toggle_ui_compact, update_program};
 use crate::egui::Layout;
 use crate::happy_chart_state::HappyChartState;
 use crate::improved_daystat::ImprovedDayStat;
-use chrono::{Days, Local};
+use chrono::{Datelike, Days, Local};
 use eframe::emath::Pos2;
 use eframe::{egui, Frame, NativeOptions};
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
 use self_update::{cargo_crate_version, Status};
+use zip::CompressionMethod;
+use zip::write::FileOptions;
 
 const SAVE_FILE_NAME: &str = "save.ser";
 const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
@@ -563,6 +567,41 @@ impl eframe::App for HappyChartState {
                         "Draw stat lines",
                     );
                 });
+
+                if ui.button("Backup program state").clicked() {
+                    // TODO: make the program save all the states to the file instead of just saving the current files, cause we might nbe 
+                    let time = Local::now();
+                    let file = File::create(format!("happy_chart_backup_{}-{}-{}.zip",time.month(),time.day(),time.year()));
+                    let mut arch = zip::ZipWriter::new(file.unwrap());
+                    let options = zip::write::FileOptions::default().compression_method(CompressionMethod::Deflated);
+                    match File::open(SAVE_FILE_NAME) {
+                        Ok(mut old_save_file) => {
+                            let _ = arch.start_file(SAVE_FILE_NAME,options.clone());
+                            let mut old_file_bytes = vec![];
+                            let _ = old_save_file.read_to_end(&mut old_file_bytes);
+                            let _ = arch.write_all(&old_file_bytes);
+                        }
+                        Err(_) => {
+                            // no old save file present, so we can just
+                        }
+                    }
+                    let mut new_save_file = File::open(NEW_SAVE_FILE_NAME).unwrap();
+                    let mut last_session_file = File::open(LAST_SESSION_FILE_NAME).unwrap();
+
+                    let _ = arch.start_file(NEW_SAVE_FILE_NAME,options.clone());
+                    let mut new_file_bytes = vec![];
+                    let _ = new_save_file.read_to_end(&mut new_file_bytes);
+                    let _ = arch.write_all(&new_file_bytes);
+                    let _ = arch.start_file(LAST_SESSION_FILE_NAME,options);
+                    let mut last_session_file_bytes = vec![];
+                    let _ = last_session_file.read_to_end(&mut last_session_file_bytes);
+                    let _ = arch.write_all(&last_session_file_bytes);
+                    let _ = arch.finish();
+
+                    
+
+
+                }
 
                 if ui.button("Close Options Menu").clicked() {
                     self.showing_options_menu = false;
