@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use crate::color_setting::ColorSettings;
 use serde::{Deserialize, Serialize};
 
@@ -18,6 +19,8 @@ pub struct ProgramOptions {
     pub draw_daystat_lines: bool,
     pub update_modulus: i32,
     pub color_settings: ColorSettings,
+    pub backup_save_path: PathBuf,
+    pub auto_backup_days: i32,
 }
 
 impl Default for ProgramOptions {
@@ -37,6 +40,8 @@ impl Default for ProgramOptions {
             draw_daystat_lines: true,
             update_modulus: -1,
             color_settings: Default::default(),
+            backup_save_path: PathBuf::from("./backups/"),
+            auto_backup_days: -1,
         }
     }
 }

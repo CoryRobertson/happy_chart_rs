@@ -14,6 +14,8 @@ pub struct LastSession {
     pub last_open_date: DateTime<Local>,
     #[serde(default)]
     pub last_version_checked: Option<String>,
+    #[serde(default)]
+    pub last_backup_date: DateTime<Local>,
 }
 
 impl Default for LastSession {
@@ -24,6 +26,7 @@ impl Default for LastSession {
             open_modulus: 0,
             last_open_date: Local::now(),
             last_version_checked: None,
+            last_backup_date: Local::now(),
         }
     }
 }

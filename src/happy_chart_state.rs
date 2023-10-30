@@ -28,6 +28,10 @@ pub struct HappyChartState {
     /// The version number of the most recent available update that the user has seen
     /// This variable will determine if an update message should be shown, if they have already seen the message, and ignored it then we will not tell them again.
     pub auto_update_seen_version: Option<String>,
+
+    pub backup_path_text: String,
+
+    pub last_backup_date: DateTime<Local>,
 }
 
 impl HappyChartState {
@@ -46,6 +50,8 @@ impl HappyChartState {
             last_open_date: Local::now(),
             update_available: None,
             auto_update_seen_version: None,
+            backup_path_text: "".into(),
+            last_backup_date: Local::now(),
         }
     }
 }

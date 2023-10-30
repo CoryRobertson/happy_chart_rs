@@ -15,21 +15,18 @@ mod happy_chart_state;
 const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
-use std::fs::File;
-use std::io::{Read, Write};
+use std::path::PathBuf;
 use crate::auto_update_status::AutoUpdateStatus;
 use crate::color_setting::ColorSettings;
-use crate::common::{distance, get_release_list, improved_calculate_x, quit, read_last_session_save_file, read_save_file, toggle_ui_compact, update_program};
+use crate::common::{backup_program_state, distance, get_release_list, improved_calculate_x, quit, read_last_session_save_file, read_save_file, toggle_ui_compact, update_program};
 use crate::egui::Layout;
 use crate::happy_chart_state::HappyChartState;
 use crate::improved_daystat::ImprovedDayStat;
-use chrono::{Datelike, Days, Local};
+use chrono::{Days, Local};
 use eframe::emath::Pos2;
 use eframe::{egui, Frame, NativeOptions};
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
 use self_update::{cargo_crate_version, Status};
-use zip::CompressionMethod;
-use zip::write::FileOptions;
 
 const SAVE_FILE_NAME: &str = "save.ser";
 const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
@@ -61,9 +58,11 @@ impl eframe::App for HappyChartState {
             self.open_modulus = ls.open_modulus;
             self.program_options = ls.program_options;
             self.last_open_date = ls.last_open_date;
+            self.last_backup_date = ls.last_backup_date;
             if let Some(ver) = ls.last_version_checked {
                 self.auto_update_seen_version = Some(ver);
             }
+            self.backup_path_text = self.program_options.backup_save_path.to_str().unwrap_or("./backups/").to_string();
             if Local::now().signed_duration_since(ls.last_open_date).num_hours() >= 12 {
                 match get_release_list() {
                     Ok(list) => {
@@ -83,6 +82,12 @@ impl eframe::App for HappyChartState {
                     }
                     Err(_) => {}
                 }
+            }
+
+            // check if user last backup day is +- 3 hours between the margin of their auto backup day count
+            if self.program_options.auto_backup_days > -1 && (Local::now().signed_duration_since(ls.last_backup_date).num_hours() - (self.program_options.auto_backup_days * 24) as i64).abs() >= 3 {
+                backup_program_state(frame,&self);
+                self.last_backup_date = Local::now();
             }
 
             #[cfg(not(debug_assertions))]
@@ -568,42 +573,26 @@ impl eframe::App for HappyChartState {
                     );
                 });
 
-                if ui.button("Backup program state").clicked() {
-                    // TODO: make the program save all the states to the file instead of just saving the current files, cause we might nbe
-                    // TODO: Add a setting to allow the user to decide the backup location, which defaults to a local folder 'backups'
-                    // TODO: Add a setting to allow backups to be automatically be taken every N Days
-                    // TODO: Add a setting to allow backups to only be kept upto a specific count
-                    let time = Local::now();
-                    let file = File::create(format!("happy_chart_backup_{}-{}-{}.zip",time.month(),time.day(),time.year()));
-                    let mut arch = zip::ZipWriter::new(file.unwrap());
-                    let options = zip::write::FileOptions::default().compression_method(CompressionMethod::Deflated);
-                    match File::open(SAVE_FILE_NAME) {
-                        Ok(mut old_save_file) => {
-                            let _ = arch.start_file(SAVE_FILE_NAME,options.clone());
-                            let mut old_file_bytes = vec![];
-                            let _ = old_save_file.read_to_end(&mut old_file_bytes);
-                            let _ = arch.write_all(&old_file_bytes);
-                        }
-                        Err(_) => {
-                            // no old save file present, so we can just
-                        }
+                ui.horizontal(|ui| {
+                    ui.label("Backup folder ");
+                    ui.text_edit_singleline(&mut self.backup_path_text);
+                    if let Ok(path) = PathBuf::try_from(self.backup_path_text.clone()) {
+                        self.program_options.backup_save_path = path;
+
                     }
-                    let mut new_save_file = File::open(NEW_SAVE_FILE_NAME).unwrap();
-                    let mut last_session_file = File::open(LAST_SESSION_FILE_NAME).unwrap();
+                });
 
-                    let _ = arch.start_file(NEW_SAVE_FILE_NAME,options.clone());
-                    let mut new_file_bytes = vec![];
-                    let _ = new_save_file.read_to_end(&mut new_file_bytes);
-                    let _ = arch.write_all(&new_file_bytes);
-                    let _ = arch.start_file(LAST_SESSION_FILE_NAME,options);
-                    let mut last_session_file_bytes = vec![];
-                    let _ = last_session_file.read_to_end(&mut last_session_file_bytes);
-                    let _ = arch.write_all(&last_session_file_bytes);
-                    let _ = arch.finish();
+                ui.horizontal(|ui| {
+                    ui.label("Auto backup day count: ");
+                    ui.add(
+                        egui::DragValue::new(&mut self.program_options.auto_backup_days)
+                    ).on_hover_text("The number of days to elapse between auto backups, if less than 0, no automatic backups will take place.");
+                });
 
-                    
-
-
+                if ui.button("Backup program state").clicked() {
+                    // TODO: Add a setting to allow backups to only be kept upto a specific count
+                    backup_program_state(frame, &self);
+                    self.last_backup_date = Local::now();
                 }
 
                 if ui.button("Close Options Menu").clicked() {
