@@ -569,7 +569,10 @@ impl eframe::App for HappyChartState {
                 });
 
                 if ui.button("Backup program state").clicked() {
-                    // TODO: make the program save all the states to the file instead of just saving the current files, cause we might nbe 
+                    // TODO: make the program save all the states to the file instead of just saving the current files, cause we might nbe
+                    // TODO: Add a setting to allow the user to decide the backup location, which defaults to a local folder 'backups'
+                    // TODO: Add a setting to allow backups to be automatically be taken every N Days
+                    // TODO: Add a setting to allow backups to only be kept upto a specific count
                     let time = Local::now();
                     let file = File::create(format!("happy_chart_backup_{}-{}-{}.zip",time.month(),time.day(),time.year()));
                     let mut arch = zip::ZipWriter::new(file.unwrap());
