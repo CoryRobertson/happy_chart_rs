@@ -15,10 +15,12 @@ mod happy_chart_state;
 const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
-use std::path::PathBuf;
 use crate::auto_update_status::AutoUpdateStatus;
 use crate::color_setting::ColorSettings;
-use crate::common::{backup_program_state, distance, get_release_list, improved_calculate_x, quit, read_last_session_save_file, read_save_file, toggle_ui_compact, update_program};
+use crate::common::{
+    backup_program_state, distance, get_release_list, improved_calculate_x, quit,
+    read_last_session_save_file, read_save_file, toggle_ui_compact, update_program,
+};
 use crate::egui::Layout;
 use crate::happy_chart_state::HappyChartState;
 use crate::improved_daystat::ImprovedDayStat;
@@ -27,6 +29,7 @@ use eframe::emath::Pos2;
 use eframe::{egui, Frame, NativeOptions};
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke, Vec2};
 use self_update::{cargo_crate_version, Status};
+use crate::program_options::ProgramOptions;
 
 const SAVE_FILE_NAME: &str = "save.ser";
 const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
@@ -64,20 +67,31 @@ impl eframe::App for HappyChartState {
             if let Some(ver) = ls.last_version_checked {
                 self.auto_update_seen_version = Some(ver);
             }
-            self.backup_path_text = self.program_options.backup_save_path.to_str().unwrap_or("./backups/").to_string();
-            if Local::now().signed_duration_since(ls.last_open_date).num_hours() >= 12 {
+
+            if Local::now()
+                .signed_duration_since(ls.last_open_date)
+                .num_hours()
+                >= 12
+            {
                 match get_release_list() {
                     Ok(list) => {
                         if let Some(release) = list.first() {
-                            if let Ok(greater_bump) = self_update::version::bump_is_greater(cargo_crate_version!(), &release.version) {
+                            if let Ok(greater_bump) = self_update::version::bump_is_greater(
+                                cargo_crate_version!(),
+                                &release.version,
+                            ) {
                                 if greater_bump {
-                                    println!("Update available! {} {} {}", release.name,release.version,release.date);
+                                    println!(
+                                        "Update available! {} {} {}",
+                                        release.name, release.version, release.date
+                                    );
                                     self.update_available = Some(release.clone());
                                     self.update_status = AutoUpdateStatus::OutOfDate;
-                                }
-                                else {
+                                } else {
                                     println!("No update available.");
-                                    self.update_status = AutoUpdateStatus::UpToDate(cargo_crate_version!().to_string());
+                                    self.update_status = AutoUpdateStatus::UpToDate(
+                                        cargo_crate_version!().to_string(),
+                                    );
                                 }
                             }
                         }
@@ -87,8 +101,13 @@ impl eframe::App for HappyChartState {
             }
 
             // check if user last backup day is +- 3 hours between the margin of their auto backup day count
-            if self.program_options.auto_backup_days > -1 && (Local::now().signed_duration_since(ls.last_backup_date).num_hours() - (self.program_options.auto_backup_days * 24) as i64).abs() >= 3 {
-                backup_program_state(frame,&self);
+            if self.program_options.auto_backup_days > -1
+                && Local::now()
+                    .signed_duration_since(ls.last_backup_date)
+                    .num_days()
+                    > self.program_options.auto_backup_days as i64
+            {
+                backup_program_state(frame, &self);
                 self.last_backup_date = Local::now();
             }
 
@@ -589,12 +608,19 @@ impl eframe::App for HappyChartState {
 
                 ui.horizontal(|ui| {
                     ui.label("Backup folder ");
-                    ui.text_edit_singleline(&mut self.backup_path_text);
-                    if let Ok(path) = PathBuf::try_from(self.backup_path_text.clone()) {
-                        self.program_options.backup_save_path = path;
-
+                    if ui.button("Browse path").on_hover_text(format!("Backup folder: {:?}", self.program_options.backup_save_path.clone().into_os_string())).clicked() {
+                        if let Some(path) = rfd::FileDialog::new()
+                            .set_directory("./")
+                            .set_title("Set the location where a backup will be stored")
+                            .pick_folder() {
+                            self.program_options.backup_save_path = path;
+                        }
                     }
+
                 });
+                if ui.button("Reset backup path").clicked() {
+                    self.program_options.backup_save_path = ProgramOptions::default().backup_save_path;
+                }
 
                 ui.horizontal(|ui| {
                     ui.label("Auto backup day count: ");
@@ -603,17 +629,22 @@ impl eframe::App for HappyChartState {
                     ).on_hover_text("The number of days to elapse between auto backups, if less than 0, no automatic backups will take place.");
                 });
 
+                ui.horizontal(|ui| {
+                    ui.label("Backup age before removal: ");
+                    ui.add(
+                        egui::DragValue::new(&mut self.program_options.backup_age_keep_days)
+                    ).on_hover_text("The number of days to elapse before deleting a backup, <1 = never remove");
+                });
+
                 if ui.button("Backup program state").clicked() {
-                    // TODO: Add a setting to allow backups to only be kept upto a specific count
                     backup_program_state(frame, &self);
                     self.last_backup_date = Local::now();
                 }
 
                 if ui.button("asdoijasd").clicked() {
+                    // temporary test button
                     println!("{:?}", self.get_backup_file_list());
                 }
-
-
 
                 if ui.button("Close Options Menu").clicked() {
                     self.showing_options_menu = false;

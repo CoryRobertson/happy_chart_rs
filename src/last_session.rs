@@ -1,5 +1,5 @@
-use chrono::{DateTime, Local};
 use crate::program_options::ProgramOptions;
+use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

@@ -27,9 +27,7 @@ impl AutoUpdateStatus {
             AutoUpdateStatus::Error(err) => {
                 format!("Error: {}", err)
             }
-            AutoUpdateStatus::OutOfDate => {
-                "Out of date".to_string()
-            }
+            AutoUpdateStatus::OutOfDate => "Out of date".to_string(),
         }
     }
 }

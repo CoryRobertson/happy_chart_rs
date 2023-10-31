@@ -1,16 +1,14 @@
-use std::alloc::System;
 use crate::auto_update_status::AutoUpdateStatus;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::program_options::ProgramOptions;
+use crate::BACKUP_FILENAME_PREFIX;
+use chrono::{DateTime, Local};
+use self_update::update::Release;
 use self_update::Status;
 use std::cell::Cell;
 use std::fs;
-use std::fs::{DirEntry, File};
+use std::fs::DirEntry;
 use std::thread::JoinHandle;
-use std::time::SystemTime;
-use chrono::{DateTime, Local};
-use self_update::update::Release;
-use crate::BACKUP_FILENAME_PREFIX;
 
 #[derive(Default)]
 pub struct HappyChartState {
@@ -34,10 +32,10 @@ pub struct HappyChartState {
     /// This variable will determine if an update message should be shown, if they have already seen the message, and ignored it then we will not tell them again.
     pub auto_update_seen_version: Option<String>,
 
-    pub backup_path_text: String,
-
+    /// The last date that a backup was taken
     pub last_backup_date: DateTime<Local>,
 
+    /// A string of text to search through all day stats to check if they contain this string, the stats are highlighted when they contain it
     pub filter_term: String,
 }
 
@@ -57,14 +55,12 @@ impl HappyChartState {
             last_open_date: Local::now(),
             update_available: None,
             auto_update_seen_version: None,
-            backup_path_text: "".into(),
             last_backup_date: Local::now(),
             filter_term: "".to_string(),
         }
     }
 
     pub fn get_backup_file_list(&self) -> Vec<DirEntry> {
-
         if self.program_options.backup_age_keep_days < 1 {
             return vec![];
         }
@@ -73,36 +69,42 @@ impl HappyChartState {
         println!("{:?}", self.program_options.backup_save_path);
         match fs::read_dir(&self.program_options.backup_save_path) {
             Ok(dir_list) => {
-                dir_list.filter_map(|item| {
-                    #[cfg(debug_assertions)]
-                    println!("{:?}", item);
-                    item.ok()
-                }).filter(|entry| {
-                    if let Some(f_name) = entry.file_name().to_str() {
-                        if f_name.contains(BACKUP_FILENAME_PREFIX) && f_name.contains(".zip") {
-                            if let Ok(meta_data) = entry.metadata() {
-                                if let Ok(created_time) = meta_data.created() {
-                                    if let Ok(dur) = SystemTime::now().duration_since(created_time) {
-                                        let days = (((dur.as_secs() / 60) / 60) / 24) as i32;
+                dir_list
+                    .filter_map(|item| {
+                        #[cfg(debug_assertions)]
+                        println!("{:?}", item);
+                        item.ok()
+                    })
+                    .filter(|entry| {
+                        if let Some(f_name) = entry.file_name().to_str() {
+                            if f_name.contains(BACKUP_FILENAME_PREFIX) && f_name.contains(".zip") {
+                                if let Ok(meta_data) = entry.metadata() {
+                                    if let Ok(created_time) = meta_data.created() {
+                                        let dt: DateTime<Local> = created_time.clone().into();
+                                        let days =
+                                            Local::now().signed_duration_since(dt).num_days();
                                         #[cfg(debug_assertions)]
-                                        println!("{} age: {}",f_name ,days);
-
-                                        days > self.program_options.backup_age_keep_days
-                                    } else { false }
-                                } else { false }
-                            } else { false }
-                        } else { false }
-                        // there has to be a better way to do this ??
-                    } else {
-                        false
-                    }
-
-                }).collect::<Vec<DirEntry>>()
+                                        println!("{} age: {}", f_name, days);
+                                        days > self.program_options.backup_age_keep_days as i64
+                                    } else {
+                                        false
+                                    }
+                                } else {
+                                    false
+                                }
+                            } else {
+                                false
+                            }
+                            // there has to be a better way to do this ??
+                        } else {
+                            false
+                        }
+                    })
+                    .collect::<Vec<DirEntry>>()
             }
             Err(_) => {
                 vec![]
             }
         }
     }
-
 }

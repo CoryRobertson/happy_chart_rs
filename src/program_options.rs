@@ -1,6 +1,6 @@
-use std::path::PathBuf;
 use crate::color_setting::ColorSettings;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]

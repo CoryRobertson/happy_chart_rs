@@ -4,17 +4,17 @@ use crate::happy_chart_state::HappyChartState;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::last_session::LastSession;
 use crate::{BACKUP_FILENAME_PREFIX, LAST_SESSION_FILE_NAME, NEW_SAVE_FILE_NAME, SAVE_FILE_NAME};
+use chrono::{DateTime, Datelike, Local};
 use eframe::{egui, Frame};
+use self_update::update::Release;
 use self_update::{cargo_crate_version, Status};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::{fs, thread};
 use std::thread::JoinHandle;
-use chrono::{Datelike, DateTime, Local};
-use self_update::update::Release;
-use zip::CompressionMethod;
+use std::{fs, thread};
 use zip::write::FileOptions;
+use zip::CompressionMethod;
 
 /// Calculates the x coordinate for each graph point
 #[deprecated]
@@ -48,27 +48,37 @@ pub fn distance(x1: &f32, y1: &f32, x2: &f32, y2: &f32) -> f32 {
 
 /// Quit function run when the user clicks the quit button
 pub fn quit(frame: &mut Frame, app: &HappyChartState) {
-
     save_program_state(frame, app);
 
     frame.close();
 }
 
 fn get_backup_file_name(time: &DateTime<Local>) -> String {
-    format!("{}{}-{}-{}.zip",BACKUP_FILENAME_PREFIX,time.month(),time.day(),time.year())
+    format!(
+        "{}{}-{}-{}.zip",
+        BACKUP_FILENAME_PREFIX,
+        time.month(),
+        time.day(),
+        time.year()
+    )
 }
 
-pub fn backup_program_state(frame: &mut Frame,app: &HappyChartState) {
+pub fn backup_program_state(frame: &mut Frame, app: &HappyChartState) {
     let time = Local::now();
     save_program_state(frame, app);
     let _ = fs::create_dir_all(&app.program_options.backup_save_path);
     let archive_file_name = get_backup_file_name(&time);
-    let file = File::create(app.program_options.backup_save_path.clone().join(Path::new(&archive_file_name)));
+    let file = File::create(
+        app.program_options
+            .backup_save_path
+            .clone()
+            .join(Path::new(&archive_file_name)),
+    );
     let mut arch = zip::ZipWriter::new(file.unwrap());
     let options = FileOptions::default().compression_method(CompressionMethod::Deflated);
     match File::open(SAVE_FILE_NAME) {
         Ok(mut old_save_file) => {
-            let _ = arch.start_file(SAVE_FILE_NAME,options.clone());
+            let _ = arch.start_file(SAVE_FILE_NAME, options.clone());
             let mut old_file_bytes = vec![];
             let _ = old_save_file.read_to_end(&mut old_file_bytes);
             let _ = arch.write_all(&old_file_bytes);
@@ -79,18 +89,18 @@ pub fn backup_program_state(frame: &mut Frame,app: &HappyChartState) {
     }
     let mut new_save_file = File::open(NEW_SAVE_FILE_NAME).unwrap();
     let mut last_session_file = File::open(LAST_SESSION_FILE_NAME).unwrap();
-    let _ = arch.start_file(NEW_SAVE_FILE_NAME,options.clone());
+    let _ = arch.start_file(NEW_SAVE_FILE_NAME, options.clone());
     let mut new_file_bytes = vec![];
     let _ = new_save_file.read_to_end(&mut new_file_bytes);
     let _ = arch.write_all(&new_file_bytes);
-    let _ = arch.start_file(LAST_SESSION_FILE_NAME,options);
+    let _ = arch.start_file(LAST_SESSION_FILE_NAME, options);
     let mut last_session_file_bytes = vec![];
     let _ = last_session_file.read_to_end(&mut last_session_file_bytes);
     let _ = arch.write_all(&last_session_file_bytes);
     let _ = arch.finish();
 }
 
-pub fn save_program_state(frame: &mut Frame,app: &HappyChartState) {
+pub fn save_program_state(frame: &mut Frame, app: &HappyChartState) {
     let days = &app.days;
     let last_session = LastSession {
         window_size: frame.info().window_info.size.into(),
@@ -99,11 +109,10 @@ pub fn save_program_state(frame: &mut Frame,app: &HappyChartState) {
         last_open_date: Local::now(),
         last_version_checked: {
             match &app.auto_update_seen_version {
-                None => { None }
-                Some(version) => {
-                    Some(version.to_string())
-                }
-            }},
+                None => None,
+                Some(version) => Some(version.to_string()),
+            }
+        },
         last_backup_date: app.last_backup_date,
     };
 
@@ -175,14 +184,15 @@ pub fn update_program() -> JoinHandle<Result<Status, String>> {
     })
 }
 
-pub fn get_release_list() -> Result<Vec<Release>,Box<dyn std::error::Error>> {
+pub fn get_release_list() -> Result<Vec<Release>, Box<dyn std::error::Error>> {
     let list = self_update::backends::github::ReleaseList::configure()
         .repo_owner("CoryRobertson")
         .repo_name("happy_chart_rs")
-        .build()?.fetch()?;
+        .build()?
+        .fetch()?;
     #[cfg(debug_assertions)]
     println!("{:?}", list);
-        Ok(list)
+    Ok(list)
 }
 
 /// Reads the last session file, if exists, returns the deserialized contents, if it doesnt exist, returns a default LastSession struct.
