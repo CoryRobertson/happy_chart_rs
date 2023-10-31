@@ -24,12 +24,12 @@ use crate::common::{
 use crate::egui::Layout;
 use crate::happy_chart_state::HappyChartState;
 use crate::improved_daystat::ImprovedDayStat;
+use crate::program_options::ProgramOptions;
 use chrono::{Days, Local};
 use eframe::emath::Pos2;
 use eframe::{egui, Frame, NativeOptions};
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke, Vec2};
 use self_update::{cargo_crate_version, Status};
-use crate::program_options::ProgramOptions;
 
 const SAVE_FILE_NAME: &str = "save.ser";
 const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
@@ -73,30 +73,26 @@ impl eframe::App for HappyChartState {
                 .num_hours()
                 >= 12
             {
-                match get_release_list() {
-                    Ok(list) => {
-                        if let Some(release) = list.first() {
-                            if let Ok(greater_bump) = self_update::version::bump_is_greater(
-                                cargo_crate_version!(),
-                                &release.version,
-                            ) {
-                                if greater_bump {
-                                    println!(
-                                        "Update available! {} {} {}",
-                                        release.name, release.version, release.date
-                                    );
-                                    self.update_available = Some(release.clone());
-                                    self.update_status = AutoUpdateStatus::OutOfDate;
-                                } else {
-                                    println!("No update available.");
-                                    self.update_status = AutoUpdateStatus::UpToDate(
-                                        cargo_crate_version!().to_string(),
-                                    );
-                                }
+                if let Ok(list) = get_release_list() {
+                    if let Some(release) = list.first() {
+                        if let Ok(greater_bump) = self_update::version::bump_is_greater(
+                            cargo_crate_version!(),
+                            &release.version,
+                        ) {
+                            if greater_bump {
+                                println!(
+                                    "Update available! {} {} {}",
+                                    release.name, release.version, release.date
+                                );
+                                self.update_available = Some(release.clone());
+                                self.update_status = AutoUpdateStatus::OutOfDate;
+                            } else {
+                                println!("No update available.");
+                                self.update_status =
+                                    AutoUpdateStatus::UpToDate(cargo_crate_version!().to_string());
                             }
                         }
                     }
-                    Err(_) => {}
                 }
             }
 
@@ -107,7 +103,7 @@ impl eframe::App for HappyChartState {
                     .num_days()
                     > self.program_options.auto_backup_days as i64
             {
-                backup_program_state(frame, &self);
+                backup_program_state(frame, self);
                 self.last_backup_date = Local::now();
             }
 
@@ -421,6 +417,10 @@ impl eframe::App for HappyChartState {
                         self.showing_options_menu = true;
                     }
 
+                    if !self.showing_about_page && ui.button("About").clicked() {
+                        self.showing_about_page = true;
+                    }
+
                     if ui.button("Save Screenshot").clicked() {
                         frame.request_screenshot();
                     }
@@ -447,23 +447,20 @@ impl eframe::App for HappyChartState {
                         None => {}
                         Some(thread) => {
                             if thread.is_finished() {
-                                match thread.join() {
-                                    Ok(res) => match res {
-                                        Ok(status) => match status {
-                                            Status::UpToDate(ver) => {
-                                                self.update_status =
-                                                    AutoUpdateStatus::UpToDate(ver);
-                                            }
-                                            Status::Updated(ver) => {
-                                                self.update_status = AutoUpdateStatus::Updated(ver);
-                                            }
-                                        },
-                                        Err(err) => {
-                                            self.update_status = AutoUpdateStatus::Error(err);
+                                if let Ok(res) = thread.join() { match res {
+                                    Ok(status) => match status {
+                                        Status::UpToDate(ver) => {
+                                            self.update_status =
+                                                AutoUpdateStatus::UpToDate(ver);
+                                        }
+                                        Status::Updated(ver) => {
+                                            self.update_status = AutoUpdateStatus::Updated(ver);
                                         }
                                     },
-                                    Err(_) => {}
-                                }
+                                    Err(err) => {
+                                        self.update_status = AutoUpdateStatus::Error(err);
+                                    }
+                                } }
                             } else {
                                 self.update_thread.replace(Some(thread));
                                 self.update_status = AutoUpdateStatus::Checking;
@@ -637,7 +634,7 @@ impl eframe::App for HappyChartState {
                 });
 
                 if ui.button("Backup program state").clicked() {
-                    backup_program_state(frame, &self);
+                    backup_program_state(frame, self);
                     self.last_backup_date = Local::now();
                 }
 
@@ -648,6 +645,19 @@ impl eframe::App for HappyChartState {
 
                 if ui.button("Close Options Menu").clicked() {
                     self.showing_options_menu = false;
+                }
+            });
+        }
+
+        if self.showing_about_page {
+            egui::Window::new("About").show(ctx, |ui| {
+                ui.label(format!("Cargo crate version: {}", cargo_crate_version!()));
+                ui.label(format!("Git describe: {}", GIT_DESCRIBE));
+                ui.label(format!("BUILD_TIMESTAMP: {}", BUILD_TIMESTAMP));
+                ui.label(format!("Day stats recorded: {}", self.days.len()));
+
+                if ui.button("Close").clicked() {
+                    self.showing_about_page = false;
                 }
             });
         }

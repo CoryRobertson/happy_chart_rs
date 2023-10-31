@@ -37,6 +37,8 @@ pub struct HappyChartState {
 
     /// A string of text to search through all day stats to check if they contain this string, the stats are highlighted when they contain it
     pub filter_term: String,
+
+    pub showing_about_page: bool,
 }
 
 impl HappyChartState {
@@ -57,6 +59,7 @@ impl HappyChartState {
             auto_update_seen_version: None,
             last_backup_date: Local::now(),
             filter_term: "".to_string(),
+            showing_about_page: false,
         }
     }
 
@@ -80,11 +83,13 @@ impl HappyChartState {
                             if f_name.contains(BACKUP_FILENAME_PREFIX) && f_name.contains(".zip") {
                                 if let Ok(meta_data) = entry.metadata() {
                                     if let Ok(created_time) = meta_data.created() {
-                                        let dt: DateTime<Local> = created_time.clone().into();
+                                        let dt: DateTime<Local> = created_time.into();
                                         let days =
                                             Local::now().signed_duration_since(dt).num_days();
+                                        let hours =
+                                            Local::now().signed_duration_since(dt).num_hours();
                                         #[cfg(debug_assertions)]
-                                        println!("{} age: {}", f_name, days);
+                                        println!("{} age: {} days hours: {}", f_name, days, hours);
                                         days > self.program_options.backup_age_keep_days as i64
                                     } else {
                                         false

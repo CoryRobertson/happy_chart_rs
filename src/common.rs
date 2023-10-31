@@ -78,7 +78,7 @@ pub fn backup_program_state(frame: &mut Frame, app: &HappyChartState) {
     let options = FileOptions::default().compression_method(CompressionMethod::Deflated);
     match File::open(SAVE_FILE_NAME) {
         Ok(mut old_save_file) => {
-            let _ = arch.start_file(SAVE_FILE_NAME, options.clone());
+            let _ = arch.start_file(SAVE_FILE_NAME, options);
             let mut old_file_bytes = vec![];
             let _ = old_save_file.read_to_end(&mut old_file_bytes);
             let _ = arch.write_all(&old_file_bytes);
@@ -89,7 +89,7 @@ pub fn backup_program_state(frame: &mut Frame, app: &HappyChartState) {
     }
     let mut new_save_file = File::open(NEW_SAVE_FILE_NAME).unwrap();
     let mut last_session_file = File::open(LAST_SESSION_FILE_NAME).unwrap();
-    let _ = arch.start_file(NEW_SAVE_FILE_NAME, options.clone());
+    let _ = arch.start_file(NEW_SAVE_FILE_NAME, options);
     let mut new_file_bytes = vec![];
     let _ = new_save_file.read_to_end(&mut new_file_bytes);
     let _ = arch.write_all(&new_file_bytes);
@@ -108,10 +108,9 @@ pub fn save_program_state(frame: &mut Frame, app: &HappyChartState) {
         open_modulus: app.open_modulus + 1,
         last_open_date: Local::now(),
         last_version_checked: {
-            match &app.auto_update_seen_version {
-                None => None,
-                Some(version) => Some(version.to_string()),
-            }
+            app.auto_update_seen_version
+                .as_ref()
+                .map(|version| version.to_string())
         },
         last_backup_date: app.last_backup_date,
     };
