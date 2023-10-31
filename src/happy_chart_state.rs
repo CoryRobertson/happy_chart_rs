@@ -37,6 +37,8 @@ pub struct HappyChartState {
     pub backup_path_text: String,
 
     pub last_backup_date: DateTime<Local>,
+
+    pub filter_term: String,
 }
 
 impl HappyChartState {
@@ -57,6 +59,7 @@ impl HappyChartState {
             auto_update_seen_version: None,
             backup_path_text: "".into(),
             last_backup_date: Local::now(),
+            filter_term: "".to_string(),
         }
     }
 
@@ -83,6 +86,7 @@ impl HappyChartState {
                                         let days = (((dur.as_secs() / 60) / 60) / 24) as i32;
                                         #[cfg(debug_assertions)]
                                         println!("{} age: {}",f_name ,days);
+
                                         days > self.program_options.backup_age_keep_days
                                     } else { false }
                                 } else { false }

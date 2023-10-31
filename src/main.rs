@@ -25,7 +25,7 @@ use crate::improved_daystat::ImprovedDayStat;
 use chrono::{Days, Local};
 use eframe::emath::Pos2;
 use eframe::{egui, Frame, NativeOptions};
-use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke};
+use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke, Vec2};
 use self_update::{cargo_crate_version, Status};
 
 const SAVE_FILE_NAME: &str = "save.ser";
@@ -133,6 +133,11 @@ impl eframe::App for HappyChartState {
             if ui.button("Remove day").clicked() && !self.days.is_empty() {
                 self.days.remove(self.days.len() - 1);
             }
+
+            ui.horizontal(|ui| {
+                ui.label("Search: ");
+                ui.add_sized(Vec2::new(120.0,20.0),egui::widgets::text_edit::TextEdit::singleline(&mut self.filter_term));
+            });
 
             let mouse_pos = match ctx.pointer_hover_pos() {
                 None => Pos2::new(0.0, 0.0),
@@ -266,10 +271,17 @@ impl eframe::App for HappyChartState {
                         self.program_options.daystat_circle_outline_radius,
                         Color32::BLACK,
                     );
+
+                    let color = if !self.filter_term.is_empty() &&day.note.contains(&self.filter_term) {
+                        Color32::LIGHT_BLUE
+                    } else {
+                        color_setting::get_shape_color_from_rating(day.rating)
+                    };
+
                     ui.painter().circle_filled(
                         Pos2::new(x, y),
                         self.program_options.daystat_circle_size,
-                        color_setting::get_shape_color_from_rating(day.rating),
+                        color,
                     );
 
                     i += 1;
@@ -600,6 +612,8 @@ impl eframe::App for HappyChartState {
                 if ui.button("asdoijasd").clicked() {
                     println!("{:?}", self.get_backup_file_list());
                 }
+
+
 
                 if ui.button("Close Options Menu").clicked() {
                     self.showing_options_menu = false;
