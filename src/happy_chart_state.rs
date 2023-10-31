@@ -1,11 +1,16 @@
+use std::alloc::System;
 use crate::auto_update_status::AutoUpdateStatus;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::program_options::ProgramOptions;
 use self_update::Status;
 use std::cell::Cell;
+use std::fs;
+use std::fs::{DirEntry, File};
 use std::thread::JoinHandle;
+use std::time::SystemTime;
 use chrono::{DateTime, Local};
 use self_update::update::Release;
+use crate::BACKUP_FILENAME_PREFIX;
 
 #[derive(Default)]
 pub struct HappyChartState {
@@ -54,4 +59,46 @@ impl HappyChartState {
             last_backup_date: Local::now(),
         }
     }
+
+    pub fn get_backup_file_list(&self) -> Vec<DirEntry> {
+
+        if self.program_options.backup_age_keep_days < 1 {
+            return vec![];
+        }
+
+        #[cfg(debug_assertions)]
+        println!("{:?}", self.program_options.backup_save_path);
+        match fs::read_dir(&self.program_options.backup_save_path) {
+            Ok(dir_list) => {
+                dir_list.filter_map(|item| {
+                    #[cfg(debug_assertions)]
+                    println!("{:?}", item);
+                    item.ok()
+                }).filter(|entry| {
+                    if let Some(f_name) = entry.file_name().to_str() {
+                        if f_name.contains(BACKUP_FILENAME_PREFIX) && f_name.contains(".zip") {
+                            if let Ok(meta_data) = entry.metadata() {
+                                if let Ok(created_time) = meta_data.created() {
+                                    if let Ok(dur) = SystemTime::now().duration_since(created_time) {
+                                        let days = (((dur.as_secs() / 60) / 60) / 24) as i32;
+                                        #[cfg(debug_assertions)]
+                                        println!("{} age: {}",f_name ,days);
+                                        days > self.program_options.backup_age_keep_days
+                                    } else { false }
+                                } else { false }
+                            } else { false }
+                        } else { false }
+                        // there has to be a better way to do this ??
+                    } else {
+                        false
+                    }
+
+                }).collect::<Vec<DirEntry>>()
+            }
+            Err(_) => {
+                vec![]
+            }
+        }
+    }
+
 }

@@ -32,6 +32,8 @@ const SAVE_FILE_NAME: &str = "save.ser";
 const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
 const LAST_SESSION_FILE_NAME: &str = "happy_chart_last_session.ser";
 
+const BACKUP_FILENAME_PREFIX: &str = "happy_chart_backup_";
+
 fn main() {
     let native_options = NativeOptions {
         initial_window_size: Some(read_last_session_save_file().window_size.into()),
@@ -593,6 +595,10 @@ impl eframe::App for HappyChartState {
                     // TODO: Add a setting to allow backups to only be kept upto a specific count
                     backup_program_state(frame, &self);
                     self.last_backup_date = Local::now();
+                }
+
+                if ui.button("asdoijasd").clicked() {
+                    println!("{:?}", self.get_backup_file_list());
                 }
 
                 if ui.button("Close Options Menu").clicked() {

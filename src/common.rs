@@ -3,7 +3,7 @@ use crate::daystat::DayStat;
 use crate::happy_chart_state::HappyChartState;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::last_session::LastSession;
-use crate::{LAST_SESSION_FILE_NAME, NEW_SAVE_FILE_NAME, SAVE_FILE_NAME};
+use crate::{BACKUP_FILENAME_PREFIX, LAST_SESSION_FILE_NAME, NEW_SAVE_FILE_NAME, SAVE_FILE_NAME};
 use eframe::{egui, Frame};
 use self_update::{cargo_crate_version, Status};
 use std::fs::File;
@@ -11,7 +11,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::{fs, thread};
 use std::thread::JoinHandle;
-use chrono::{Datelike, Local};
+use chrono::{Datelike, DateTime, Local};
 use self_update::update::Release;
 use zip::CompressionMethod;
 use zip::write::FileOptions;
@@ -54,11 +54,15 @@ pub fn quit(frame: &mut Frame, app: &HappyChartState) {
     frame.close();
 }
 
+fn get_backup_file_name(time: &DateTime<Local>) -> String {
+    format!("{}{}-{}-{}.zip",BACKUP_FILENAME_PREFIX,time.month(),time.day(),time.year())
+}
+
 pub fn backup_program_state(frame: &mut Frame,app: &HappyChartState) {
     let time = Local::now();
     save_program_state(frame, app);
     let _ = fs::create_dir_all(&app.program_options.backup_save_path);
-    let archive_file_name = format!("happy_chart_backup_{}-{}-{}.zip",time.month(),time.day(),time.year());
+    let archive_file_name = get_backup_file_name(&time);
     let file = File::create(app.program_options.backup_save_path.clone().join(Path::new(&archive_file_name)));
     let mut arch = zip::ZipWriter::new(file.unwrap());
     let options = FileOptions::default().compression_method(CompressionMethod::Deflated);

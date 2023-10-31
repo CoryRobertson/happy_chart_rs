@@ -21,6 +21,7 @@ pub struct ProgramOptions {
     pub color_settings: ColorSettings,
     pub backup_save_path: PathBuf,
     pub auto_backup_days: i32,
+    pub backup_age_keep_days: i32,
 }
 
 impl Default for ProgramOptions {
@@ -42,6 +43,7 @@ impl Default for ProgramOptions {
             color_settings: Default::default(),
             backup_save_path: PathBuf::from("./backups/"),
             auto_backup_days: -1,
+            backup_age_keep_days: 30,
         }
     }
 }
