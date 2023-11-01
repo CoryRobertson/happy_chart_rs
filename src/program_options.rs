@@ -12,15 +12,19 @@ pub struct ProgramOptions {
     pub x_offset_slider_speed: f32,
     pub day_line_height_offset: f32,
     pub day_stat_height_offset: f32,
+    /// The radius that is used to determine if the user is mousing over a day stat
     pub mouse_over_radius: f32,
     pub daystat_circle_outline_radius: f32,
     pub daystat_circle_size: f32,
     pub draw_daystat_circles: bool,
     pub draw_daystat_lines: bool,
+    /// Mostly unused, but most likely will be used to determine if we should try to update the program every N number of launches
     pub update_modulus: i32,
     pub color_settings: ColorSettings,
     pub backup_save_path: PathBuf,
+    /// Days to elapse FULLY between automatically backing up the program state to a zip
     pub auto_backup_days: i32,
+    /// Number of days FULLY elapsed before a backup is considered old and will be deleted
     pub backup_age_keep_days: i32,
 }
 
@@ -43,7 +47,7 @@ impl Default for ProgramOptions {
             color_settings: Default::default(),
             backup_save_path: PathBuf::from("./backups/"),
             auto_backup_days: -1,
-            backup_age_keep_days: 30,
+            backup_age_keep_days: -1,
         }
     }
 }

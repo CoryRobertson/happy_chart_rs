@@ -68,6 +68,8 @@ impl eframe::App for HappyChartState {
                 self.auto_update_seen_version = Some(ver);
             }
 
+            // TODO: on startup here we should remove old backups if they exist
+
             if Local::now()
                 .signed_duration_since(ls.last_open_date)
                 .num_hours()
@@ -630,7 +632,7 @@ impl eframe::App for HappyChartState {
                     ui.label("Backup age before removal: ");
                     ui.add(
                         egui::DragValue::new(&mut self.program_options.backup_age_keep_days)
-                    ).on_hover_text("The number of days to elapse before deleting a backup, <1 = never remove");
+                    ).on_hover_text("The number of days to elapse before deleting a backup, < 0 = never remove");
                 });
 
                 if ui.button("Backup program state").clicked() {
@@ -651,10 +653,22 @@ impl eframe::App for HappyChartState {
 
         if self.showing_about_page {
             egui::Window::new("About").show(ctx, |ui| {
+                ui.heading("Happy Chart");
+                ui.label("A multi-purpose journaling software.");
+                ui.separator();
+                ui.label("Authors: Cory Robertson");
+                ui.label("License: GPL-3.0");
+                ui.horizontal(|ui| {
+                    ui.label("Github repository:");
+                    ui.hyperlink("https://github.com/CoryRobertson/happy_chart_rs");
+                });
+                ui.separator();
                 ui.label(format!("Cargo crate version: {}", cargo_crate_version!()));
                 ui.label(format!("Git describe: {}", GIT_DESCRIBE));
                 ui.label(format!("BUILD_TIMESTAMP: {}", BUILD_TIMESTAMP));
+                ui.separator();
                 ui.label(format!("Day stats recorded: {}", self.days.len()));
+                ui.separator();
 
                 if ui.button("Close").clicked() {
                     self.showing_about_page = false;

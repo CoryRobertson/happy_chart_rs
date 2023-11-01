@@ -4,7 +4,7 @@ version = "1.10.3"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "A subjective day quality charting program"
-keywords = ["happy","chart","mental-health","binary","executable"]
+keywords = ["happy","charting","mental-health","binary", "journal"]
 readme = "README.MD"
 repository = "https://github.com/CoryRobertson/happy_chart_rs"
 homepage = "https://github.com/CoryRobertson/happy_chart_rs"
@@ -31,7 +31,7 @@ self_update = { version = "0.39.0", features = ["archive-zip","compression-flate
 zip = "0.6.6"
 
 [build-dependencies]
-vergen = { version = "8.2.4", features = ["build","git","gitcl"] }
+vergen = { version = "8.2.5", features = ["build","git","gitcl"] }
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1.12"

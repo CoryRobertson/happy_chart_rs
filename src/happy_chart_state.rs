@@ -63,8 +63,17 @@ impl HappyChartState {
         }
     }
 
+    pub fn remove_old_backup_files(&self) {
+        let list = self.get_backup_file_list();
+
+        for entry in list {
+            let res = fs::remove_file(entry.path());
+            println!("Removing {:?}, result: {:?}", entry, res);
+        }
+    }
+
     pub fn get_backup_file_list(&self) -> Vec<DirEntry> {
-        if self.program_options.backup_age_keep_days < 1 {
+        if self.program_options.backup_age_keep_days < 0 {
             return vec![];
         }
 
@@ -89,7 +98,17 @@ impl HappyChartState {
                                         let hours =
                                             Local::now().signed_duration_since(dt).num_hours();
                                         #[cfg(debug_assertions)]
-                                        println!("{} age: {} days hours: {}", f_name, days, hours);
+                                        {
+                                            println!(
+                                                "{} age: {} days hours: {}",
+                                                f_name, days, hours
+                                            );
+                                            println!(
+                                                "{} > {}",
+                                                days,
+                                                self.program_options.backup_age_keep_days as i64
+                                            );
+                                        }
                                         days > self.program_options.backup_age_keep_days as i64
                                     } else {
                                         false

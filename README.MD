@@ -1,4 +1,7 @@
 # Happy Chart
+## A multipurpose daily journaling software
+
+
 Happy chart is a program I wrote using:
 - eframe
 - egui
@@ -22,6 +25,7 @@ I would also love to know if anyone uses this program, and what they do and don'
 - Automagic updating
 - Screenshotting system
 - Mild amount of customization and settings to play with
+- Automatic program data backups ( if enabled )
 
 ### Contributions and suggestions:
 I love working on this program, if you have any ideas, please feel free to send a pull request, or create an issue. I will always consider them!
