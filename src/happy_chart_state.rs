@@ -66,9 +66,16 @@ impl HappyChartState {
     pub fn remove_old_backup_files(&self) {
         let list = self.get_backup_file_list();
 
-        for entry in list {
-            let res = fs::remove_file(entry.path());
-            println!("Removing {:?}, result: {:?}", entry, res);
+        // only remove old backup files if the number of old backups exceeds the amount allowed
+        let mut removed_count = 0;
+        let number_to_remove = list.len() as i32 - self.program_options.number_of_kept_backups;
+        if list.len() > self.program_options.number_of_kept_backups as usize && self.program_options.number_of_kept_backups >= 0 {
+            for entry in list {
+                if removed_count >= number_to_remove { break; }
+                let res = fs::remove_file(entry.path());
+                removed_count += 1;
+                println!("Removing {:?}, result: {:?}", entry, res);
+            }
         }
     }
 
@@ -88,6 +95,7 @@ impl HappyChartState {
                         item.ok()
                     })
                     .filter(|entry| {
+                        let mut keep = false;
                         if let Some(f_name) = entry.file_name().to_str() {
                             if f_name.contains(BACKUP_FILENAME_PREFIX) && f_name.contains(".zip") {
                                 if let Ok(meta_data) = entry.metadata() {
@@ -103,26 +111,13 @@ impl HappyChartState {
                                                 "{} age: {} days hours: {}",
                                                 f_name, days, hours
                                             );
-                                            println!(
-                                                "{} > {}",
-                                                days,
-                                                self.program_options.backup_age_keep_days as i64
-                                            );
                                         }
-                                        days > self.program_options.backup_age_keep_days as i64
-                                    } else {
-                                        false
+                                        keep = days > self.program_options.backup_age_keep_days as i64;
                                     }
-                                } else {
-                                    false
                                 }
-                            } else {
-                                false
                             }
-                            // there has to be a better way to do this ??
-                        } else {
-                            false
                         }
+                        keep
                     })
                     .collect::<Vec<DirEntry>>()
             }

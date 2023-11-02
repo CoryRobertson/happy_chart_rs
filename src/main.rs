@@ -109,6 +109,8 @@ impl eframe::App for HappyChartState {
                 self.last_backup_date = Local::now();
             }
 
+            self.remove_old_backup_files();
+
             #[cfg(not(debug_assertions))]
             if self.open_modulus % self.program_options.update_modulus == 0
                 && self.program_options.update_modulus >= 1
@@ -635,14 +637,16 @@ impl eframe::App for HappyChartState {
                     ).on_hover_text("The number of days to elapse before deleting a backup, < 0 = never remove");
                 });
 
+                ui.horizontal(|ui| {
+                    ui.label("Number of stale backups before removal: ");
+                    ui.add(
+                        egui::DragValue::new(&mut self.program_options.number_of_kept_backups)
+                    ).on_hover_text("The minimum number of stale backups needed to be present in the backups folder before the program will remove any, -1 for disabled.");
+                });
+
                 if ui.button("Backup program state").clicked() {
                     backup_program_state(frame, self);
                     self.last_backup_date = Local::now();
-                }
-
-                if ui.button("asdoijasd").clicked() {
-                    // temporary test button
-                    println!("{:?}", self.get_backup_file_list());
                 }
 
                 if ui.button("Close Options Menu").clicked() {

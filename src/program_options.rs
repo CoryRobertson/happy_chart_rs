@@ -24,8 +24,10 @@ pub struct ProgramOptions {
     pub backup_save_path: PathBuf,
     /// Days to elapse FULLY between automatically backing up the program state to a zip
     pub auto_backup_days: i32,
-    /// Number of days FULLY elapsed before a backup is considered old and will be deleted
+    /// Number of days FULLY elapsed before a backup is considered stale and will be deleted when there are enough backups present
     pub backup_age_keep_days: i32,
+    /// The minimum number of backups before we try to automatically clean up stale backups
+    pub number_of_kept_backups: i32,
 }
 
 impl Default for ProgramOptions {
@@ -48,6 +50,7 @@ impl Default for ProgramOptions {
             backup_save_path: PathBuf::from("./backups/"),
             auto_backup_days: -1,
             backup_age_keep_days: -1,
+            number_of_kept_backups: -1,
         }
     }
 }
