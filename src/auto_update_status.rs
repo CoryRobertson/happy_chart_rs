@@ -17,7 +17,7 @@ impl AutoUpdateStatus {
     pub fn to_text(&self) -> String {
         match self {
             AutoUpdateStatus::Checking => "Checking".to_string(),
-            AutoUpdateStatus::NotChecked => "NotChecked".to_string(),
+            AutoUpdateStatus::NotChecked => "Not Checked".to_string(),
             AutoUpdateStatus::UpToDate(ver) => {
                 format!("Up to date: {}", ver)
             }

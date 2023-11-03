@@ -113,13 +113,6 @@ impl eframe::App for HappyChartState {
 
             self.remove_old_backup_files();
 
-            #[cfg(not(debug_assertions))]
-            if self.open_modulus % self.program_options.update_modulus == 0
-                && self.program_options.update_modulus >= 1
-            {
-                self.update_thread.replace(Some(update_program()));
-                self.open_modulus = 0;
-            }
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -379,6 +372,7 @@ impl eframe::App for HappyChartState {
                         }
                         if ui.button("Update happy chart").clicked() {
                             self.update_thread.replace(Some(update_program()));
+                            self.auto_update_seen_version = Some(release.version.to_string());
                         }
                         let mid_point_x = (ctx.screen_rect().width() / 2.0) - (250.0/2.0);
                         let quarter_point_y = ctx.screen_rect().height() / 4.0;
@@ -398,6 +392,14 @@ impl eframe::App for HappyChartState {
 
                     }
                 }
+                ui.horizontal(|ui| {
+                    if let Some(thread) = self.update_thread.get_mut() {
+                        if !thread.is_finished() {
+                            ui.label("Updating... ");
+                            ui.spinner();
+                        }
+                    }
+                });
             }
 
             // quit button layout
@@ -484,15 +486,15 @@ impl eframe::App for HappyChartState {
                     self.update_thread.replace(Some(update_program()));
                 }
 
-                ui.horizontal(|ui| {
-                    ui.label("Update rate: ");
-                    ui.add(egui::DragValue::new(
-                        &mut self.program_options.update_modulus,
-                    ))
-                    .on_hover_text(
-                        "Automatically try to update the program every X times the program opens, -1 for disabled, 1 for every launch",
-                    );
-                });
+                // ui.horizontal(|ui| {
+                //     ui.label("Update rate: ");
+                //     ui.add(egui::DragValue::new(
+                //         &mut self.program_options.update_modulus,
+                //     ))
+                //     .on_hover_text(
+                //         "Automatically try to update the program every X times the program opens, -1 for disabled, 1 for every launch",
+                //     );
+                // });
 
                 ui.horizontal(|ui| {
                     ui.label("Display day lines: ");
