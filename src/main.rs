@@ -152,19 +152,13 @@ impl eframe::App for HappyChartState {
                 ui.add_sized(Vec2::new(120.0,20.0),egui::widgets::text_edit::TextEdit::singleline(&mut self.filter_term));
             });
 
-            let mouse_pos = match ctx.pointer_hover_pos() {
-                None => Pos2::new(0.0, 0.0),
-                Some(a) => a,
-            };
+            let mouse_pos = ctx.pointer_hover_pos().map_or_else(|| Pos2::new(0.0, 0.0), |a| a);
 
             // click drag and zoom detection and handling
             {
                 let within_day_lines = {
                     let min_y: f32 = 220.0 - self.program_options.day_line_height_offset;
-                    match pointer_interact_pos {
-                        None => false,
-                        Some(pos) => pos.y >= min_y,
-                    }
+                    pointer_interact_pos.map_or(false, |pos| pos.y >= min_y)
                 };
 
                 if within_day_lines {
@@ -209,7 +203,7 @@ impl eframe::App for HappyChartState {
                         let fake_day = ImprovedDayStat {
                             rating: 0.0,
                             date: d.date.checked_add_days(Days::new(1)).unwrap_or_default(), // fake day that starts from where the first day is, with one day added
-                            note: "".to_string(),
+                            note: String::new(),
                         };
                         let y: f32 = 220.0 - self.program_options.day_line_height_offset;
                         let x = {
@@ -239,8 +233,8 @@ impl eframe::App for HappyChartState {
                     let x: f32 = improved_calculate_x(
                         &self.days,
                         day,
-                        &self.program_options.graph_x_scale,
-                        &self.program_options.x_offset,
+                        self.program_options.graph_x_scale,
+                        self.program_options.x_offset,
                     );
 
                     let y: f32 = day
@@ -270,8 +264,8 @@ impl eframe::App for HappyChartState {
                     let x: f32 = improved_calculate_x(
                         &self.days,
                         day,
-                        &self.program_options.graph_x_scale,
-                        &self.program_options.x_offset,
+                        self.program_options.graph_x_scale,
+                        self.program_options.x_offset,
                     );
                     let y: f32 = day
                         .rating
@@ -309,8 +303,8 @@ impl eframe::App for HappyChartState {
                 let x: f32 = improved_calculate_x(
                     &self.days,
                     day,
-                    &self.program_options.graph_x_scale,
-                    &self.program_options.x_offset,
+                    self.program_options.graph_x_scale,
+                    self.program_options.x_offset,
                 );
                 let y: f32 = day
                     .rating
@@ -322,7 +316,7 @@ impl eframe::App for HappyChartState {
 
                 let dist_max = self.program_options.mouse_over_radius; // maximum distance to consider a point being moused over
 
-                if distance(&mouse_pos.x, &mouse_pos.y, &x, &y) < dist_max && !moused_over {
+                if distance(mouse_pos.x, mouse_pos.y, x, y) < dist_max && !moused_over {
                     // draw text near by each coordinate point
                     moused_over = true;
 
@@ -693,7 +687,7 @@ impl eframe::App for HappyChartState {
                     "Auto update seen version: {}",
                     self.auto_update_seen_version
                         .clone()
-                        .unwrap_or("".to_string())
+                        .unwrap_or(String::new())
                 ));
                 ui.label(format!(
                     "Auto update status: {}",

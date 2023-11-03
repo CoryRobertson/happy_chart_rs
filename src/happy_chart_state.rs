@@ -47,7 +47,7 @@ impl HappyChartState {
             rating: 0.0,
             days: vec![],
             first_load: true,
-            note_input: "".to_string(),
+            note_input: String::new(),
             starting_length: 0,
             showing_options_menu: false,
             program_options: ProgramOptions::default(),
@@ -58,7 +58,7 @@ impl HappyChartState {
             update_available: None,
             auto_update_seen_version: None,
             last_backup_date: Local::now(),
-            filter_term: "".to_string(),
+            filter_term: String::new(),
             showing_about_page: false,
         }
     }

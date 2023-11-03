@@ -16,18 +16,18 @@ impl Default for AutoUpdateStatus {
 impl AutoUpdateStatus {
     pub fn to_text(&self) -> String {
         match self {
-            AutoUpdateStatus::Checking => "Checking".to_string(),
-            AutoUpdateStatus::NotChecked => "Not Checked".to_string(),
-            AutoUpdateStatus::UpToDate(ver) => {
+            Self::Checking => "Checking".to_string(),
+            Self::NotChecked => "Not Checked".to_string(),
+            Self::UpToDate(ver) => {
                 format!("Up to date: {}", ver)
             }
-            AutoUpdateStatus::Updated(ver) => {
+            Self::Updated(ver) => {
                 format!("Updated: {}", ver)
             }
-            AutoUpdateStatus::Error(err) => {
+            Self::Error(err) => {
                 format!("Error: {}", err)
             }
-            AutoUpdateStatus::OutOfDate => "Out of date".to_string(),
+            Self::OutOfDate => "Out of date".to_string(),
         }
     }
 }

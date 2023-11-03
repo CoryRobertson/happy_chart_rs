@@ -99,7 +99,7 @@ impl ImprovedDayStat {
     }
 
     /// Simply subtracts the two timestamps, giving you a distance the stats are apart. timestamp being a unix timestamp
-    pub fn get_hour_difference(&self, compare_day_stat: &ImprovedDayStat) -> i64 {
+    pub fn get_hour_difference(&self, compare_day_stat: &Self) -> i64 {
         (self.date.timestamp() - compare_day_stat.date.timestamp()).abs()
     }
 }

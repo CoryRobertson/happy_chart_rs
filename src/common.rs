@@ -22,10 +22,10 @@ use zip::CompressionMethod;
 /// Calculates the x coordinate for each graph point
 #[deprecated]
 #[allow(dead_code, deprecated)]
-fn calculate_x(days: &[DayStat], day: &DayStat, graph_xscale: &f32, xoffset: &i32) -> f32 {
+fn calculate_x(days: &[DayStat], day: &DayStat, graph_xscale: f32, xoffset: i32) -> f32 {
     let first_day = days.get(0).unwrap_or(day);
     let hours: f32 = day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
-    let x: f32 = (hours * graph_xscale) + *xoffset as f32;
+    let x: f32 = (hours * graph_xscale) + xoffset as f32;
     x
 }
 
@@ -33,17 +33,17 @@ fn calculate_x(days: &[DayStat], day: &DayStat, graph_xscale: &f32, xoffset: &i3
 pub fn improved_calculate_x(
     days: &[ImprovedDayStat],
     day: &ImprovedDayStat,
-    graph_x_scale: &f32,
-    x_offset: &f32,
+    graph_x_scale: f32,
+    x_offset: f32,
 ) -> f32 {
     let first_day = days.get(0).unwrap_or(day);
     let hours: f32 = day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
-    let x: f32 = (hours * graph_x_scale) + *x_offset;
+    let x: f32 = (hours * graph_x_scale) + x_offset;
     x
 }
 
 /// Returns the coordinate point distance between two points
-pub fn distance(x1: &f32, y1: &f32, x2: &f32, y2: &f32) -> f32 {
+pub fn distance(x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
     let g1 = (x2 - x1).powi(2);
     let g2 = (y2 - y1).powi(2);
     (g1 + g2).sqrt()
@@ -74,7 +74,7 @@ fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {
     )
 }
 
-pub fn backup_program_state(frame: &mut Frame, app: &HappyChartState, is_manual: bool) {
+pub fn backup_program_state(frame: &Frame, app: &HappyChartState, is_manual: bool) {
     let time = Local::now();
     save_program_state(frame, app);
     let _ = fs::create_dir_all(&app.program_options.backup_save_path);
@@ -87,16 +87,13 @@ pub fn backup_program_state(frame: &mut Frame, app: &HappyChartState, is_manual:
     );
     let mut arch = zip::ZipWriter::new(file.unwrap());
     let options = FileOptions::default().compression_method(CompressionMethod::Deflated);
-    match File::open(SAVE_FILE_NAME) {
-        Ok(mut old_save_file) => {
-            let _ = arch.start_file(SAVE_FILE_NAME, options);
-            let mut old_file_bytes = vec![];
-            let _ = old_save_file.read_to_end(&mut old_file_bytes);
-            let _ = arch.write_all(&old_file_bytes);
-        }
-        Err(_) => {
-            // no old save file present, so we can just
-        }
+    if let Ok(mut old_save_file) = File::open(SAVE_FILE_NAME) {
+        let _ = arch.start_file(SAVE_FILE_NAME, options);
+        let mut old_file_bytes = vec![];
+        let _ = old_save_file.read_to_end(&mut old_file_bytes);
+        let _ = arch.write_all(&old_file_bytes);
+    } else {
+        // no old save file present, so we can just
     }
     let mut new_save_file = File::open(NEW_SAVE_FILE_NAME).unwrap();
     let mut last_session_file = File::open(LAST_SESSION_FILE_NAME).unwrap();
@@ -111,7 +108,7 @@ pub fn backup_program_state(frame: &mut Frame, app: &HappyChartState, is_manual:
     let _ = arch.finish();
 }
 
-pub fn save_program_state(frame: &mut Frame, app: &HappyChartState) {
+pub fn save_program_state(frame: &Frame, app: &HappyChartState) {
     let days = &app.days;
     let last_session = LastSession {
         window_size: frame.info().window_info.size.into(),
@@ -121,7 +118,7 @@ pub fn save_program_state(frame: &mut Frame, app: &HappyChartState) {
         last_version_checked: {
             app.auto_update_seen_version
                 .as_ref()
-                .map(|version| version.to_string())
+                .map(std::string::ToString::to_string)
         },
         last_backup_date: app.last_backup_date,
     };
@@ -138,10 +135,10 @@ pub fn save_program_state(frame: &mut Frame, app: &HappyChartState) {
 
     match last_session_save_file.write_all(session_ser.as_bytes()) {
         Ok(_) => {
-            println!("successfully wrote to last_session_save")
+            println!("successfully wrote to last_session_save");
         }
         Err(_) => {
-            println!("failed to write to last_session_save")
+            println!("failed to write to last_session_save");
         }
     }
 
@@ -163,13 +160,13 @@ pub fn save_program_state(frame: &mut Frame, app: &HappyChartState) {
             println!(
                 "successfully wrote to {:?}!",
                 save_path.file_name().unwrap_or_default()
-            )
+            );
         }
         Err(_) => {
             println!(
                 "failed to write to {:?}",
                 save_path.file_name().unwrap_or_default()
-            )
+            );
         }
     }
 }
@@ -205,7 +202,7 @@ pub fn get_release_list() -> Result<Vec<Release>, Box<dyn std::error::Error>> {
     Ok(list)
 }
 
-/// Reads the last session file, if exists, returns the deserialized contents, if it doesnt exist, returns a default LastSession struct.
+/// Reads the last session file, if exists, returns the deserialized contents, if it doesnt exist, returns a default `LastSession` struct.
 pub fn read_last_session_save_file() -> LastSession {
     let path = Path::new(LAST_SESSION_FILE_NAME);
 
@@ -240,7 +237,7 @@ pub fn read_last_session_save_file() -> LastSession {
     serde_json::from_str(&s).unwrap_or_default() // return the deserialized struct
 }
 
-/// Reads the save file, if found, returns the vector full of all the DayStats
+/// Reads the save file, if found, returns the vector full of all the `DayStats`
 pub fn read_save_file() -> Vec<ImprovedDayStat> {
     let new_path = PathBuf::from(NEW_SAVE_FILE_NAME);
     let path = Path::new(SAVE_FILE_NAME);

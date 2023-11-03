@@ -46,7 +46,7 @@ impl Default for ProgramOptions {
             draw_daystat_circles: true,
             draw_daystat_lines: true,
             update_modulus: -1,
-            color_settings: Default::default(),
+            color_settings: ColorSettings::default(),
             backup_save_path: PathBuf::from("./backups/"),
             auto_backup_days: -1,
             backup_age_keep_days: -1,

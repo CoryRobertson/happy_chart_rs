@@ -17,7 +17,7 @@ pub struct DayStat {
 }
 
 impl DayStat {
-    /// Returns the date of this DayStat modified to pacific time, this can be made to support more time zones if needed.
+    /// Returns the date of this `DayStat` modified to pacific time, this can be made to support more time zones if needed.
     pub fn get_date_time(&self) -> DateTime<Tz> {
         // pacific time zone conversion
         let utc = DateTime::<Utc>::from_utc(
@@ -29,7 +29,7 @@ impl DayStat {
     }
 
     /// Returns the difference in hours in the form of an absolute value, bit of a bad name as it really just subtracts the utc values.
-    pub fn get_hour_difference(&self, compare_day_stat: &DayStat) -> i64 {
+    pub fn get_hour_difference(&self, compare_day_stat: &Self) -> i64 {
         (self.date - compare_day_stat.date).abs()
     }
 }
