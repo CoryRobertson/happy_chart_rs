@@ -674,6 +674,11 @@ impl eframe::App for HappyChartState {
                 ui.label(format!("BUILD_TIMESTAMP: {}", BUILD_TIMESTAMP));
                 ui.separator();
                 ui.label(format!("Day stats recorded: {}", self.days.len()));
+                ui.label(format!("Last backup date: {}", self.last_backup_date));
+                ui.label(format!("Last open date: {}", self.last_open_date));
+                ui.label(format!("Auto update seen version: {}", self.auto_update_seen_version.clone().unwrap_or("".to_string())));
+                ui.label(format!("Auto update status: {}", &self.update_status.to_text()));
+
                 ui.separator();
 
                 if ui.button("Close").clicked() {
