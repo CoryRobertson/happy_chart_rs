@@ -37,6 +37,10 @@ const LAST_SESSION_FILE_NAME: &str = "happy_chart_last_session.ser";
 
 const BACKUP_FILENAME_PREFIX: &str = "happy_chart_backup_";
 
+const MANUAL_BACKUP_SUFFIX: &str = "_manual";
+
+const BACKUP_FILE_EXTENSION: &str = "zip";
+
 fn main() {
     let native_options = NativeOptions {
         initial_window_size: Some(read_last_session_save_file().window_size.into()),
@@ -67,8 +71,6 @@ impl eframe::App for HappyChartState {
             if let Some(ver) = ls.last_version_checked {
                 self.auto_update_seen_version = Some(ver);
             }
-
-            // TODO: on startup here we should remove old backups if they exist
 
             if Local::now()
                 .signed_duration_since(ls.last_open_date)
@@ -105,7 +107,7 @@ impl eframe::App for HappyChartState {
                     .num_days()
                     > self.program_options.auto_backup_days as i64
             {
-                backup_program_state(frame, self);
+                backup_program_state(frame, self, false);
                 self.last_backup_date = Local::now();
             }
 
@@ -645,7 +647,7 @@ impl eframe::App for HappyChartState {
                 });
 
                 if ui.button("Backup program state").clicked() {
-                    backup_program_state(frame, self);
+                    backup_program_state(frame, self, true);
                     self.last_backup_date = Local::now();
                 }
 

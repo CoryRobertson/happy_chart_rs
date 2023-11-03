@@ -3,7 +3,7 @@ use crate::daystat::DayStat;
 use crate::happy_chart_state::HappyChartState;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::last_session::LastSession;
-use crate::{BACKUP_FILENAME_PREFIX, LAST_SESSION_FILE_NAME, NEW_SAVE_FILE_NAME, SAVE_FILE_NAME};
+use crate::{BACKUP_FILE_EXTENSION, BACKUP_FILENAME_PREFIX, LAST_SESSION_FILE_NAME, MANUAL_BACKUP_SUFFIX, NEW_SAVE_FILE_NAME, SAVE_FILE_NAME};
 use chrono::{DateTime, Datelike, Local};
 use eframe::{egui, Frame};
 use self_update::update::Release;
@@ -53,21 +53,23 @@ pub fn quit(frame: &mut Frame, app: &HappyChartState) {
     frame.close();
 }
 
-fn get_backup_file_name(time: &DateTime<Local>) -> String {
+fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {
     format!(
-        "{}{}-{}-{}.zip",
+        "{}{}-{}-{}{}.{}",
         BACKUP_FILENAME_PREFIX,
         time.month(),
         time.day(),
-        time.year()
+        time.year(),
+        {if is_manual { MANUAL_BACKUP_SUFFIX } else {""} },
+        BACKUP_FILE_EXTENSION
     )
 }
 
-pub fn backup_program_state(frame: &mut Frame, app: &HappyChartState) {
+pub fn backup_program_state(frame: &mut Frame, app: &HappyChartState, is_manual: bool) {
     let time = Local::now();
     save_program_state(frame, app);
     let _ = fs::create_dir_all(&app.program_options.backup_save_path);
-    let archive_file_name = get_backup_file_name(&time);
+    let archive_file_name = get_backup_file_name(&time,is_manual);
     let file = File::create(
         app.program_options
             .backup_save_path

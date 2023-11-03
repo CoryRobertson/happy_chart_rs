@@ -1,7 +1,7 @@
 use crate::auto_update_status::AutoUpdateStatus;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::program_options::ProgramOptions;
-use crate::BACKUP_FILENAME_PREFIX;
+use crate::{BACKUP_FILENAME_PREFIX, BACKUP_FILE_EXTENSION, MANUAL_BACKUP_SUFFIX};
 use chrono::{DateTime, Local};
 use self_update::update::Release;
 use self_update::Status;
@@ -69,9 +69,13 @@ impl HappyChartState {
         // only remove old backup files if the number of old backups exceeds the amount allowed
         let mut removed_count = 0;
         let number_to_remove = list.len() as i32 - self.program_options.number_of_kept_backups;
-        if list.len() > self.program_options.number_of_kept_backups as usize && self.program_options.number_of_kept_backups >= 0 {
+        if list.len() > self.program_options.number_of_kept_backups as usize
+            && self.program_options.number_of_kept_backups >= 0
+        {
             for entry in list {
-                if removed_count >= number_to_remove { break; }
+                if removed_count >= number_to_remove {
+                    break;
+                }
                 let res = fs::remove_file(entry.path());
                 removed_count += 1;
                 println!("Removing {:?}, result: {:?}", entry, res);
@@ -87,40 +91,36 @@ impl HappyChartState {
         #[cfg(debug_assertions)]
         println!("{:?}", self.program_options.backup_save_path);
         match fs::read_dir(&self.program_options.backup_save_path) {
-            Ok(dir_list) => {
-                dir_list
-                    .filter_map(|item| {
-                        #[cfg(debug_assertions)]
-                        println!("{:?}", item);
-                        item.ok()
-                    })
-                    .filter(|entry| {
-                        let mut keep = false;
-                        if let Some(f_name) = entry.file_name().to_str() {
-                            if f_name.contains(BACKUP_FILENAME_PREFIX) && f_name.contains(".zip") {
-                                if let Ok(meta_data) = entry.metadata() {
-                                    if let Ok(created_time) = meta_data.created() {
-                                        let dt: DateTime<Local> = created_time.into();
-                                        let days =
-                                            Local::now().signed_duration_since(dt).num_days();
-                                        let hours =
-                                            Local::now().signed_duration_since(dt).num_hours();
-                                        #[cfg(debug_assertions)]
-                                        {
-                                            println!(
-                                                "{} age: {} days hours: {}",
-                                                f_name, days, hours
-                                            );
-                                        }
-                                        keep = days > self.program_options.backup_age_keep_days as i64;
+            Ok(dir_list) => dir_list
+                .filter_map(|item| {
+                    #[cfg(debug_assertions)]
+                    println!("{:?}", item);
+                    item.ok()
+                })
+                .filter(|entry| {
+                    let mut keep = false;
+                    if let Some(f_name) = entry.file_name().to_str() {
+                        if !f_name.contains(MANUAL_BACKUP_SUFFIX)
+                            && f_name.contains(BACKUP_FILENAME_PREFIX)
+                            && f_name.contains(BACKUP_FILE_EXTENSION)
+                        {
+                            if let Ok(meta_data) = entry.metadata() {
+                                if let Ok(created_time) = meta_data.created() {
+                                    let dt: DateTime<Local> = created_time.into();
+                                    let days = Local::now().signed_duration_since(dt).num_days();
+                                    let hours = Local::now().signed_duration_since(dt).num_hours();
+                                    #[cfg(debug_assertions)]
+                                    {
+                                        println!("{} age: {} days hours: {}", f_name, days, hours);
                                     }
+                                    keep = days > self.program_options.backup_age_keep_days as i64;
                                 }
                             }
                         }
-                        keep
-                    })
-                    .collect::<Vec<DirEntry>>()
-            }
+                    }
+                    keep
+                })
+                .collect::<Vec<DirEntry>>(),
             Err(_) => {
                 vec![]
             }
