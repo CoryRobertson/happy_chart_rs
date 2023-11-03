@@ -112,7 +112,6 @@ impl eframe::App for HappyChartState {
             }
 
             self.remove_old_backup_files();
-
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -496,162 +495,174 @@ impl eframe::App for HappyChartState {
                 //     );
                 // });
 
-                ui.horizontal(|ui| {
-                    ui.label("Display day lines: ");
-
-                    toggle_ui_compact(ui, &mut self.program_options.draw_day_lines);
-                });
-
-                ui.horizontal(|ui| {
-                    ui.color_edit_button_srgba(&mut self.program_options.color_settings.line_color)
-                        .on_hover_text("Line color");
-                    ui.color_edit_button_srgba(
-                        &mut self.program_options.color_settings.day_line_color,
-                    )
-                    .on_hover_text("Day line color");
-                    // TODO: text color doesnt work cause we use the foreground color for this, probably not a good idea to let the user change this normally yet until I think of a way to do it in a pretty way
-                    // ui.color_edit_button_srgba(&mut self.program_options.color_settings.text_color).on_hover_text("Text Color");
-                    ui.color_edit_button_srgba(
-                        &mut self.program_options.color_settings.info_window_color,
-                    )
-                    .on_hover_text("Info window color");
-                });
-                if ui.button("Reset colors to defaults").clicked() {
-                    self.program_options.color_settings = ColorSettings::default();
-                }
-
-                ui.horizontal(|ui| {
-                    ui.label("Graph X Scale: ");
-                    ui.add(egui::Slider::new(
-                        &mut self.program_options.graph_x_scale,
-                        0.01..=10.0,
-                    ))
-                    .on_hover_text("Multiplier used to scale the graph on the X axis.");
-                });
-
-                ui.horizontal(|ui| {
-                    ui.label("Graph Y Scale: ");
-                    ui.add(egui::Slider::new(
-                        &mut self.program_options.graph_y_scale,
-                        0.5..=5.0,
-                    ))
-                    .on_hover_text("Multiplier used to scale the graph on the Y axis.");
-                });
-
-                ui.horizontal(|ui| {
-                    ui.label("X Offset: ");
-                    ui.add(
-                        egui::DragValue::new(&mut self.program_options.x_offset)
-                            .speed(self.program_options.x_offset_slider_speed),
-                    )
-                    .on_hover_text("Amount of units to shift the graph on the X axis.");
-                });
-
-                // x offset slider speed
-                ui.horizontal(|ui| {
-                    ui.label("X offset slider speed:");
-                    ui.add(
-                        egui::DragValue::new(&mut self.program_options.x_offset_slider_speed)
-                            .speed(0.1),
-                    );
-                });
-
-                // stat height offset
-                ui.horizontal(|ui| {
-                    ui.label("Stat height offset:");
-                    ui.add(
-                        egui::DragValue::new(&mut self.program_options.day_stat_height_offset)
-                            .speed(0.1),
-                    );
-                });
-
-                // day line height
-                ui.horizontal(|ui| {
-                    ui.label("Day line height:");
-                    ui.add(
-                        egui::DragValue::new(&mut self.program_options.day_line_height_offset)
-                            .speed(0.1),
-                    );
-                });
-
-                // mouse over radius
-                ui.horizontal(|ui| {
-                    ui.label("Stat mouse over radius:");
-                    ui.add(
-                        egui::DragValue::new(&mut self.program_options.mouse_over_radius)
-                            .speed(0.1),
-                    );
-                });
-
-                // day stat circle sizes
-                ui.horizontal(|ui| {
-                    ui.label("Stat circle radius:");
-                    ui.add(
-                        egui::DragValue::new(&mut self.program_options.daystat_circle_size)
-                            .speed(0.1),
-                    );
-                });
-                ui.horizontal(|ui| {
-                    ui.label("Stat circle outline radius:");
-                    ui.add(
-                        egui::DragValue::new(
-                            &mut self.program_options.daystat_circle_outline_radius,
+                ui.collapsing("Color options", |ui| {
+                    ui.horizontal(|ui| {
+                        ui.color_edit_button_srgba(&mut self.program_options.color_settings.line_color)
+                            .on_hover_text("Line color");
+                        ui.color_edit_button_srgba(
+                            &mut self.program_options.color_settings.day_line_color,
                         )
-                        .speed(0.1),
-                    );
-                });
-                ui.horizontal(|ui| {
-                    ui.checkbox(
-                        &mut self.program_options.draw_daystat_circles,
-                        "Draw stat circles",
-                    );
-                    ui.checkbox(
-                        &mut self.program_options.draw_daystat_lines,
-                        "Draw stat lines",
-                    );
+                            .on_hover_text("Day line color");
+                        // TODO: text color doesnt work cause we use the foreground color for this, probably not a good idea to let the user change this normally yet until I think of a way to do it in a pretty way
+                        // ui.color_edit_button_srgba(&mut self.program_options.color_settings.text_color).on_hover_text("Text Color");
+                        ui.color_edit_button_srgba(
+                            &mut self.program_options.color_settings.info_window_color,
+                        )
+                            .on_hover_text("Info window color");
+                    });
+
+                    if ui.button("Reset colors to defaults").clicked() {
+                        self.program_options.color_settings = ColorSettings::default();
+                    }
                 });
 
-                ui.horizontal(|ui| {
-                    ui.label("Backup folder ");
-                    if ui.button("Browse path").on_hover_text(format!("Backup folder: {:?}", self.program_options.backup_save_path.clone().into_os_string())).clicked() {
-                        if let Some(path) = rfd::FileDialog::new()
-                            .set_directory("./")
-                            .set_title("Set the location where a backup will be stored")
-                            .pick_folder() {
-                            self.program_options.backup_save_path = path;
+                ui.collapsing("Graphing options", |ui| {
+
+                    ui.horizontal(|ui| {
+                        ui.label("Display day lines: ");
+
+                        toggle_ui_compact(ui, &mut self.program_options.draw_day_lines);
+                    });
+
+                    ui.horizontal(|ui| {
+                        ui.label("Graph X Scale: ");
+                        ui.add(egui::Slider::new(
+                            &mut self.program_options.graph_x_scale,
+                            0.01..=10.0,
+                        ))
+                            .on_hover_text("Multiplier used to scale the graph on the X axis.");
+                    });
+
+                    ui.horizontal(|ui| {
+                        ui.label("Graph Y Scale: ");
+                        ui.add(egui::Slider::new(
+                            &mut self.program_options.graph_y_scale,
+                            0.5..=5.0,
+                        ))
+                            .on_hover_text("Multiplier used to scale the graph on the Y axis.");
+                    });
+
+                    ui.horizontal(|ui| {
+                        ui.label("X Offset: ");
+                        ui.add(
+                            egui::DragValue::new(&mut self.program_options.x_offset)
+                                .speed(self.program_options.x_offset_slider_speed),
+                        )
+                            .on_hover_text("Amount of units to shift the graph on the X axis.");
+                    });
+
+                    // x offset slider speed
+                    ui.horizontal(|ui| {
+                        ui.label("X offset slider speed:");
+                        ui.add(
+                            egui::DragValue::new(&mut self.program_options.x_offset_slider_speed)
+                                .speed(0.1),
+                        );
+                    });
+
+                    // day line height
+                    ui.horizontal(|ui| {
+                        ui.label("Day line height:");
+                        ui.add(
+                            egui::DragValue::new(&mut self.program_options.day_line_height_offset)
+                                .speed(0.1),
+                        );
+                    });
+                });
+
+                ui.collapsing("Stat drawing options", |ui| {
+
+                    // mouse over radius
+                    ui.horizontal(|ui| {
+                        ui.label("Stat mouse over radius:");
+                        ui.add(
+                            egui::DragValue::new(&mut self.program_options.mouse_over_radius)
+                                .speed(0.1),
+                        );
+                    });
+
+                    // stat height offset
+                    ui.horizontal(|ui| {
+                        ui.label("Stat height offset:");
+                        ui.add(
+                            egui::DragValue::new(&mut self.program_options.day_stat_height_offset)
+                                .speed(0.1),
+                        );
+                    });
+
+                    // day stat circle sizes
+                    ui.horizontal(|ui| {
+                        ui.label("Stat circle radius:");
+                        ui.add(
+                            egui::DragValue::new(&mut self.program_options.daystat_circle_size)
+                                .speed(0.1),
+                        );
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Stat circle outline radius:");
+                        ui.add(
+                            egui::DragValue::new(
+                                &mut self.program_options.daystat_circle_outline_radius,
+                            )
+                                .speed(0.1),
+                        );
+                    });
+                    ui.horizontal(|ui| {
+                        ui.checkbox(
+                            &mut self.program_options.draw_daystat_circles,
+                            "Draw stat circles",
+                        );
+                        ui.checkbox(
+                            &mut self.program_options.draw_daystat_lines,
+                            "Draw stat lines",
+                        );
+                    });
+                });
+
+                ui.collapsing("Backup options", |ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("Backup folder ");
+                        if ui.button("Browse path").on_hover_text(format!("Current backup folder: {:?}", self.program_options.backup_save_path.clone().into_os_string())).clicked() {
+                            if let Some(path) = rfd::FileDialog::new()
+                                .set_directory("./")
+                                .set_title("Set the location where a backup will be stored")
+                                .pick_folder() {
+                                self.program_options.backup_save_path = path;
+                            }
                         }
+
+                    });
+
+                    if ui.button("Reset backup path").clicked() {
+                        self.program_options.backup_save_path = ProgramOptions::default().backup_save_path;
                     }
 
-                });
-                if ui.button("Reset backup path").clicked() {
-                    self.program_options.backup_save_path = ProgramOptions::default().backup_save_path;
-                }
+                    ui.horizontal(|ui| {
+                        ui.label("Auto backup day count: ");
+                        ui.add(
+                            egui::DragValue::new(&mut self.program_options.auto_backup_days)
+                        ).on_hover_text("The number of days to elapse between auto backups, if less than 0, no automatic backups will take place.");
+                    });
 
-                ui.horizontal(|ui| {
-                    ui.label("Auto backup day count: ");
-                    ui.add(
-                        egui::DragValue::new(&mut self.program_options.auto_backup_days)
-                    ).on_hover_text("The number of days to elapse between auto backups, if less than 0, no automatic backups will take place.");
-                });
+                    ui.horizontal(|ui| {
+                        ui.label("Backup age before removal: ");
+                        ui.add(
+                            egui::DragValue::new(&mut self.program_options.backup_age_keep_days)
+                        ).on_hover_text("The number of days to elapse before deleting a backup, < 0 = never remove");
+                    });
 
-                ui.horizontal(|ui| {
-                    ui.label("Backup age before removal: ");
-                    ui.add(
-                        egui::DragValue::new(&mut self.program_options.backup_age_keep_days)
-                    ).on_hover_text("The number of days to elapse before deleting a backup, < 0 = never remove");
-                });
+                    ui.horizontal(|ui| {
+                        ui.label("Number of stale backups before removal: ");
+                        ui.add(
+                            egui::DragValue::new(&mut self.program_options.number_of_kept_backups)
+                        ).on_hover_text("The minimum number of stale backups needed to be present in the backups folder before the program will remove any, -1 for disabled.");
+                    });
 
-                ui.horizontal(|ui| {
-                    ui.label("Number of stale backups before removal: ");
-                    ui.add(
-                        egui::DragValue::new(&mut self.program_options.number_of_kept_backups)
-                    ).on_hover_text("The minimum number of stale backups needed to be present in the backups folder before the program will remove any, -1 for disabled.");
+                    if ui.button("Backup program state").on_hover_text("Compress the save state and the last session data into a zip file titled with the current date.").clicked() {
+                        backup_program_state(frame, self, true);
+                        self.last_backup_date = Local::now();
+                    }
                 });
-
-                if ui.button("Backup program state").clicked() {
-                    backup_program_state(frame, self, true);
-                    self.last_backup_date = Local::now();
-                }
 
                 if ui.button("Close Options Menu").clicked() {
                     self.showing_options_menu = false;
@@ -678,8 +689,16 @@ impl eframe::App for HappyChartState {
                 ui.label(format!("Day stats recorded: {}", self.days.len()));
                 ui.label(format!("Last backup date: {}", self.last_backup_date));
                 ui.label(format!("Last open date: {}", self.last_open_date));
-                ui.label(format!("Auto update seen version: {}", self.auto_update_seen_version.clone().unwrap_or("".to_string())));
-                ui.label(format!("Auto update status: {}", &self.update_status.to_text()));
+                ui.label(format!(
+                    "Auto update seen version: {}",
+                    self.auto_update_seen_version
+                        .clone()
+                        .unwrap_or("".to_string())
+                ));
+                ui.label(format!(
+                    "Auto update status: {}",
+                    &self.update_status.to_text()
+                ));
 
                 ui.separator();
 
