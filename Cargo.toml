@@ -36,3 +36,5 @@ vergen = { version = "8.2.5", features = ["build","git","gitcl"] }
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1.12"
+
+# TODO: use https://crates.io/crates/tray-item to allow happy chart to run minimized ? unsure if I want this yet as its a little much just for a daily journaling tool
