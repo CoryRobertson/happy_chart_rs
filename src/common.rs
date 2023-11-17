@@ -25,7 +25,7 @@ use zip::CompressionMethod;
 fn calculate_x(days: &[DayStat], day: &DayStat, graph_xscale: f32, xoffset: i32) -> f32 {
     let first_day = days.get(0).unwrap_or(day);
     let hours: f32 = day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
-    let x: f32 = (hours * graph_xscale) + xoffset as f32;
+    let x: f32 = hours.mul_add(graph_xscale, xoffset as f32);
     x
 }
 
@@ -38,7 +38,7 @@ pub fn improved_calculate_x(
 ) -> f32 {
     let first_day = days.get(0).unwrap_or(day);
     let hours: f32 = day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
-    let x: f32 = (hours * graph_x_scale) + x_offset;
+    let x: f32 = hours.mul_add(graph_x_scale, x_offset);
     x
 }
 
@@ -171,7 +171,7 @@ pub fn save_program_state(frame: &Frame, app: &HappyChartState) {
     }
 }
 
-pub fn get_average_for_day_of_week(day_of_week: Weekday, days: &Vec<ImprovedDayStat>) -> f32 {
+pub fn get_average_for_day_of_week(day_of_week: Weekday, days: &[ImprovedDayStat]) -> f32 {
     let ratings = days
         .iter()
         .filter(|stat| stat.date.weekday() == day_of_week)

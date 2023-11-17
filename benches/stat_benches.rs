@@ -1,5 +1,5 @@
 use chrono::{DateTime, Datelike, Local, Weekday};
-use rand::{random, thread_rng, Rng};
+use rand::{thread_rng, Rng};
 
 fn main() {
     divan::main();
@@ -8,12 +8,11 @@ fn main() {
 pub(crate) struct ImprovedDayStat {
     pub rating: f32,
     pub date: DateTime<Local>,
-    pub note: String,
 }
 
 #[divan::bench]
 fn day_of_week_test() -> f32 {
-    fn get_average_for_day_of_week(day_of_week: Weekday, days: &Vec<ImprovedDayStat>) -> f32 {
+    fn get_average_for_day_of_week(day_of_week: Weekday, days: &[ImprovedDayStat]) -> f32 {
         let ratings = days
             .iter()
             .filter(|stat| stat.date.weekday() == day_of_week)
@@ -31,7 +30,6 @@ fn day_of_week_test() -> f32 {
                 date: DateTime::from(
                     DateTime::from_timestamp(thread_rng().gen_range(0..=1_000_000_000), 0).unwrap(),
                 ),
-                note: "".to_string(),
             });
         });
         list

@@ -39,7 +39,7 @@ impl StateStats {
 }
 
 impl WeekdayAverages {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             avg_monday: 0.0,
             avg_tuesday: 0.0,
@@ -52,7 +52,7 @@ impl WeekdayAverages {
     }
 
     /// Calculate all averages and set them in the stats
-    pub fn calc_averages(&mut self, list: &Vec<ImprovedDayStat>) {
+    pub fn calc_averages(&mut self, list: &[ImprovedDayStat]) {
         self.avg_monday = get_average_for_day_of_week(Weekday::Mon, list);
         self.avg_tuesday = get_average_for_day_of_week(Weekday::Tue, list);
         self.avg_wednesday = get_average_for_day_of_week(Weekday::Wed, list);

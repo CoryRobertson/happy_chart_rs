@@ -27,7 +27,7 @@ use crate::egui::Layout;
 use crate::happy_chart_state::HappyChartState;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::program_options::ProgramOptions;
-use chrono::{Datelike, Days, Local, Weekday};
+use chrono::{Days, Local};
 use eframe::emath::Pos2;
 use eframe::{egui, Frame, NativeOptions};
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke, Vec2};
@@ -112,7 +112,7 @@ impl eframe::App for HappyChartState {
                 && Local::now()
                     .signed_duration_since(ls.last_backup_date)
                     .num_days()
-                    > self.program_options.auto_backup_days as i64
+                    > i64::from(self.program_options.auto_backup_days)
             {
                 backup_program_state(frame, self, false);
                 self.last_backup_date = Local::now();
@@ -725,9 +725,7 @@ impl eframe::App for HappyChartState {
                 ui.label(format!("Last open date: {}", self.last_open_date));
                 ui.label(format!(
                     "Auto update seen version: {}",
-                    self.auto_update_seen_version
-                        .clone()
-                        .unwrap_or(String::new())
+                    self.auto_update_seen_version.clone().unwrap_or_default()
                 ));
                 ui.label(format!(
                     "Auto update status: {}",

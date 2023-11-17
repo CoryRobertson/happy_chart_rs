@@ -112,12 +112,15 @@ impl HappyChartState {
                                 if let Ok(created_time) = meta_data.created() {
                                     let dt: DateTime<Local> = created_time.into();
                                     let days = Local::now().signed_duration_since(dt).num_days();
-                                    let hours = Local::now().signed_duration_since(dt).num_hours();
+
                                     #[cfg(debug_assertions)]
                                     {
+                                        let hours =
+                                            Local::now().signed_duration_since(dt).num_hours();
                                         println!("{} age: {} days hours: {}", f_name, days, hours);
                                     }
-                                    keep = days > self.program_options.backup_age_keep_days as i64;
+                                    keep =
+                                        days > i64::from(self.program_options.backup_age_keep_days);
                                 }
                             }
                         }
