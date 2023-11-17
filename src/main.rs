@@ -10,6 +10,8 @@ mod auto_update_status;
 
 mod common;
 
+mod state_stats;
+
 mod happy_chart_state;
 
 const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
@@ -25,7 +27,7 @@ use crate::egui::Layout;
 use crate::happy_chart_state::HappyChartState;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::program_options::ProgramOptions;
-use chrono::{Days, Local};
+use chrono::{Datelike, Days, Local, Weekday};
 use eframe::emath::Pos2;
 use eframe::{egui, Frame, NativeOptions};
 use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke, Vec2};
@@ -58,10 +60,15 @@ fn main() {
 /// Update loop for egui
 impl eframe::App for HappyChartState {
     fn update(&mut self, ctx: &egui::Context, frame: &mut Frame) {
-        // load previous save on first load in
+        // all data we need to read one time on launch, all of this most of the time is unchanging throughout usage of the program, so it can only be recalculated on launch
+        // for example, day quality averages do not need to change between launches
         if self.first_load {
             self.first_load = false;
             self.days = read_save_file();
+
+            self.days
+                .sort_by(|day1, day2| day1.date.timestamp().cmp(&day2.date.timestamp()));
+
             self.starting_length = self.days.len();
             let ls = read_last_session_save_file();
             self.open_modulus = ls.open_modulus;
@@ -112,6 +119,8 @@ impl eframe::App for HappyChartState {
             }
 
             self.remove_old_backup_files();
+
+            self.stats.avg_weekdays.calc_averages(&self.days);
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -135,6 +144,7 @@ impl eframe::App for HappyChartState {
                     date: ImprovedDayStat::get_current_time_system(),
                     note: self.note_input.clone(),
                 });
+                self.stats.avg_weekdays.calc_averages(&self.days);
                 println!(
                     "day added with rating {} and date {}",
                     self.rating,
@@ -145,6 +155,7 @@ impl eframe::App for HappyChartState {
 
             if ui.button("Remove day").clicked() && !self.days.is_empty() {
                 self.days.remove(self.days.len() - 1);
+                self.stats.avg_weekdays.calc_averages(&self.days);
             }
 
             ui.horizontal(|ui| {
@@ -681,6 +692,35 @@ impl eframe::App for HappyChartState {
                 ui.label(format!("BUILD_TIMESTAMP: {}", BUILD_TIMESTAMP));
                 ui.separator();
                 ui.label(format!("Day stats recorded: {}", self.days.len()));
+                ui.label(format!(
+                    "Average sunday: {}",
+                    self.stats.avg_weekdays.avg_sunday
+                ));
+                ui.label(format!(
+                    "Average monday: {}",
+                    self.stats.avg_weekdays.avg_monday
+                ));
+                ui.label(format!(
+                    "Average tuesday: {}",
+                    self.stats.avg_weekdays.avg_tuesday
+                ));
+                ui.label(format!(
+                    "Average wednesday: {}",
+                    self.stats.avg_weekdays.avg_wednesday
+                ));
+                ui.label(format!(
+                    "Average thursday: {}",
+                    self.stats.avg_weekdays.avg_thursday
+                ));
+                ui.label(format!(
+                    "Average friday: {}",
+                    self.stats.avg_weekdays.avg_friday
+                ));
+                ui.label(format!(
+                    "Average saturday: {}",
+                    self.stats.avg_weekdays.avg_saturday
+                ));
+                ui.separator();
                 ui.label(format!("Last backup date: {}", self.last_backup_date));
                 ui.label(format!("Last open date: {}", self.last_open_date));
                 ui.label(format!(

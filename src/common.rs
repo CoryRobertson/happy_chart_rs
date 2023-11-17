@@ -7,7 +7,7 @@ use crate::{
     BACKUP_FILENAME_PREFIX, BACKUP_FILE_EXTENSION, LAST_SESSION_FILE_NAME, MANUAL_BACKUP_SUFFIX,
     NEW_SAVE_FILE_NAME, SAVE_FILE_NAME,
 };
-use chrono::{DateTime, Datelike, Local};
+use chrono::{DateTime, Datelike, Local, Weekday};
 use eframe::{egui, Frame};
 use self_update::update::Release;
 use self_update::{cargo_crate_version, Status};
@@ -169,6 +169,16 @@ pub fn save_program_state(frame: &Frame, app: &HappyChartState) {
             );
         }
     }
+}
+
+pub fn get_average_for_day_of_week(day_of_week: Weekday, days: &Vec<ImprovedDayStat>) -> f32 {
+    let ratings = days
+        .iter()
+        .filter(|stat| stat.date.weekday() == day_of_week)
+        .map(|stat| stat.rating)
+        .collect::<Vec<f32>>();
+
+    ratings.iter().sum::<f32>() / ratings.len() as f32
 }
 
 pub fn update_program() -> JoinHandle<Result<Status, String>> {

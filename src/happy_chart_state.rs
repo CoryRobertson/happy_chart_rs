@@ -1,6 +1,7 @@
 use crate::auto_update_status::AutoUpdateStatus;
 use crate::improved_daystat::ImprovedDayStat;
 use crate::program_options::ProgramOptions;
+use crate::state_stats::StateStats;
 use crate::{BACKUP_FILENAME_PREFIX, BACKUP_FILE_EXTENSION, MANUAL_BACKUP_SUFFIX};
 use chrono::{DateTime, Local};
 use self_update::update::Release;
@@ -39,6 +40,8 @@ pub struct HappyChartState {
     pub filter_term: String,
 
     pub showing_about_page: bool,
+
+    pub stats: StateStats,
 }
 
 impl HappyChartState {
@@ -60,6 +63,7 @@ impl HappyChartState {
             last_backup_date: Local::now(),
             filter_term: String::new(),
             showing_about_page: false,
+            stats: StateStats::new(),
         }
     }
 
