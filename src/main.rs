@@ -17,7 +17,6 @@ mod happy_chart_state;
 const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
-use std::sync::Arc;
 use crate::auto_update_status::AutoUpdateStatus;
 use crate::color_setting::ColorSettings;
 use crate::common::{
@@ -31,8 +30,12 @@ use crate::program_options::ProgramOptions;
 use chrono::{Days, Local};
 use eframe::emath::Pos2;
 use eframe::{egui, Frame, NativeOptions};
-use egui::{Align2, Color32, ColorImage, Context, FontId, Rect, Rounding, Stroke, Ui, Vec2, ViewportBuilder, ViewportCommand};
+use egui::{
+    Align2, Color32, ColorImage, Context, FontId, Rect, Rounding, Stroke, Ui, Vec2,
+    ViewportBuilder, ViewportCommand,
+};
 use self_update::{cargo_crate_version, Status};
+use std::sync::Arc;
 
 const SAVE_FILE_NAME: &str = "save.ser";
 const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
@@ -45,12 +48,10 @@ const MANUAL_BACKUP_SUFFIX: &str = "_manual";
 const BACKUP_FILE_EXTENSION: &str = "zip";
 
 fn main() {
-
     let window_size: Vec2 = read_last_session_save_file().window_size.into();
 
     let native_options = NativeOptions {
-        viewport: ViewportBuilder::default()
-            .with_inner_size(window_size),
+        viewport: ViewportBuilder::default().with_inner_size(window_size),
         ..Default::default()
     };
 
@@ -88,10 +89,9 @@ fn first_load(app: &mut HappyChartState, ctx: &Context) {
     {
         if let Ok(list) = get_release_list() {
             if let Some(release) = list.first() {
-                if let Ok(greater_bump) = self_update::version::bump_is_greater(
-                    cargo_crate_version!(),
-                    &release.version,
-                ) {
+                if let Ok(greater_bump) =
+                    self_update::version::bump_is_greater(cargo_crate_version!(), &release.version)
+                {
                     if greater_bump {
                         println!(
                             "Update available! {} {} {}",
@@ -112,9 +112,9 @@ fn first_load(app: &mut HappyChartState, ctx: &Context) {
     // check if user last backup day is +- 3 hours between the margin of their auto backup day count
     if app.program_options.auto_backup_days > -1
         && Local::now()
-        .signed_duration_since(ls.last_backup_date)
-        .num_days()
-        > i64::from(app.program_options.auto_backup_days)
+            .signed_duration_since(ls.last_backup_date)
+            .num_days()
+            > i64::from(app.program_options.auto_backup_days)
     {
         backup_program_state(ctx, app, false);
         app.last_backup_date = Local::now();
@@ -137,7 +137,7 @@ fn handle_screenshot_event(image: &Arc<ColorImage>) {
             image.height() as u32,
             image::ColorType::Rgba8,
         )
-            .unwrap();
+        .unwrap();
     }
 }
 
@@ -175,11 +175,18 @@ fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
 
     central_panel_ui.horizontal(|ui| {
         ui.label("Search: ");
-        ui.add_sized(Vec2::new(120.0,20.0),egui::widgets::text_edit::TextEdit::singleline(&mut app.filter_term));
+        ui.add_sized(
+            Vec2::new(120.0, 20.0),
+            egui::widgets::text_edit::TextEdit::singleline(&mut app.filter_term),
+        );
     });
 }
 
-fn click_drag_zoom_detection(central_panel_ui: &mut Ui, app: &mut HappyChartState, pointer_interact_pos: Option<&Pos2>) {
+fn click_drag_zoom_detection(
+    central_panel_ui: &mut Ui,
+    app: &mut HappyChartState,
+    pointer_interact_pos: Option<&Pos2>,
+) {
     let within_day_lines = {
         let min_y: f32 = 220.0 - app.program_options.day_line_height_offset;
         pointer_interact_pos.map_or(false, |pos| pos.y >= min_y)
@@ -209,10 +216,9 @@ fn click_drag_zoom_detection(central_panel_ui: &mut Ui, app: &mut HappyChartStat
     }
 }
 
-
 /// Draw the lines that represent time itself, typically 24 hours
 fn draw_day_lines(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
-    if app.program_options.draw_day_lines && app.days.len() > 1 {
+    if app.days.len() > 1 {
         // range for calculating how many lines in both directions on the x axis
         let range = {
             if app.program_options.x_offset > 5000.0 {
@@ -235,8 +241,7 @@ fn draw_day_lines(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
                 let y: f32 = 220.0 - app.program_options.day_line_height_offset;
                 let x = {
                     let first_day = d;
-                    let hours: f32 =
-                        fake_day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
+                    let hours: f32 = fake_day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
 
                     let x: f32 = (hours * app.program_options.graph_x_scale) * i2 as f32;
                     x + app.program_options.x_offset
@@ -251,81 +256,86 @@ fn draw_day_lines(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
     }
 }
 
+/// Draw the lines between each stat like a graph
 fn draw_stat_line_segments(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
     let mut i = 0;
     let mut prev_x = 0.0;
     let mut prev_y = 0.0;
     // draw lines loop, bottom layer
-    if app.program_options.draw_daystat_lines {
-        for day in &app.days {
-            let x: f32 = improved_calculate_x(
-                &app.days,
-                day,
-                app.program_options.graph_x_scale,
-                app.program_options.x_offset,
+    for day in &app.days {
+        let x: f32 = improved_calculate_x(
+            &app.days,
+            day,
+            app.program_options.graph_x_scale,
+            app.program_options.x_offset,
+        );
+
+        let y: f32 = day
+            .rating
+            .mul_add(-app.program_options.graph_y_scale, 500.0)
+            - app.program_options.day_stat_height_offset;
+        let points = [Pos2::new(prev_x, prev_y), Pos2::new(x, y)];
+
+        if (prev_x != 0.0 && prev_y != 0.0) || i == 1 {
+            // draw line segments connecting the dots
+            central_panel_ui.painter().line_segment(
+                points,
+                Stroke::new(2.0, app.program_options.color_settings.line_color),
             );
-
-            let y: f32 = day
-                .rating
-                .mul_add(-app.program_options.graph_y_scale, 500.0)
-                - app.program_options.day_stat_height_offset;
-            let points = [Pos2::new(prev_x, prev_y), Pos2::new(x, y)];
-
-            if (prev_x != 0.0 && prev_y != 0.0) || i == 1 {
-                // draw line segments connecting the dots
-                central_panel_ui.painter().line_segment(
-                    points,
-                    Stroke::new(2.0, app.program_options.color_settings.line_color),
-                );
-            }
-
-            i += 1;
-            prev_x = x;
-            prev_y = y;
         }
+
+        i += 1;
+        prev_x = x;
+        prev_y = y;
     }
 }
 
+/// draw the circled for each stat, seperate color based on each stats rating
 fn draw_stat_circles(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
-    if app.program_options.draw_daystat_circles {
-        for day in &app.days.clone() {
-            let x: f32 = improved_calculate_x(
-                &app.days,
-                day,
-                app.program_options.graph_x_scale,
-                app.program_options.x_offset,
-            );
-            let y: f32 = day
-                .rating
-                .mul_add(-app.program_options.graph_y_scale, 500.0)
-                - app.program_options.day_stat_height_offset;
+    for day in &app.days.clone() {
+        let x: f32 = improved_calculate_x(
+            &app.days,
+            day,
+            app.program_options.graph_x_scale,
+            app.program_options.x_offset,
+        );
+        let y: f32 = day
+            .rating
+            .mul_add(-app.program_options.graph_y_scale, 500.0)
+            - app.program_options.day_stat_height_offset;
 
-            //draw circles on each coordinate point
-            central_panel_ui.painter().circle_filled(
-                Pos2::new(x, y),
-                app.program_options.daystat_circle_outline_radius,
-                Color32::BLACK,
-            );
+        //draw circles on each coordinate point
+        central_panel_ui.painter().circle_filled(
+            Pos2::new(x, y),
+            app.program_options.daystat_circle_outline_radius,
+            Color32::BLACK,
+        );
 
-            let color = if !app.filter_term.is_empty() &&day.note.contains(&app.filter_term) {
-                Color32::LIGHT_BLUE
-            } else {
-                color_setting::get_shape_color_from_rating(day.rating)
-            };
+        let color = if !app.filter_term.is_empty() && day.note.contains(&app.filter_term) {
+            Color32::LIGHT_BLUE
+        } else {
+            color_setting::get_shape_color_from_rating(day.rating)
+        };
 
-            central_panel_ui.painter().circle_filled(
-                Pos2::new(x, y),
-                app.program_options.daystat_circle_size,
-                color,
-            );
-        }
+        central_panel_ui.painter().circle_filled(
+            Pos2::new(x, y),
+            app.program_options.daystat_circle_size,
+            color,
+        );
     }
 }
 
-fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &egui::Context) {
-    let mouse_pos = ctx.pointer_hover_pos().map_or_else(|| Pos2::new(0.0, 0.0), |a| a);
+/// Draw a stats info if it is moused over
+fn draw_stat_mouse_over_info(
+    central_panel_ui: &mut Ui,
+    app: &mut HappyChartState,
+    ctx: &egui::Context,
+) {
+    let mouse_pos = ctx
+        .pointer_hover_pos()
+        .map_or_else(|| Pos2::new(0.0, 0.0), |a| a);
     let mut moused_over = false; // boolean used to know if we are already showing mouse over text, if so, not to render it if this is true
-    // draw text loop, top most layer (mostly)
+                                 // draw text loop, top most layer (mostly)
     for day in &app.days {
         let x: f32 = improved_calculate_x(
             &app.days,
@@ -374,14 +384,13 @@ fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &mut HappyChartStat
     }
 }
 
+/// Draw the auto update ui on screen if needed
 fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &Context) {
     if let Some(release) = &app.update_available {
         let should_show_update = match &app.auto_update_seen_version {
-            None => {
-                true
-            }
+            None => true,
             Some(ver) => {
-                self_update::version::bump_is_greater(ver,&release.version).unwrap_or(true)
+                self_update::version::bump_is_greater(ver, &release.version).unwrap_or(true)
             }
         };
         if should_show_update {
@@ -392,11 +401,14 @@ fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx
                 app.update_thread.replace(Some(update_program()));
                 app.auto_update_seen_version = Some(release.version.to_string());
             }
-            let mid_point_x = (ctx.screen_rect().width() / 2.0) - (250.0/2.0);
+            let mid_point_x = (ctx.screen_rect().width() / 2.0) - (250.0 / 2.0);
             let quarter_point_y = ctx.screen_rect().height() / 4.0;
 
             central_panel_ui.painter().rect_filled(
-                Rect::from_two_pos(Pos2::new(mid_point_x, quarter_point_y), Pos2::new(mid_point_x + 250.0, quarter_point_y + 120.0)),
+                Rect::from_two_pos(
+                    Pos2::new(mid_point_x, quarter_point_y),
+                    Pos2::new(mid_point_x + 250.0, quarter_point_y + 120.0),
+                ),
                 Rounding::from(4.0),
                 app.program_options.color_settings.info_window_color,
             );
@@ -407,7 +419,6 @@ fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx
                 Rect::from_two_pos(Pos2::new(mid_point_x, quarter_point_y), Pos2::new(mid_point_x + 250.0, quarter_point_y + 120.0)),
                 egui::widgets::Label::new(format!("Update available:\n{}\nCurrent version:\nv{}\n\"Update happy chart\" to automagically update\nThis message will not display on next launch", release.name,cargo_crate_version!())),
             );
-
         }
     }
     central_panel_ui.horizontal(|ui| {
@@ -420,7 +431,8 @@ fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx
     });
 }
 
-fn draw_quit_button(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &Context) {
+/// Draw the quit button as well as the options, about, and screenshot button
+fn draw_bottom_row_buttons(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &Context) {
     // quit button layout
     central_panel_ui.with_layout(Layout::bottom_up(egui::Align::BOTTOM), |ui| {
         if app.starting_length != app.days.len() {
@@ -454,18 +466,14 @@ fn draw_quit_button(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &
             }
 
             if quit_button.hovered() {
-                ui.label(
-                    egui::RichText::new(BUILD_TIMESTAMP)
-                        .color(Color32::from_rgb(80, 80, 80)),
-                );
-                ui.label(
-                    egui::RichText::new(GIT_DESCRIBE).color(Color32::from_rgb(80, 80, 80)),
-                );
+                ui.label(egui::RichText::new(BUILD_TIMESTAMP).color(Color32::from_rgb(80, 80, 80)));
+                ui.label(egui::RichText::new(GIT_DESCRIBE).color(Color32::from_rgb(80, 80, 80)));
             }
         });
     });
 }
 
+/// Draw an indicator in the options menu for if an update is taking place, or needed
 fn options_update_thread_block(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
     // update thread block, handles showing spinner, and checking if the update is done
     let update_thread = app.update_thread.replace(None);
@@ -473,20 +481,21 @@ fn options_update_thread_block(options_panel_ui: &mut Ui, app: &mut HappyChartSt
         None => {}
         Some(thread) => {
             if thread.is_finished() {
-                if let Ok(res) = thread.join() { match res {
-                    Ok(status) => match status {
-                        Status::UpToDate(ver) => {
-                            app.update_status =
-                                AutoUpdateStatus::UpToDate(ver);
+                if let Ok(res) = thread.join() {
+                    match res {
+                        Ok(status) => match status {
+                            Status::UpToDate(ver) => {
+                                app.update_status = AutoUpdateStatus::UpToDate(ver);
+                            }
+                            Status::Updated(ver) => {
+                                app.update_status = AutoUpdateStatus::Updated(ver);
+                            }
+                        },
+                        Err(err) => {
+                            app.update_status = AutoUpdateStatus::Error(err);
                         }
-                        Status::Updated(ver) => {
-                            app.update_status = AutoUpdateStatus::Updated(ver);
-                        }
-                    },
-                    Err(err) => {
-                        app.update_status = AutoUpdateStatus::Error(err);
                     }
-                } }
+                }
             } else {
                 app.update_thread.replace(Some(thread));
                 app.update_status = AutoUpdateStatus::Checking;
@@ -496,20 +505,17 @@ fn options_update_thread_block(options_panel_ui: &mut Ui, app: &mut HappyChartSt
     }
 }
 
+/// Color options collapsing menu
 fn draw_color_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
     options_panel_ui.collapsing("Color options", |ui| {
         ui.horizontal(|ui| {
             ui.color_edit_button_srgba(&mut app.program_options.color_settings.line_color)
                 .on_hover_text("Line color");
-            ui.color_edit_button_srgba(
-                &mut app.program_options.color_settings.day_line_color,
-            )
+            ui.color_edit_button_srgba(&mut app.program_options.color_settings.day_line_color)
                 .on_hover_text("Day line color");
             // TODO: text color doesnt work cause we use the foreground color for this, probably not a good idea to let the user change this normally yet until I think of a way to do it in a pretty way
             // ui.color_edit_button_srgba(&mut self.program_options.color_settings.text_color).on_hover_text("Text Color");
-            ui.color_edit_button_srgba(
-                &mut app.program_options.color_settings.info_window_color,
-            )
+            ui.color_edit_button_srgba(&mut app.program_options.color_settings.info_window_color)
                 .on_hover_text("Info window color");
         });
 
@@ -518,9 +524,10 @@ fn draw_color_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState)
         }
     });
 }
+
+/// Graphing options collapsing menu
 fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
     options_panel_ui.collapsing("Graphing options", |options_panel_ui| {
-
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("Display day lines: ");
 
@@ -529,28 +536,31 @@ fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartSta
 
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("Graph X Scale: ");
-            options_panel_ui.add(egui::Slider::new(
-                &mut app.program_options.graph_x_scale,
-                0.01..=10.0,
-            ))
+            options_panel_ui
+                .add(egui::Slider::new(
+                    &mut app.program_options.graph_x_scale,
+                    0.01..=10.0,
+                ))
                 .on_hover_text("Multiplier used to scale the graph on the X axis.");
         });
 
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("Graph Y Scale: ");
-            options_panel_ui.add(egui::Slider::new(
-                &mut app.program_options.graph_y_scale,
-                0.5..=5.0,
-            ))
+            options_panel_ui
+                .add(egui::Slider::new(
+                    &mut app.program_options.graph_y_scale,
+                    0.5..=5.0,
+                ))
                 .on_hover_text("Multiplier used to scale the graph on the Y axis.");
         });
 
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("X Offset: ");
-            options_panel_ui.add(
-                egui::DragValue::new(&mut app.program_options.x_offset)
-                    .speed(app.program_options.x_offset_slider_speed),
-            )
+            options_panel_ui
+                .add(
+                    egui::DragValue::new(&mut app.program_options.x_offset)
+                        .speed(app.program_options.x_offset_slider_speed),
+                )
                 .on_hover_text("Amount of units to shift the graph on the X axis.");
         });
 
@@ -558,8 +568,7 @@ fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartSta
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("X offset slider speed:");
             options_panel_ui.add(
-                egui::DragValue::new(&mut app.program_options.x_offset_slider_speed)
-                    .speed(0.1),
+                egui::DragValue::new(&mut app.program_options.x_offset_slider_speed).speed(0.1),
             );
         });
 
@@ -567,47 +576,40 @@ fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartSta
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("Day line height:");
             options_panel_ui.add(
-                egui::DragValue::new(&mut app.program_options.day_line_height_offset)
-                    .speed(0.1),
+                egui::DragValue::new(&mut app.program_options.day_line_height_offset).speed(0.1),
             );
         });
     });
 }
+
+/// Day stat options collapsing menu
 fn draw_stat_drawing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
     options_panel_ui.collapsing("Stat drawing options", |options_panel_ui| {
-
         // mouse over radius
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("Stat mouse over radius:");
-            options_panel_ui.add(
-                egui::DragValue::new(&mut app.program_options.mouse_over_radius)
-                    .speed(0.1),
-            );
+            options_panel_ui
+                .add(egui::DragValue::new(&mut app.program_options.mouse_over_radius).speed(0.1));
         });
 
         // stat height offset
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("Stat height offset:");
             options_panel_ui.add(
-                egui::DragValue::new(&mut app.program_options.day_stat_height_offset)
-                    .speed(0.1),
+                egui::DragValue::new(&mut app.program_options.day_stat_height_offset).speed(0.1),
             );
         });
 
         // day stat circle sizes
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("Stat circle radius:");
-            options_panel_ui.add(
-                egui::DragValue::new(&mut app.program_options.daystat_circle_size)
-                    .speed(0.1),
-            );
+            options_panel_ui
+                .add(egui::DragValue::new(&mut app.program_options.daystat_circle_size).speed(0.1));
         });
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("Stat circle outline radius:");
             options_panel_ui.add(
-                egui::DragValue::new(
-                    &mut app.program_options.daystat_circle_outline_radius,
-                )
+                egui::DragValue::new(&mut app.program_options.daystat_circle_outline_radius)
                     .speed(0.1),
             );
         });
@@ -623,7 +625,13 @@ fn draw_stat_drawing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChar
         });
     });
 }
-fn draw_backup_settings_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &Context) {
+
+/// Backup settings collapsing menu
+fn draw_backup_settings_options_menu(
+    options_panel_ui: &mut Ui,
+    app: &mut HappyChartState,
+    ctx: &Context,
+) {
     options_panel_ui.collapsing("Backup options", |options_panel_ui| {
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("Backup folder ");
@@ -670,6 +678,7 @@ fn draw_backup_settings_options_menu(options_panel_ui: &mut Ui, app: &mut HappyC
     });
 }
 
+/// About page info such as build date, program license, and other fun stats that are slightly extraneous
 fn draw_about_page(about_page_ui: &mut Ui, app: &mut HappyChartState) {
     about_page_ui.heading("Happy Chart");
     about_page_ui.label("A multi-purpose journaling software.");
@@ -736,15 +745,18 @@ fn draw_about_page(about_page_ui: &mut Ui, app: &mut HappyChartState) {
 /// Update loop for egui
 impl eframe::App for HappyChartState {
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
-
         if self.first_load {
-           first_load(self,ctx);
+            first_load(self, ctx);
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.input(|i| {
                 for event in &i.raw.events {
-                    if let egui::Event::Screenshot { viewport_id: _, image} = event {
+                    if let egui::Event::Screenshot {
+                        viewport_id: _,
+                        image,
+                    } = event
+                    {
                         handle_screenshot_event(image);
                     }
                 }
@@ -752,26 +764,32 @@ impl eframe::App for HappyChartState {
 
             let pointer_interact_pos = ctx.pointer_interact_pos();
 
-            main_screen_button_ui(ui,self);
+            main_screen_button_ui(ui, self);
 
-            click_drag_zoom_detection(ui,self,pointer_interact_pos.as_ref());
+            click_drag_zoom_detection(ui, self, pointer_interact_pos.as_ref());
 
-            draw_day_lines(ui,self);
-            
-            draw_stat_line_segments(ui,self);
+            if self.program_options.draw_day_lines {
+                draw_day_lines(ui, self);
+            }
 
-            draw_stat_circles(ui,self);
+            if self.program_options.draw_daystat_lines {
+                draw_stat_line_segments(ui, self);
+            }
 
-            draw_stat_mouse_over_info(ui,self,ctx);
+            if self.program_options.draw_daystat_circles {
+                draw_stat_circles(ui, self);
+            }
 
-            draw_auto_update_ui(ui,self,ctx);
+            draw_stat_mouse_over_info(ui, self, ctx);
 
-            draw_quit_button(ui,self,ctx);
+            draw_auto_update_ui(ui, self, ctx);
+
+            draw_bottom_row_buttons(ui, self, ctx);
         });
 
         if self.showing_options_menu {
             egui::Window::new("Options").show(ctx, |ui| {
-                options_update_thread_block(ui,self);
+                options_update_thread_block(ui, self);
 
                 if ui
                     .button("Check for updates & update program")
@@ -781,14 +799,14 @@ impl eframe::App for HappyChartState {
                     self.update_thread.replace(Some(update_program()));
                 }
 
-                draw_color_options_menu(ui,self);
+                draw_color_options_menu(ui, self);
 
-                draw_graphing_options_menu(ui,self);
-                
-                draw_stat_drawing_options_menu(ui,self);
-                
-                draw_backup_settings_options_menu(ui,self,ctx);
-                
+                draw_graphing_options_menu(ui, self);
+
+                draw_stat_drawing_options_menu(ui, self);
+
+                draw_backup_settings_options_menu(ui, self, ctx);
+
                 if ui.button("Close Options Menu").clicked() {
                     self.showing_options_menu = false;
                 }
@@ -797,7 +815,7 @@ impl eframe::App for HappyChartState {
 
         if self.showing_about_page {
             egui::Window::new("About").show(ctx, |ui| {
-                draw_about_page(ui,self);
+                draw_about_page(ui, self);
             });
         }
     }

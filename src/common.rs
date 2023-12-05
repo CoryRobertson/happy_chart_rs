@@ -9,6 +9,7 @@ use crate::{
 };
 use chrono::{DateTime, Datelike, Local, Weekday};
 use eframe::egui;
+use egui::{Pos2, Rect, ViewportCommand};
 use self_update::update::Release;
 use self_update::{cargo_crate_version, Status};
 use std::fs::File;
@@ -16,7 +17,6 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::thread::JoinHandle;
 use std::{fs, thread};
-use egui::{Pos2, Rect, ViewportCommand};
 use zip::write::FileOptions;
 use zip::CompressionMethod;
 
@@ -113,10 +113,15 @@ pub fn backup_program_state(ctx: &egui::Context, app: &HappyChartState, is_manua
 pub fn save_program_state(ctx: &egui::Context, app: &HappyChartState) {
     let days = &app.days;
 
-    let window_size = ctx.input(|i| i.viewport().inner_rect.unwrap_or(Rect::from_two_pos(Pos2::new(0.0,0.0),Pos2::new(600.0,600.0))));
+    let window_size = ctx.input(|i| {
+        i.viewport().inner_rect.unwrap_or(Rect::from_two_pos(
+            Pos2::new(0.0, 0.0),
+            Pos2::new(600.0, 600.0),
+        ))
+    });
 
     let last_session = LastSession {
-        window_size: [window_size.width(),window_size.height()],
+        window_size: [window_size.width(), window_size.height()],
         program_options: app.program_options.clone(),
         open_modulus: app.open_modulus + 1,
         last_open_date: Local::now(),
