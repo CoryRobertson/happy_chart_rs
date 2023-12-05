@@ -30,7 +30,7 @@ use crate::program_options::ProgramOptions;
 use chrono::{Days, Local};
 use eframe::emath::Pos2;
 use eframe::{egui, Frame, NativeOptions};
-use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke, Vec2};
+use egui::{Align2, Color32, FontId, Rect, Rounding, Stroke, Vec2, ViewportBuilder, ViewportCommand};
 use self_update::{cargo_crate_version, Status};
 
 const SAVE_FILE_NAME: &str = "save.ser";
@@ -44,8 +44,12 @@ const MANUAL_BACKUP_SUFFIX: &str = "_manual";
 const BACKUP_FILE_EXTENSION: &str = "zip";
 
 fn main() {
+
+    let window_size: Vec2 = read_last_session_save_file().window_size.into();
+
     let native_options = NativeOptions {
-        initial_window_size: Some(read_last_session_save_file().window_size.into()),
+        viewport: ViewportBuilder::default()
+            .with_inner_size(window_size),
         ..Default::default()
     };
 
@@ -114,7 +118,7 @@ impl eframe::App for HappyChartState {
                     .num_days()
                     > i64::from(self.program_options.auto_backup_days)
             {
-                backup_program_state(frame, self, false);
+                backup_program_state(ctx, self, false);
                 self.last_backup_date = Local::now();
             }
 
@@ -124,6 +128,27 @@ impl eframe::App for HappyChartState {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
+
+            ui.input(|i| {
+                for event in &i.raw.events {
+                    if let egui::Event::Screenshot { viewport_id: _, image} = event {
+                        if let Some(path) = rfd::FileDialog::new()
+                            .add_filter("Image", &["png", "jpeg", "jpg", "bmp", "tiff"])
+                            .save_file()
+                        {
+                            image::save_buffer(
+                                path,
+                                image.as_raw(),
+                                image.width() as u32,
+                                image.height() as u32,
+                                image::ColorType::Rgba8,
+                            )
+                                .unwrap();
+                        }
+                    }
+                }
+            });
+
             let pointer_interact_pos = ctx.pointer_interact_pos();
 
             ui.horizontal(|ui| {
@@ -419,7 +444,7 @@ impl eframe::App for HappyChartState {
                     let quit_button = ui.button("Save & Quit");
 
                     if quit_button.clicked() {
-                        quit(frame, self);
+                        quit(frame,ctx, self);
                     }
 
                     ui.style_mut().visuals.override_text_color =
@@ -434,7 +459,8 @@ impl eframe::App for HappyChartState {
                     }
 
                     if ui.button("Save Screenshot").clicked() {
-                        frame.request_screenshot();
+                        // frame.request_screenshot();
+                        ctx.send_viewport_cmd(ViewportCommand::Screenshot);
                     }
 
                     if quit_button.hovered() {
@@ -489,16 +515,6 @@ impl eframe::App for HappyChartState {
                 {
                     self.update_thread.replace(Some(update_program()));
                 }
-
-                // ui.horizontal(|ui| {
-                //     ui.label("Update rate: ");
-                //     ui.add(egui::DragValue::new(
-                //         &mut self.program_options.update_modulus,
-                //     ))
-                //     .on_hover_text(
-                //         "Automatically try to update the program every X times the program opens, -1 for disabled, 1 for every launch",
-                //     );
-                // });
 
                 ui.collapsing("Color options", |ui| {
                     ui.horizontal(|ui| {
@@ -664,7 +680,7 @@ impl eframe::App for HappyChartState {
                     });
 
                     if ui.button("Backup program state").on_hover_text("Compress the save state and the last session data into a zip file titled with the current date.").clicked() {
-                        backup_program_state(frame, self, true);
+                        backup_program_state(ctx, self, true);
                         self.last_backup_date = Local::now();
                     }
                 });
@@ -741,21 +757,21 @@ impl eframe::App for HappyChartState {
         }
     }
 
-    fn post_rendering(&mut self, window_size_px: [u32; 2], frame: &Frame) {
-        if let Some(ss) = frame.screenshot() {
-            if let Some(path) = rfd::FileDialog::new()
-                .add_filter("Image", &["png", "jpeg", "jpg", "bmp", "tiff"])
-                .save_file()
-            {
-                image::save_buffer(
-                    path,
-                    ss.as_raw(),
-                    window_size_px[0],
-                    window_size_px[1],
-                    image::ColorType::Rgba8,
-                )
-                .unwrap();
-            }
-        }
-    }
+    // fn post_rendering(&mut self, window_size_px: [u32; 2], frame: &Frame) {
+    //     if let Some(ss) = frame.screenshot() {
+    //         if let Some(path) = rfd::FileDialog::new()
+    //             .add_filter("Image", &["png", "jpeg", "jpg", "bmp", "tiff"])
+    //             .save_file()
+    //         {
+    //             image::save_buffer(
+    //                 path,
+    //                 ss.as_raw(),
+    //                 window_size_px[0],
+    //                 window_size_px[1],
+    //                 image::ColorType::Rgba8,
+    //             )
+    //             .unwrap();
+    //         }
+    //     }
+    // }
 }

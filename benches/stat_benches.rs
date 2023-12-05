@@ -24,7 +24,7 @@ fn day_of_week_test() -> f32 {
 
     let days = {
         let mut list = vec![];
-        (0..500).into_iter().for_each(|_| {
+        (0..500).for_each(|_| {
             list.push(ImprovedDayStat {
                 rating: thread_rng().gen_range(0..=100) as f32,
                 date: DateTime::from(

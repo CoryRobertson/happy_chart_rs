@@ -16,6 +16,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::thread::JoinHandle;
 use std::{fs, thread};
+use egui::{Pos2, Rect, ViewportCommand};
 use zip::write::FileOptions;
 use zip::CompressionMethod;
 
@@ -50,10 +51,11 @@ pub fn distance(x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
 }
 
 /// Quit function run when the user clicks the quit button
-pub fn quit(frame: &mut Frame, app: &HappyChartState) {
-    save_program_state(frame, app);
+pub fn quit(_frame: &mut Frame, ctx: &egui::Context, app: &HappyChartState) {
+    save_program_state(ctx, app);
 
-    frame.close();
+    ctx.send_viewport_cmd(ViewportCommand::Close);
+    // frame.close();
 }
 
 fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {
@@ -74,9 +76,9 @@ fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {
     )
 }
 
-pub fn backup_program_state(frame: &Frame, app: &HappyChartState, is_manual: bool) {
+pub fn backup_program_state(ctx: &egui::Context, app: &HappyChartState, is_manual: bool) {
     let time = Local::now();
-    save_program_state(frame, app);
+    save_program_state(ctx, app);
     let _ = fs::create_dir_all(&app.program_options.backup_save_path);
     let archive_file_name = get_backup_file_name(&time, is_manual);
     let file = File::create(
@@ -108,10 +110,13 @@ pub fn backup_program_state(frame: &Frame, app: &HappyChartState, is_manual: boo
     let _ = arch.finish();
 }
 
-pub fn save_program_state(frame: &Frame, app: &HappyChartState) {
+pub fn save_program_state(ctx: &egui::Context, app: &HappyChartState) {
     let days = &app.days;
+
+    let window_size = ctx.input(|i| i.viewport().inner_rect.unwrap_or(Rect::from_two_pos(Pos2::new(0.0,0.0),Pos2::new(600.0,600.0))));
+
     let last_session = LastSession {
-        window_size: frame.info().window_info.size.into(),
+        window_size: [window_size.width(),window_size.height()],
         program_options: app.program_options.clone(),
         open_modulus: app.open_modulus + 1,
         last_open_date: Local::now(),
