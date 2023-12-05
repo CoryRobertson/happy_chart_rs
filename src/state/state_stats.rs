@@ -1,5 +1,5 @@
 use crate::common::get_average_for_day_of_week;
-use crate::improved_daystat::ImprovedDayStat;
+use crate::day_stats::improved_daystat::ImprovedDayStat;
 use chrono::Weekday;
 
 #[derive(Debug)]

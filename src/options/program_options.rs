@@ -1,4 +1,4 @@
-use crate::color_setting::ColorSettings;
+use crate::options::color_setting::ColorSettings;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 

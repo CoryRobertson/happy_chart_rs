@@ -1,20 +1,23 @@
+use crate::auto_update_status::AutoUpdateStatus;
 #[allow(deprecated)]
-use crate::daystat::DayStat;
-use crate::happy_chart_state::HappyChartState;
-use crate::improved_daystat::ImprovedDayStat;
+use crate::day_stats::daystat::DayStat;
+use crate::day_stats::improved_daystat::ImprovedDayStat;
 use crate::last_session::LastSession;
+use crate::state::happy_chart_state::HappyChartState;
 use crate::{
     BACKUP_FILENAME_PREFIX, BACKUP_FILE_EXTENSION, LAST_SESSION_FILE_NAME, MANUAL_BACKUP_SUFFIX,
     NEW_SAVE_FILE_NAME, SAVE_FILE_NAME,
 };
 use chrono::{DateTime, Datelike, Local, Weekday};
 use eframe::egui;
-use egui::{Pos2, Rect, ViewportCommand};
+use eframe::epaint::ColorImage;
+use egui::{Context, Pos2, Rect, ViewportCommand};
 use self_update::update::Release;
 use self_update::{cargo_crate_version, Status};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::thread::JoinHandle;
 use std::{fs, thread};
 use zip::write::FileOptions;
@@ -74,6 +77,84 @@ fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {
         },
         BACKUP_FILE_EXTENSION
     )
+}
+
+pub(crate) fn first_load(app: &mut HappyChartState, ctx: &Context) {
+    // all data we need to read one time on launch, all of this most of the time is unchanging throughout usage of the program, so it can only be recalculated on launch
+    // for example, day quality averages do not need to change between launches
+    app.first_load = false;
+    app.days = read_save_file();
+
+    app.days
+        .sort_by(|day1, day2| day1.date.timestamp().cmp(&day2.date.timestamp()));
+
+    app.starting_length = app.days.len();
+    let ls = read_last_session_save_file();
+    app.open_modulus = ls.open_modulus;
+    app.program_options = ls.program_options;
+    app.last_open_date = ls.last_open_date;
+    app.last_backup_date = ls.last_backup_date;
+    if let Some(ver) = ls.last_version_checked {
+        app.auto_update_seen_version = Some(ver);
+    }
+
+    if Local::now()
+        .signed_duration_since(ls.last_open_date)
+        .num_hours()
+        >= 12
+    {
+        if let Ok(list) = get_release_list() {
+            if let Some(release) = list.first() {
+                if let Ok(greater_bump) =
+                    self_update::version::bump_is_greater(cargo_crate_version!(), &release.version)
+                {
+                    if greater_bump {
+                        println!(
+                            "Update available! {} {} {}",
+                            release.name, release.version, release.date
+                        );
+                        app.update_available = Some(release.clone());
+                        app.update_status = AutoUpdateStatus::OutOfDate;
+                    } else {
+                        println!("No update available.");
+                        app.update_status =
+                            AutoUpdateStatus::UpToDate(cargo_crate_version!().to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    // check if user last backup day is +- 3 hours between the margin of their auto backup day count
+    if app.program_options.auto_backup_days > -1
+        && Local::now()
+            .signed_duration_since(ls.last_backup_date)
+            .num_days()
+            > i64::from(app.program_options.auto_backup_days)
+    {
+        backup_program_state(ctx, app, false);
+        app.last_backup_date = Local::now();
+    }
+
+    app.remove_old_backup_files();
+
+    app.stats.avg_weekdays.calc_averages(&app.days);
+}
+
+pub(crate) fn handle_screenshot_event(image: &Arc<ColorImage>) {
+    if let Some(path) = rfd::FileDialog::new()
+        .add_filter("Image", &["png", "jpeg", "jpg", "bmp", "tiff"])
+        .save_file()
+    {
+        image::save_buffer(
+            path,
+            image.as_raw(),
+            image.width() as u32,
+            image.height() as u32,
+            image::ColorType::Rgba8,
+        )
+        .unwrap();
+    }
 }
 
 pub fn backup_program_state(ctx: &egui::Context, app: &HappyChartState, is_manual: bool) {

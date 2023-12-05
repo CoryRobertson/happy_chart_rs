@@ -1,5 +1,5 @@
 #[allow(deprecated)]
-use crate::daystat::DayStat;
+use crate::day_stats::daystat::DayStat;
 use chrono::{DateTime, Datelike, Local, Timelike};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};

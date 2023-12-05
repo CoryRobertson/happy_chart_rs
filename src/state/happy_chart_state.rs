@@ -1,7 +1,7 @@
 use crate::auto_update_status::AutoUpdateStatus;
-use crate::improved_daystat::ImprovedDayStat;
-use crate::program_options::ProgramOptions;
-use crate::state_stats::StateStats;
+use crate::day_stats::improved_daystat::ImprovedDayStat;
+use crate::options::program_options::ProgramOptions;
+use crate::state::state_stats::StateStats;
 use crate::{BACKUP_FILENAME_PREFIX, BACKUP_FILE_EXTENSION, MANUAL_BACKUP_SUFFIX};
 use chrono::{DateTime, Local};
 use self_update::update::Release;
