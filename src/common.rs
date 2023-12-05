@@ -8,7 +8,7 @@ use crate::{
     NEW_SAVE_FILE_NAME, SAVE_FILE_NAME,
 };
 use chrono::{DateTime, Datelike, Local, Weekday};
-use eframe::{egui, Frame};
+use eframe::egui;
 use self_update::update::Release;
 use self_update::{cargo_crate_version, Status};
 use std::fs::File;
@@ -51,7 +51,7 @@ pub fn distance(x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
 }
 
 /// Quit function run when the user clicks the quit button
-pub fn quit(_frame: &mut Frame, ctx: &egui::Context, app: &HappyChartState) {
+pub fn quit(ctx: &egui::Context, app: &HappyChartState) {
     save_program_state(ctx, app);
 
     ctx.send_viewport_cmd(ViewportCommand::Close);
