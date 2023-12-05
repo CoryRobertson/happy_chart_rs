@@ -258,11 +258,10 @@ fn draw_day_lines(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
 
 /// Draw the lines between each stat like a graph
 fn draw_stat_line_segments(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
-    let mut i = 0;
     let mut prev_x = 0.0;
     let mut prev_y = 0.0;
     // draw lines loop, bottom layer
-    for day in &app.days {
+    for (i,day) in app.days.iter().enumerate() {
         let x: f32 = improved_calculate_x(
             &app.days,
             day,
@@ -284,7 +283,6 @@ fn draw_stat_line_segments(central_panel_ui: &mut Ui, app: &mut HappyChartState)
             );
         }
 
-        i += 1;
         prev_x = x;
         prev_y = y;
     }
