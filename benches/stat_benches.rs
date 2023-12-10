@@ -11,7 +11,7 @@ pub(crate) struct ImprovedDayStat {
 }
 
 #[divan::bench]
-fn day_of_week_test() -> f32 {
+fn day_of_week_test(bencher: divan::Bencher) {
     fn get_average_for_day_of_week(day_of_week: Weekday, days: &[ImprovedDayStat]) -> f32 {
         let ratings = days
             .iter()
@@ -34,11 +34,14 @@ fn day_of_week_test() -> f32 {
         });
         list
     };
-    get_average_for_day_of_week(Weekday::Mon, &days)
-        + get_average_for_day_of_week(Weekday::Tue, &days)
-        + get_average_for_day_of_week(Weekday::Wed, &days)
-        + get_average_for_day_of_week(Weekday::Thu, &days)
-        + get_average_for_day_of_week(Weekday::Fri, &days)
-        + get_average_for_day_of_week(Weekday::Sat, &days)
-        + get_average_for_day_of_week(Weekday::Sun, &days)
+
+    bencher.bench(|| {
+        get_average_for_day_of_week(Weekday::Mon, &days)
+            + get_average_for_day_of_week(Weekday::Tue, &days)
+            + get_average_for_day_of_week(Weekday::Wed, &days)
+            + get_average_for_day_of_week(Weekday::Thu, &days)
+            + get_average_for_day_of_week(Weekday::Fri, &days)
+            + get_average_for_day_of_week(Weekday::Sat, &days)
+            + get_average_for_day_of_week(Weekday::Sun, &days)
+    })
 }
