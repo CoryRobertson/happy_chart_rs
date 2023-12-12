@@ -160,8 +160,7 @@ pub(crate) fn draw_stat_line_segments(central_panel_ui: &mut Ui, app: &mut Happy
 
 /// draw the circled for each stat, separate color based on each stats rating
 pub(crate) fn draw_stat_circles(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
-    let mut idx = 0;
-    for day in &app.days.clone() {
+    for (idx, day) in app.days.clone().iter().enumerate() {
         let x: f32 = improved_calculate_x(
             &app.days,
             day,
@@ -174,7 +173,8 @@ pub(crate) fn draw_stat_circles(central_panel_ui: &mut Ui, app: &mut HappyChartS
             - app.program_options.day_stat_height_offset;
 
         let streak_color = if idx >= app.stats.longest_streak.streak_start_index
-            && idx <= app.stats.longest_streak.streak_end_index && app.program_options.show_streak
+            && idx <= app.stats.longest_streak.streak_end_index
+            && app.program_options.show_streak
         {
             app.program_options.color_settings.stat_outline_streak_color
         } else {
@@ -199,7 +199,6 @@ pub(crate) fn draw_stat_circles(central_panel_ui: &mut Ui, app: &mut HappyChartS
             app.program_options.daystat_circle_size,
             color,
         );
-        idx += 1;
     }
 }
 
