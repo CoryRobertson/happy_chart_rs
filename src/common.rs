@@ -139,6 +139,7 @@ pub(crate) fn first_load(app: &mut HappyChartState, ctx: &Context) {
     app.remove_old_backup_files();
 
     app.stats.avg_weekdays.calc_averages(&app.days);
+    app.stats.calc_streak(&app.days);
 }
 
 pub(crate) fn handle_screenshot_event(image: &Arc<ColorImage>) {

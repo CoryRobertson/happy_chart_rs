@@ -103,3 +103,13 @@ impl ImprovedDayStat {
         (self.date.timestamp() - compare_day_stat.date.timestamp()).abs()
     }
 }
+
+impl Default for ImprovedDayStat {
+    fn default() -> Self {
+        Self {
+            rating: 0.0,
+            date: Local::now(),
+            note: "DEFAULT NOTE".to_string(),
+        }
+    }
+}

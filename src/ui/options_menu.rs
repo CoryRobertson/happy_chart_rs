@@ -51,6 +51,12 @@ pub(crate) fn draw_color_options_menu(options_panel_ui: &mut Ui, app: &mut Happy
             // ui.color_edit_button_srgba(&mut self.program_options.color_settings.text_color).on_hover_text("Text Color");
             ui.color_edit_button_srgba(&mut app.program_options.color_settings.info_window_color)
                 .on_hover_text("Info window color");
+            ui.color_edit_button_srgba(&mut app.program_options.color_settings.stat_outline_color)
+                .on_hover_text("Day stat outline color");
+            ui.color_edit_button_srgba(
+                &mut app.program_options.color_settings.stat_outline_streak_color,
+            )
+            .on_hover_text("Day stat outline streak color");
         });
 
         if ui.button("Reset colors to defaults").clicked() {

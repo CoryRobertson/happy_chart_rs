@@ -41,7 +41,7 @@ impl Default for ProgramOptions {
             day_line_height_offset: 0.0,
             day_stat_height_offset: 0.0,
             mouse_over_radius: 20.0,
-            daystat_circle_outline_radius: 5.0,
+            daystat_circle_outline_radius: 5.2, // on my screen 5.2 looks pretty good, probably worth testing on other displays eventually
             daystat_circle_size: 4.0,
             draw_daystat_circles: true,
             draw_daystat_lines: true,

@@ -29,6 +29,7 @@ pub(crate) fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyCh
             note: app.note_input.clone(),
         });
         app.stats.avg_weekdays.calc_averages(&app.days);
+        app.stats.calc_streak(&app.days);
         println!(
             "day added with rating {} and date {}",
             app.rating,
@@ -99,7 +100,8 @@ pub(crate) fn draw_day_lines(central_panel_ui: &mut Ui, app: &mut HappyChartStat
         for i2 in -range..range {
             // make a fake day with the first day on the list as the first day, and add 24 hours to it each time in utc time to calculate where each line goes
             let line_points: [Pos2; 2] = {
-                let d = app.days.get(0).unwrap();
+                let def = ImprovedDayStat::default();
+                let d = app.days.get(0).unwrap_or(&def);
 
                 let fake_day = ImprovedDayStat {
                     rating: 0.0,
@@ -158,6 +160,7 @@ pub(crate) fn draw_stat_line_segments(central_panel_ui: &mut Ui, app: &mut Happy
 
 /// draw the circled for each stat, separate color based on each stats rating
 pub(crate) fn draw_stat_circles(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
+    let mut idx = 0;
     for day in &app.days.clone() {
         let x: f32 = improved_calculate_x(
             &app.days,
@@ -170,11 +173,19 @@ pub(crate) fn draw_stat_circles(central_panel_ui: &mut Ui, app: &mut HappyChartS
             .mul_add(-app.program_options.graph_y_scale, 500.0)
             - app.program_options.day_stat_height_offset;
 
+        let streak_color = if idx >= app.stats.longest_streak.streak_start_index
+            && idx <= app.stats.longest_streak.streak_end_index
+        {
+            app.program_options.color_settings.stat_outline_streak_color
+        } else {
+            app.program_options.color_settings.stat_outline_color
+        };
+
         //draw circles on each coordinate point
         central_panel_ui.painter().circle_filled(
             Pos2::new(x, y),
             app.program_options.daystat_circle_outline_radius,
-            Color32::BLACK,
+            streak_color,
         );
 
         let color = if !app.filter_term.is_empty() && day.note.contains(&app.filter_term) {
@@ -188,6 +199,7 @@ pub(crate) fn draw_stat_circles(central_panel_ui: &mut Ui, app: &mut HappyChartS
             app.program_options.daystat_circle_size,
             color,
         );
+        idx += 1;
     }
 }
 

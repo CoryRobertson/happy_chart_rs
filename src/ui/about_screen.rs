@@ -21,32 +21,40 @@ pub(crate) fn draw_about_page(about_page_ui: &mut Ui, app: &mut HappyChartState)
     about_page_ui.separator();
     about_page_ui.label(format!("Day stats recorded: {}", app.days.len()));
     about_page_ui.label(format!(
-        "Average sunday: {}",
+        "Average sunday: {:.0}",
         app.stats.avg_weekdays.avg_sunday
     ));
     about_page_ui.label(format!(
-        "Average monday: {}",
+        "Average monday: {:.0}",
         app.stats.avg_weekdays.avg_monday
     ));
     about_page_ui.label(format!(
-        "Average tuesday: {}",
+        "Average tuesday: {:.0}",
         app.stats.avg_weekdays.avg_tuesday
     ));
     about_page_ui.label(format!(
-        "Average wednesday: {}",
+        "Average wednesday: {:.0}",
         app.stats.avg_weekdays.avg_wednesday
     ));
     about_page_ui.label(format!(
-        "Average thursday: {}",
+        "Average thursday: {:.0}",
         app.stats.avg_weekdays.avg_thursday
     ));
     about_page_ui.label(format!(
-        "Average friday: {}",
+        "Average friday: {:.0}",
         app.stats.avg_weekdays.avg_friday
     ));
     about_page_ui.label(format!(
-        "Average saturday: {}",
+        "Average saturday: {:.0}",
         app.stats.avg_weekdays.avg_saturday
+    ));
+    about_page_ui.label(format!(
+        "Longest streak {}",
+        app.stats.longest_streak.longest_streak
+    ));
+    about_page_ui.label(format!(
+        "Streak start-end {}-{}",
+        app.stats.longest_streak.streak_start_index, app.stats.longest_streak.streak_end_index
     ));
     about_page_ui.separator();
     about_page_ui.label(format!("Last backup date: {}", app.last_backup_date));

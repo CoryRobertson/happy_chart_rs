@@ -52,6 +52,9 @@ pub struct ColorSettings {
     pub info_window_color: Color32,
     /// Color for the lines that show each day, when they are turned on.
     pub day_line_color: Color32,
+
+    pub stat_outline_color: Color32,
+    pub stat_outline_streak_color: Color32,
 }
 
 impl Default for ColorSettings {
@@ -61,6 +64,8 @@ impl Default for ColorSettings {
             line_color: Color32::from_rgb(100, 100, 100),
             info_window_color: Color32::from_rgb(100, 100, 100),
             day_line_color: Color32::from_rgba_unmultiplied(50, 50, 50, 100),
+            stat_outline_color: Color32::BLACK,
+            stat_outline_streak_color: Color32::WHITE,
         }
     }
 }
