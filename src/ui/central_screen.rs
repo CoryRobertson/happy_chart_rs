@@ -174,7 +174,7 @@ pub(crate) fn draw_stat_circles(central_panel_ui: &mut Ui, app: &mut HappyChartS
             - app.program_options.day_stat_height_offset;
 
         let streak_color = if idx >= app.stats.longest_streak.streak_start_index
-            && idx <= app.stats.longest_streak.streak_end_index
+            && idx <= app.stats.longest_streak.streak_end_index && app.program_options.show_streak
         {
             app.program_options.color_settings.stat_outline_streak_color
         } else {

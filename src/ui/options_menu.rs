@@ -162,6 +162,10 @@ pub(crate) fn draw_stat_drawing_options_menu(options_panel_ui: &mut Ui, app: &mu
                 &mut app.program_options.draw_daystat_lines,
                 "Draw stat lines",
             );
+            options_panel_ui.checkbox(
+                &mut app.program_options.show_streak,
+                "Draw longest streak",
+            ).on_hover_text("Change the outline color of the longest streak of days recorded. This color is configurable in color options");
         });
     });
 }

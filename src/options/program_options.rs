@@ -28,6 +28,8 @@ pub struct ProgramOptions {
     pub backup_age_keep_days: i32,
     /// The minimum number of backups before we try to automatically clean up stale backups
     pub number_of_kept_backups: i32,
+    /// Draw a different color outline for day stats within a streak of time
+    pub show_streak: bool,
 }
 
 impl Default for ProgramOptions {
@@ -51,6 +53,7 @@ impl Default for ProgramOptions {
             auto_backup_days: -1,
             backup_age_keep_days: -1,
             number_of_kept_backups: -1,
+            show_streak: true,
         }
     }
 }
