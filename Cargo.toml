@@ -38,7 +38,7 @@ vergen = { version = "8.2.6", features = ["build","git","gitcl"] }
 winres = "0.1.12"
 
 [dev-dependencies]
-divan = "0.1.2"
+divan = "0.1.7"
 rand = "0.8.5"
 
 [[bench]]
