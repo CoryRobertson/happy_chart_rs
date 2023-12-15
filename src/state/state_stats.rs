@@ -53,24 +53,36 @@ impl StateStats {
     }
 
     /// Calculate the longest streak present in the day stat list
-    pub fn calc_streak(&mut self, list: &[ImprovedDayStat]) {
-        let mut streak_start_index = 0;
-        let mut streak_end_index = 0;
+    pub fn calc_streak(&mut self, list: &[ImprovedDayStat], leniency: u32) {
+        let mut streak_start_index: usize = 0;
+        let mut streak_end_index: usize = 0;
         let mut current_max = 0u32;
 
-        let mut iter = 0..list.len();
-
-        // while loop does not take ownership, or current borrowing of the iterator -> https://stackoverflow.com/questions/59045408/how-to-skip-n-items-from-inside-of-an-iterator-loop
-        // using a while loop here allows us to arbitrarily skip iterator spaces when we find a new max
-        while let Some(day_index) = iter.next() {
+        for day_index in 0..list.len() {
             let remaining_days = &list[day_index..];
+
+            #[cfg(debug_assertions)]
+            println!(
+                "{} {} {} {} {}",
+                day_index,
+                current_max,
+                streak_start_index,
+                streak_end_index,
+                remaining_days.len()
+            );
 
             let mut highest = 0;
             if let Some(mut prev_day) = remaining_days.first() {
-                streak_start_index = day_index;
+                streak_start_index = {
+                    let a: i32 = streak_end_index as i32 - current_max as i32;
+                    // guarantee that the output start index is at least zero, so we never underflow
+                    a.max(0) as usize
+                };
+
                 // iterate through each day seeing if the previous day was less than 36 hours ago, if so then increment the streak counter
                 for day in remaining_days {
-                    if day.date.signed_duration_since(prev_day.date).num_hours() >= 36 {
+                    if day.date.signed_duration_since(prev_day.date).num_hours() >= leniency as i64
+                    {
                         break;
                     }
 
@@ -80,10 +92,8 @@ impl StateStats {
                 }
 
                 // when the streak counter is higher, we assign it to the highest streak and skip that number of elements in the iterator.
-                // we skip that number of elements because the space of the streaks days will be within its streak length at least, this allows us to skip around the iterator faster.
                 if highest > current_max {
                     current_max = highest;
-                    iter.nth((highest - 1) as usize);
                     streak_end_index = day_index + (highest - 1) as usize;
                 }
             }

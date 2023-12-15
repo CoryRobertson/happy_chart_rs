@@ -79,7 +79,7 @@ fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {
     )
 }
 
-pub(crate) fn first_load(app: &mut HappyChartState, ctx: &Context) {
+pub fn first_load(app: &mut HappyChartState, ctx: &Context) {
     // all data we need to read one time on launch, all of this most of the time is unchanging throughout usage of the program, so it can only be recalculated on launch
     // for example, day quality averages do not need to change between launches
     app.first_load = false;
@@ -139,10 +139,11 @@ pub(crate) fn first_load(app: &mut HappyChartState, ctx: &Context) {
     app.remove_old_backup_files();
 
     app.stats.avg_weekdays.calc_averages(&app.days);
-    app.stats.calc_streak(&app.days);
+    app.stats
+        .calc_streak(&app.days, app.program_options.streak_leniency);
 }
 
-pub(crate) fn handle_screenshot_event(image: &Arc<ColorImage>) {
+pub fn handle_screenshot_event(image: &Arc<ColorImage>) {
     if let Some(path) = rfd::FileDialog::new()
         .add_filter("Image", &["png", "jpeg", "jpg", "bmp", "tiff"])
         .save_file()
@@ -150,8 +151,8 @@ pub(crate) fn handle_screenshot_event(image: &Arc<ColorImage>) {
         image::save_buffer(
             path,
             image.as_raw(),
-            image.width() as u32,
-            image.height() as u32,
+            u32::try_from(image.width()).unwrap_or(u32::MAX),
+            u32::try_from(image.height()).unwrap_or(u32::MAX),
             image::ColorType::Rgba8,
         )
         .unwrap();
@@ -192,7 +193,7 @@ pub fn backup_program_state(ctx: &egui::Context, app: &HappyChartState, is_manua
     let _ = arch.finish();
 }
 
-pub fn save_program_state(ctx: &egui::Context, app: &HappyChartState) {
+pub fn save_program_state(ctx: &Context, app: &HappyChartState) {
     let days = &app.days;
 
     let window_size = ctx.input(|i| {

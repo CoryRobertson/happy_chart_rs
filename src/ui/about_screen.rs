@@ -4,7 +4,7 @@ use egui::Ui;
 use self_update::cargo_crate_version;
 
 /// About page info such as build date, program license, and other fun stats that are slightly extraneous
-pub(crate) fn draw_about_page(about_page_ui: &mut Ui, app: &mut HappyChartState) {
+pub fn draw_about_page(about_page_ui: &mut Ui, app: &mut HappyChartState) {
     about_page_ui.heading("Happy Chart");
     about_page_ui.label("A multi-purpose journaling software.");
     about_page_ui.separator();

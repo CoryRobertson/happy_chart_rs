@@ -8,7 +8,7 @@ use egui::{Context, Ui};
 use self_update::Status;
 
 /// Draw an indicator in the options menu for if an update is taking place, or needed
-pub(crate) fn options_update_thread_block(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
+pub fn options_update_thread_block(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
     // update thread block, handles showing spinner, and checking if the update is done
     let update_thread = app.update_thread.replace(None);
     match update_thread {
@@ -40,7 +40,7 @@ pub(crate) fn options_update_thread_block(options_panel_ui: &mut Ui, app: &mut H
 }
 
 /// Color options collapsing menu
-pub(crate) fn draw_color_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
+pub fn draw_color_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
     options_panel_ui.collapsing("Color options", |ui| {
         ui.horizontal(|ui| {
             ui.color_edit_button_srgba(&mut app.program_options.color_settings.line_color)
@@ -66,7 +66,7 @@ pub(crate) fn draw_color_options_menu(options_panel_ui: &mut Ui, app: &mut Happy
 }
 
 /// Graphing options collapsing menu
-pub(crate) fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
+pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
     options_panel_ui.collapsing("Graphing options", |options_panel_ui| {
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("Display day lines: ");
@@ -123,7 +123,7 @@ pub(crate) fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut Ha
 }
 
 /// Day stat options collapsing menu
-pub(crate) fn draw_stat_drawing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
+pub fn draw_stat_drawing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
     options_panel_ui.collapsing("Stat drawing options", |options_panel_ui| {
         // mouse over radius
         options_panel_ui.horizontal(|options_panel_ui| {
@@ -154,6 +154,15 @@ pub(crate) fn draw_stat_drawing_options_menu(options_panel_ui: &mut Ui, app: &mu
             );
         });
         options_panel_ui.horizontal(|options_panel_ui| {
+            options_panel_ui.label("Streak leniency:");
+            if options_panel_ui.add(
+                egui::DragValue::new(&mut app.program_options.streak_leniency)
+                    .speed(0.1),
+            ).on_hover_text("The number of hours before a streak is considered broken").changed() {
+                app.stats.calc_streak(&app.days,app.program_options.streak_leniency);
+            }
+        });
+        options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.checkbox(
                 &mut app.program_options.draw_daystat_circles,
                 "Draw stat circles",
@@ -171,7 +180,7 @@ pub(crate) fn draw_stat_drawing_options_menu(options_panel_ui: &mut Ui, app: &mu
 }
 
 /// Backup settings collapsing menu
-pub(crate) fn draw_backup_settings_options_menu(
+pub fn draw_backup_settings_options_menu(
     options_panel_ui: &mut Ui,
     app: &mut HappyChartState,
     ctx: &Context,

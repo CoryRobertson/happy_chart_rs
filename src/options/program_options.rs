@@ -30,6 +30,8 @@ pub struct ProgramOptions {
     pub number_of_kept_backups: i32,
     /// Draw a different color outline for day stats within a streak of time
     pub show_streak: bool,
+    /// The gap in hours a streak is considered valid
+    pub streak_leniency: u32,
 }
 
 impl Default for ProgramOptions {
@@ -54,6 +56,7 @@ impl Default for ProgramOptions {
             backup_age_keep_days: -1,
             number_of_kept_backups: -1,
             show_streak: true,
+            streak_leniency: 36,
         }
     }
 }

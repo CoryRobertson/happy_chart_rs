@@ -9,7 +9,7 @@ use eframe::epaint::{Color32, FontId, Rounding, Stroke};
 use egui::{Context, Layout, Ui, ViewportCommand};
 use self_update::cargo_crate_version;
 
-pub(crate) fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
+pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
     central_panel_ui.horizontal(|ui| {
         ui.label("Rating: ");
         ui.add(egui::Slider::new(&mut app.rating, 0.0..=100.0))
@@ -29,7 +29,8 @@ pub(crate) fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyCh
             note: app.note_input.clone(),
         });
         app.stats.avg_weekdays.calc_averages(&app.days);
-        app.stats.calc_streak(&app.days);
+        app.stats
+            .calc_streak(&app.days, app.program_options.streak_leniency);
         println!(
             "day added with rating {} and date {}",
             app.rating,
@@ -51,8 +52,8 @@ pub(crate) fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyCh
     });
 }
 
-pub(crate) fn click_drag_zoom_detection(
-    central_panel_ui: &mut Ui,
+pub fn click_drag_zoom_detection(
+    central_panel_ui: &Ui,
     app: &mut HappyChartState,
     pointer_interact_pos: Option<&Pos2>,
 ) {
@@ -86,7 +87,7 @@ pub(crate) fn click_drag_zoom_detection(
 }
 
 /// Draw the lines that represent time itself, typically 24 hours
-pub(crate) fn draw_day_lines(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
+pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState) {
     if app.days.len() > 1 {
         // range for calculating how many lines in both directions on the x axis
         let range = {
@@ -127,7 +128,7 @@ pub(crate) fn draw_day_lines(central_panel_ui: &mut Ui, app: &mut HappyChartStat
 }
 
 /// Draw the lines between each stat like a graph
-pub(crate) fn draw_stat_line_segments(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
+pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
     let mut prev_x = 0.0;
     let mut prev_y = 0.0;
     // draw lines loop, bottom layer
@@ -159,7 +160,7 @@ pub(crate) fn draw_stat_line_segments(central_panel_ui: &mut Ui, app: &mut Happy
 }
 
 /// draw the circled for each stat, separate color based on each stats rating
-pub(crate) fn draw_stat_circles(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
+pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState) {
     for (idx, day) in app.days.clone().iter().enumerate() {
         let x: f32 = improved_calculate_x(
             &app.days,
@@ -203,11 +204,7 @@ pub(crate) fn draw_stat_circles(central_panel_ui: &mut Ui, app: &mut HappyChartS
 }
 
 /// Draw a stats info if it is moused over
-pub(crate) fn draw_stat_mouse_over_info(
-    central_panel_ui: &mut Ui,
-    app: &mut HappyChartState,
-    ctx: &Context,
-) {
+pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartState, ctx: &Context) {
     let mouse_pos = ctx
         .pointer_hover_pos()
         .map_or_else(|| Pos2::new(0.0, 0.0), |a| a);
@@ -262,11 +259,7 @@ pub(crate) fn draw_stat_mouse_over_info(
 }
 
 /// Draw the auto update ui on screen if needed
-pub(crate) fn draw_auto_update_ui(
-    central_panel_ui: &mut Ui,
-    app: &mut HappyChartState,
-    ctx: &Context,
-) {
+pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &Context) {
     if let Some(release) = &app.update_available {
         let should_show_update = match &app.auto_update_seen_version {
             None => true,
@@ -313,7 +306,7 @@ pub(crate) fn draw_auto_update_ui(
 }
 
 /// Draw the quit button as well as the options, about, and screenshot button
-pub(crate) fn draw_bottom_row_buttons(
+pub fn draw_bottom_row_buttons(
     central_panel_ui: &mut Ui,
     app: &mut HappyChartState,
     ctx: &Context,

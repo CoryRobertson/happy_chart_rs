@@ -1,2 +1,2 @@
-pub(crate) mod happy_chart_state;
-pub(crate) mod state_stats;
+pub mod happy_chart_state;
+pub mod state_stats;
