@@ -22,6 +22,7 @@ use std::thread::JoinHandle;
 use std::{fs, thread};
 use zip::write::FileOptions;
 use zip::CompressionMethod;
+use crate::options::program_options::ProgramOptions;
 
 /// Calculates the x coordinate for each graph point
 #[deprecated]
@@ -164,12 +165,19 @@ pub fn backup_program_state(ctx: &egui::Context, app: &HappyChartState, is_manua
     save_program_state(ctx, app);
     let _ = fs::create_dir_all(&app.program_options.backup_save_path);
     let archive_file_name = get_backup_file_name(&time, is_manual);
-    let file = File::create(
+    let file = match File::create(
         app.program_options
             .backup_save_path
             .clone()
             .join(Path::new(&archive_file_name)),
-    );
+    ) {
+        Ok(f) => { Ok(f)}
+        Err(_) => {
+            File::create(
+                ProgramOptions::default().backup_save_path.join(Path::new(&archive_file_name)),
+            )
+        }
+    };
     let mut arch = zip::ZipWriter::new(file.unwrap());
     let options = FileOptions::default().compression_method(CompressionMethod::Deflated);
     if let Ok(mut old_save_file) = File::open(SAVE_FILE_NAME) {
