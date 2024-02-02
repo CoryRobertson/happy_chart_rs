@@ -89,7 +89,7 @@ pub fn click_drag_zoom_detection(
 /// Draw the lines that represent time itself, typically 24 hours
 pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState) {
     if app.days.len() > 1 {
-        // range for calculating how many lines in both directions on the x axis
+        // range for calculating how many lines in both directions on the x-axis
         let range = {
             if app.program_options.x_offset > 5000.0 {
                 app.program_options.x_offset as i32
@@ -159,7 +159,7 @@ pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
     }
 }
 
-/// draw the circled for each stat, separate color based on each stats rating
+/// draw the circled for each stat, separate color based on each stat's rating
 pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState) {
     for (idx, day) in app.days.clone().iter().enumerate() {
         let x: f32 = improved_calculate_x(
@@ -228,7 +228,7 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
         let dist_max = app.program_options.mouse_over_radius; // maximum distance to consider a point being moused over
 
         if distance(mouse_pos.x, mouse_pos.y, x, y) < dist_max && !moused_over {
-            // draw text near by each coordinate point
+            // draw text nearby each coordinate point
             moused_over = true;
 
             central_panel_ui.painter().text(

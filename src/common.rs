@@ -60,10 +60,7 @@ pub fn quit(ctx: &Context, app: &HappyChartState) {
     let _ = save_program_state(ctx, app);
 
     ctx.send_viewport_cmd(ViewportCommand::Close);
-    // frame.close();
 }
-
-// TODO: make user go to a special error screen displaying what happened, allowing the user to dismiss it, reset the given issue to a default value, or close the program.
 
 fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {
     format!(
@@ -319,7 +316,7 @@ pub fn get_release_list() -> Result<Vec<Release>, Box<dyn Error>> {
     Ok(list)
 }
 
-/// Reads the last session file, if exists, returns the deserialized contents, if it doesnt exist, returns a default `LastSession` struct.
+/// Reads the last session file, if exists, returns the deserialized contents, if it doesn't exist, returns a default `LastSession` struct.
 pub fn read_last_session_save_file() -> LastSession {
     let path = Path::new(LAST_SESSION_FILE_NAME);
 
