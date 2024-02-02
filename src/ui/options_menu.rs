@@ -225,7 +225,9 @@ pub fn draw_backup_settings_options_menu(
         });
 
         if options_panel_ui.button("Backup program state").on_hover_text("Compress the save state and the last session data into a zip file titled with the current date.").clicked() {
-            backup_program_state(ctx, app, true);
+            if let Err(err) = backup_program_state(ctx, app, true) {
+                app.error_states.push(err);
+            }
             app.last_backup_date = Local::now();
         }
     });

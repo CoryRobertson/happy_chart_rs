@@ -3,6 +3,7 @@ use crate::auto_update_status::AutoUpdateStatus;
 use crate::day_stats::daystat::DayStat;
 use crate::day_stats::improved_daystat::ImprovedDayStat;
 use crate::last_session::LastSession;
+use crate::state::error_states::HappyChartError;
 use crate::state::happy_chart_state::HappyChartState;
 use crate::{
     BACKUP_FILENAME_PREFIX, BACKUP_FILE_EXTENSION, LAST_SESSION_FILE_NAME, MANUAL_BACKUP_SUFFIX,
@@ -14,20 +15,19 @@ use eframe::epaint::ColorImage;
 use egui::{Context, Pos2, Rect, ViewportCommand};
 use self_update::update::Release;
 use self_update::{cargo_crate_version, Status};
+use std::error::Error;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::thread::JoinHandle;
 use std::{fs, thread};
-use std::fmt::{Display, Formatter};
 use zip::write::FileOptions;
 use zip::CompressionMethod;
-use crate::options::program_options::ProgramOptions;
 
 /// Calculates the x coordinate for each graph point
 #[deprecated]
-#[allow(dead_code, deprecated)]
+#[allow(dead_code, deprecated, clippy::get_first)]
 fn calculate_x(days: &[DayStat], day: &DayStat, graph_xscale: f32, xoffset: i32) -> f32 {
     let first_day = days.get(0).unwrap_or(day);
     let hours: f32 = day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
@@ -42,7 +42,7 @@ pub fn improved_calculate_x(
     graph_x_scale: f32,
     x_offset: f32,
 ) -> f32 {
-    let first_day = days.get(0).unwrap_or(day);
+    let first_day = days.first().unwrap_or(day);
     let hours: f32 = day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
     let x: f32 = hours.mul_add(graph_x_scale, x_offset);
     x
@@ -55,28 +55,9 @@ pub fn distance(x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
     (g1 + g2).sqrt()
 }
 
-#[derive(Debug)]
-pub(crate) enum HappyChartError {
-    SerializationError(serde_json::Error),
-    FileIOError(std::io::Error)
-}
-
-impl Display for HappyChartError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f,"{}",match self {
-            HappyChartError::SerializationError(err) => {
-                format!("HappyChartError::SerializationError {}", err)
-            }
-            HappyChartError::FileIOError(err) => {
-                format!("HappyChartError::FileIOError {}", err)
-            }
-        })
-    }
-}
-
 /// Quit function run when the user clicks the quit button
-pub fn quit(ctx: &egui::Context, app: &HappyChartState) {
-    save_program_state(ctx, app);
+pub fn quit(ctx: &Context, app: &HappyChartState) {
+    let _ = save_program_state(ctx, app);
 
     ctx.send_viewport_cmd(ViewportCommand::Close);
     // frame.close();
@@ -102,11 +83,20 @@ fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {
     )
 }
 
+/// First load governs error states on its own, no need to read output
 pub fn first_load(app: &mut HappyChartState, ctx: &Context) {
     // all data we need to read one time on launch, all of this most of the time is unchanging throughout usage of the program, so it can only be recalculated on launch
     // for example, day quality averages do not need to change between launches
     app.first_load = false;
-    app.days = read_save_file().expect("TODO: make this take the user to a different screen");
+
+    match read_save_file() {
+        Ok(save_file_days) => {
+            app.days = save_file_days;
+        }
+        Err(err) => {
+            app.error_states.push(err);
+        }
+    }
 
     app.days
         .sort_by(|day1, day2| day1.date.timestamp().cmp(&day2.date.timestamp()));
@@ -126,23 +116,32 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context) {
         .num_hours()
         >= 12
     {
-        if let Ok(list) = get_release_list() {
-            if let Some(release) = list.first() {
-                if let Ok(greater_bump) =
-                    self_update::version::bump_is_greater(cargo_crate_version!(), &release.version)
-                {
-                    if greater_bump {
-                        println!(
-                            "Update available! {} {} {}",
-                            release.name, release.version, release.date
-                        );
-                        app.update_available = Some(release.clone());
-                        app.update_status = AutoUpdateStatus::OutOfDate;
-                    } else {
-                        println!("No update available.");
-                        app.update_status =
-                            AutoUpdateStatus::UpToDate(cargo_crate_version!().to_string());
+        match get_release_list() {
+            Ok(list) => {
+                if let Some(release) = list.first() {
+                    if let Ok(greater_bump) = self_update::version::bump_is_greater(
+                        cargo_crate_version!(),
+                        &release.version,
+                    ) {
+                        if greater_bump {
+                            println!(
+                                "Update available! {} {} {}",
+                                release.name, release.version, release.date
+                            );
+                            app.update_available = Some(release.clone());
+                            app.update_status = AutoUpdateStatus::OutOfDate;
+                        } else {
+                            println!("No update available.");
+                            app.update_status =
+                                AutoUpdateStatus::UpToDate(cargo_crate_version!().to_string());
+                        }
                     }
+                }
+            }
+            Err(err) => {
+                if !app.program_options.disable_update_list_error_showing {
+                    app.error_states
+                        .push(HappyChartError::UpdateReleaseList(err));
                 }
             }
         }
@@ -155,8 +154,14 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context) {
             .num_days()
             > i64::from(app.program_options.auto_backup_days)
     {
-        backup_program_state(ctx, app, false);
-        app.last_backup_date = Local::now();
+        match backup_program_state(ctx, app, false) {
+            Ok(_) => {
+                app.last_backup_date = Local::now();
+            }
+            Err(err) => {
+                app.error_states.push(err);
+            }
+        }
     }
 
     app.remove_old_backup_files();
@@ -181,26 +186,24 @@ pub fn handle_screenshot_event(image: &Arc<ColorImage>) {
     }
 }
 
-pub fn backup_program_state(ctx: &Context, app: &mut HappyChartState, is_manual: bool) -> Result<(),std::io::Error> {
+pub fn backup_program_state(
+    ctx: &Context,
+    app: &mut HappyChartState,
+    is_manual: bool,
+) -> Result<(), HappyChartError> {
     let time = Local::now();
-    save_program_state(ctx, app);
+    save_program_state(ctx, app)?;
     let _ = fs::create_dir_all(&app.program_options.backup_save_path);
     let archive_file_name = get_backup_file_name(&time, is_manual);
-    let file = match File::create(
+    let file = File::create(
         app.program_options
             .backup_save_path
             .clone()
             .join(Path::new(&archive_file_name)),
-    ) {
-        Ok(f) => { Ok(f)}
-        Err(_) => {
-            app.program_options.backup_save_path = ProgramOptions::default().backup_save_path.join(Path::new(&archive_file_name));
-            File::create(
-                app.program_options.backup_save_path.join(Path::new(&archive_file_name)),
-            )
-        }
-    };
-    let mut arch = zip::ZipWriter::new(file?);
+    )
+    .map_err(HappyChartError::SaveBackupIO)?;
+
+    let mut arch = zip::ZipWriter::new(file);
     let options = FileOptions::default().compression_method(CompressionMethod::Deflated);
     if let Ok(mut old_save_file) = File::open(SAVE_FILE_NAME) {
         let _ = arch.start_file(SAVE_FILE_NAME, options);
@@ -210,8 +213,10 @@ pub fn backup_program_state(ctx: &Context, app: &mut HappyChartState, is_manual:
     } else {
         // no old save file present, so we can just
     }
-    let mut new_save_file = File::open(NEW_SAVE_FILE_NAME)?;
-    let mut last_session_file = File::open(LAST_SESSION_FILE_NAME)?;
+    let mut new_save_file =
+        File::open(NEW_SAVE_FILE_NAME).map_err(HappyChartError::SaveBackupIO)?;
+    let mut last_session_file =
+        File::open(LAST_SESSION_FILE_NAME).map_err(HappyChartError::SaveBackupIO)?;
     let _ = arch.start_file(NEW_SAVE_FILE_NAME, options);
     let mut new_file_bytes = vec![];
     let _ = new_save_file.read_to_end(&mut new_file_bytes);
@@ -225,7 +230,7 @@ pub fn backup_program_state(ctx: &Context, app: &mut HappyChartState, is_manual:
     Ok(())
 }
 
-pub fn save_program_state(ctx: &Context, app: &HappyChartState) -> Result<(),HappyChartError> {
+pub fn save_program_state(ctx: &Context, app: &HappyChartState) -> Result<(), HappyChartError> {
     let days = &app.days;
 
     let window_size = ctx.input(|i| {
@@ -248,39 +253,27 @@ pub fn save_program_state(ctx: &Context, app: &HappyChartState) -> Result<(),Hap
         last_backup_date: app.last_backup_date,
     };
 
-    let session_ser = serde_json::to_string(&last_session).map_err(|err| HappyChartError::SerializationError(err))?;
+    let session_ser =
+        serde_json::to_string(&last_session).map_err(HappyChartError::Serialization)?;
     let last_session_path = Path::new(LAST_SESSION_FILE_NAME);
 
-    let mut last_session_save_file = File::create(last_session_path).map_err(|io_error| HappyChartError::FileIOError(io_error))?;
+    let mut last_session_save_file = File::create(last_session_path).map_err(|io_error| {
+        HappyChartError::WriteSaveFileIO(io_error, PathBuf::from(last_session_path))
+    })?;
 
-    match last_session_save_file.write_all(session_ser.as_bytes()) {
-        Ok(_) => {
-            println!("successfully wrote to last_session_save");
-        }
-        Err(_) => {
-            println!("failed to write to last_session_save");
-        }
-    }
+    last_session_save_file
+        .write_all(session_ser.as_bytes())
+        .map_err(|err| HappyChartError::WriteSaveFileIO(err, PathBuf::from(last_session_path)))?;
 
-    let ser = serde_json::to_string(days).map_err(|err| HappyChartError::SerializationError(err))?;
+    let ser = serde_json::to_string(days).map_err(HappyChartError::Serialization)?;
     let save_path = Path::new(NEW_SAVE_FILE_NAME);
 
-    let mut save_file = File::create(save_path).map_err(|io_error| HappyChartError::FileIOError(io_error))?;
+    let mut save_file = File::create(save_path)
+        .map_err(|io_error| HappyChartError::WriteSaveFileIO(io_error, PathBuf::from(save_path)))?;
 
-    match save_file.write_all(ser.as_bytes()) {
-        Ok(_) => {
-            println!(
-                "successfully wrote to {:?}!",
-                save_path.file_name().unwrap_or_default()
-            );
-        }
-        Err(_) => {
-            println!(
-                "failed to write to {:?}",
-                save_path.file_name().unwrap_or_default()
-            );
-        }
-    }
+    save_file
+        .write_all(ser.as_bytes())
+        .map_err(|err| HappyChartError::WriteSaveFileIO(err, PathBuf::from(save_path)))?;
 
     Ok(())
 }
@@ -315,7 +308,7 @@ pub fn update_program() -> JoinHandle<Result<Status, String>> {
     })
 }
 
-pub fn get_release_list() -> Result<Vec<Release>, Box<dyn std::error::Error>> {
+pub fn get_release_list() -> Result<Vec<Release>, Box<dyn Error>> {
     let list = self_update::backends::github::ReleaseList::configure()
         .repo_owner("CoryRobertson")
         .repo_name("happy_chart_rs")
@@ -362,7 +355,7 @@ pub fn read_last_session_save_file() -> LastSession {
 }
 
 /// Reads the save file, if found, returns the vector full of all the `DayStats`
-pub fn read_save_file() -> Result<Vec<ImprovedDayStat>,HappyChartError> {
+pub fn read_save_file() -> Result<Vec<ImprovedDayStat>, HappyChartError> {
     let new_path = PathBuf::from(NEW_SAVE_FILE_NAME);
     let path = Path::new(SAVE_FILE_NAME);
 
@@ -370,10 +363,8 @@ pub fn read_save_file() -> Result<Vec<ImprovedDayStat>,HappyChartError> {
         Ok(f) => f,
         Err(_) => match File::open(path) {
             Ok(f) => f,
-            Err(_) => {
-                File::create(new_path)
-                    .map_err(|io_error| HappyChartError::FileIOError(io_error))?
-            },
+            Err(_) => File::create(new_path.clone())
+                .map_err(|io_error| HappyChartError::ReadSaveFileIO(io_error, new_path))?,
         },
     };
 
@@ -396,7 +387,7 @@ pub fn read_save_file() -> Result<Vec<ImprovedDayStat>,HappyChartError> {
             // new save file format found, return it
             Ok(vec)
         }
-        Err(_) => {
+        Err(err_improved) => {
             // not old save file format, attempt to read it as new save file format
             #[allow(deprecated)]
             match serde_json::from_str::<Vec<DayStat>>(&s[0..read_len]) {
@@ -407,9 +398,9 @@ pub fn read_save_file() -> Result<Vec<ImprovedDayStat>,HappyChartError> {
                         .map(|old_day_stat| old_day_stat.into())
                         .collect::<Vec<ImprovedDayStat>>())
                 }
-                Err(_) => {
+                Err(err_old) => {
                     // cant read old or new save file format, so empty vec.
-                    Ok(vec![])
+                    Err(HappyChartError::Deserialization(err_improved, err_old))
                 }
             }
         }

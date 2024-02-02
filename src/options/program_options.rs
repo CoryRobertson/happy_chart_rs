@@ -32,6 +32,9 @@ pub struct ProgramOptions {
     pub show_streak: bool,
     /// The gap in hours a streak is considered valid
     pub streak_leniency: u32,
+    /// Boolean for having all update list errors be ignored relating to getting the release list.
+    /// This is so the user can not be annoyed by the error if they commonly use the program without an internet connection.
+    pub disable_update_list_error_showing: bool,
 }
 
 impl Default for ProgramOptions {
@@ -57,6 +60,7 @@ impl Default for ProgramOptions {
             number_of_kept_backups: -1,
             show_streak: true,
             streak_leniency: 36,
+            disable_update_list_error_showing: false,
         }
     }
 }

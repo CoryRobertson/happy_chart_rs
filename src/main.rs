@@ -9,6 +9,7 @@ use crate::ui::central_screen::{
     click_drag_zoom_detection, draw_auto_update_ui, draw_bottom_row_buttons, draw_day_lines,
     draw_stat_circles, draw_stat_line_segments, draw_stat_mouse_over_info, main_screen_button_ui,
 };
+use crate::ui::error_screen::draw_error_screen;
 use crate::ui::options_menu::{
     draw_backup_settings_options_menu, draw_color_options_menu, draw_graphing_options_menu,
     draw_stat_drawing_options_menu, options_update_thread_block,
@@ -124,6 +125,12 @@ impl eframe::App for HappyChartState {
         if self.showing_about_page {
             egui::Window::new("About").show(ctx, |ui| {
                 draw_about_page(ui, self);
+            });
+        }
+
+        if !self.error_states.is_empty() {
+            egui::Window::new("An error occurred :(").show(ctx, |ui| {
+                draw_error_screen(self, ui);
             });
         }
     }

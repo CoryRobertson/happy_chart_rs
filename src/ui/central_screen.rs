@@ -102,7 +102,7 @@ pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState) {
             // make a fake day with the first day on the list as the first day, and add 24 hours to it each time in utc time to calculate where each line goes
             let line_points: [Pos2; 2] = {
                 let def = ImprovedDayStat::default();
-                let d = app.days.get(0).unwrap_or(&def);
+                let d = app.days.first().unwrap_or(&def);
 
                 let fake_day = ImprovedDayStat {
                     rating: 0.0,
