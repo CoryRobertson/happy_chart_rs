@@ -56,10 +56,11 @@ pub fn distance(x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
 }
 
 /// Quit function run when the user clicks the quit button
-pub fn quit(ctx: &Context, app: &HappyChartState) {
-    let _ = save_program_state(ctx, app);
+pub fn quit(ctx: &Context, app: &HappyChartState) -> Result<(), HappyChartError> {
+    save_program_state(ctx, app)?;
 
     ctx.send_viewport_cmd(ViewportCommand::Close);
+    Ok(())
 }
 
 fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {

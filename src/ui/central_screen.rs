@@ -324,7 +324,10 @@ pub fn draw_bottom_row_buttons(
             let quit_button = ui.button("Save & Quit");
 
             if quit_button.clicked() {
-                quit(ctx, app);
+                // attempt to quit the application, but present an error state if one occurs during the quit process
+                if let Err(err) = quit(ctx, app) {
+                    app.error_states.push(err);
+                }
             }
 
             ui.style_mut().visuals.override_text_color =
