@@ -1,7 +1,7 @@
 use crate::common::{distance, improved_calculate_x, quit, update_program};
 use crate::day_stats::improved_daystat::ImprovedDayStat;
 use crate::options::color_setting;
-use crate::state::happy_chart_state::HappyChartState;
+use crate::state::happy_chart_state::{HappyChartState, UiDelta};
 use crate::{BUILD_TIMESTAMP, GIT_DESCRIBE};
 use chrono::Days;
 use eframe::emath::{Align2, Pos2, Rect, Vec2};
@@ -43,13 +43,28 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
         app.stats.avg_weekdays.calc_averages(&app.days);
     }
 
+    let mut bottom_search_rect = None;
     central_panel_ui.horizontal(|ui| {
         ui.label("Search: ");
-        ui.add_sized(
-            Vec2::new(120.0, 20.0),
-            egui::widgets::text_edit::TextEdit::singleline(&mut app.filter_term),
+        bottom_search_rect = Some(
+            ui.add_sized(
+                Vec2::new(120.0, 20.0),
+                egui::widgets::text_edit::TextEdit::singleline(&mut app.filter_term),
+            )
+            .rect,
         );
     });
+
+    // use the rectangle position of the search bar in the central screen as a way to calculate offsets for day lines
+    if let Some(rect) = bottom_search_rect {
+        let pos = rect.max;
+        match &mut app.central_screen_ui_delta_pos {
+            None => app.central_screen_ui_delta_pos = Some(UiDelta::new(pos.y)),
+            Some(ui_delta) => {
+                ui_delta.update_current(pos.y);
+            }
+        }
+    }
 }
 
 pub fn click_drag_zoom_detection(
@@ -58,7 +73,7 @@ pub fn click_drag_zoom_detection(
     pointer_interact_pos: Option<&Pos2>,
 ) {
     let within_day_lines = {
-        let min_y: f32 = 220.0 - app.program_options.day_line_height_offset;
+        let min_y: f32 = app.get_day_line_y_value();
         pointer_interact_pos.map_or(false, |pos| pos.y >= min_y)
     };
 
@@ -109,7 +124,7 @@ pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState) {
                     date: d.date.checked_add_days(Days::new(1)).unwrap_or_default(), // fake day that starts from where the first day is, with one day added
                     note: String::new(),
                 };
-                let y: f32 = 220.0 - app.program_options.day_line_height_offset;
+                let y: f32 = app.get_day_line_y_value();
                 let x = {
                     let first_day = d;
                     let hours: f32 = fake_day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point

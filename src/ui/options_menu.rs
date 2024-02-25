@@ -118,7 +118,12 @@ pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChar
             options_panel_ui.add(
                 egui::DragValue::new(&mut app.program_options.day_line_height_offset).speed(0.1),
             );
+
         });
+
+        options_panel_ui
+            .checkbox(&mut app.program_options.move_day_lines_with_ui,"Move Day lines with ui: ")
+            .on_hover_text("Make the day lines in the graph move with the ui instead of being in a static position.");
     });
 }
 

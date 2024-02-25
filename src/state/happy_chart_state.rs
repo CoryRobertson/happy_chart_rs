@@ -46,9 +46,47 @@ pub struct HappyChartState {
 
     /// List of error states that are present, we show the user every item in this list if any exist
     pub error_states: Vec<HappyChartError>,
+
+    /// The position of the day lines offset to be calculated from
+    pub central_screen_ui_delta_pos: Option<UiDelta>,
+}
+
+#[derive(Debug, Clone)]
+pub struct UiDelta {
+    starting_amount: f32,
+    current_amount: f32,
+}
+
+impl UiDelta {
+    pub fn new(starting: f32) -> Self {
+        Self {
+            starting_amount: starting,
+            current_amount: starting,
+        }
+    }
+
+    pub fn get_delta(&self) -> f32 {
+        self.current_amount - self.starting_amount
+    }
+
+    pub fn update_current(&mut self, new_amount: f32) {
+        self.current_amount = new_amount;
+    }
+}
+
+impl Default for UiDelta {
+    fn default() -> Self {
+        Self {
+            starting_amount: 155.5,
+            current_amount: 155.5,
+        }
+    }
 }
 
 impl HappyChartState {
+    /// Magic number that makes day lines look just right
+    const DAY_LINE_OFFSET: f32 = 165.0;
+
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         Self {
             rating: 0.0,
@@ -69,6 +107,7 @@ impl HappyChartState {
             showing_about_page: false,
             stats: StateStats::new(),
             error_states: vec![],
+            central_screen_ui_delta_pos: None,
         }
     }
 
@@ -136,6 +175,19 @@ impl HappyChartState {
             Err(_) => {
                 vec![]
             }
+        }
+    }
+
+    pub fn get_day_line_y_value(&self) -> f32 {
+        Self::DAY_LINE_OFFSET - self.program_options.day_line_height_offset + {
+            if self.program_options.move_day_lines_with_ui {
+                match &self.central_screen_ui_delta_pos {
+                    None => 0.0, // use 0 if there has not been a delta calculated yet.
+                    Some(ui_delta) => ui_delta.get_delta(),
+                }
+            } else {
+                0.0
+            } // use 0 as an offset if the user does not want the day lines to move with the ui
         }
     }
 }

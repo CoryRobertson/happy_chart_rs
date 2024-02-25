@@ -17,14 +17,14 @@ strip = true
 lto = true
 
 [dependencies]
-eframe = { version = "0.25.0", features = ["serde"]}
-egui = { version = "0.25.0", features = ["serde"]}
-serde = { version = "1.0.196", features = ["derive"] }
-chrono = { version = "0.4.33", features = ["serde"] }
-chrono-tz = { version = "0.8.5", features = ["serde"] }
+eframe = { version = "0.26.2", features = ["serde"]}
+egui = { version = "0.26.2", features = ["serde"]}
+serde = { version = "1.0.197", features = ["derive"] }
+chrono = { version = "0.4.34", features = ["serde"] }
+chrono-tz = { version = "0.8.6", features = ["serde"] }
 serde_json = "1.0.108"
-rfd = "0.13.0"
-image = "0.24.7"
+rfd = "0.14.0"
+image = "0.24.9"
 # deflate should be used for release packages
 # example file name:
 # happy_chart_rs-v1.10.2-x86_64-pc-windows-msvc.zip
@@ -38,11 +38,9 @@ vergen = { version = "8.2.6", features = ["build","git","gitcl"] }
 winres = "0.1.12"
 
 [dev-dependencies]
-divan = "0.1.11"
+divan = "0.1.14"
 rand = "0.8.5"
 
 [[bench]]
 name = "stat_benches"
 harness = false
-
-# TODO: use https://crates.io/crates/tray-item to allow happy chart to run minimized ? unsure if I want this yet as its a little much just for a daily journaling tool

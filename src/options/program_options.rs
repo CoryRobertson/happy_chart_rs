@@ -35,6 +35,9 @@ pub struct ProgramOptions {
     /// Boolean for having all update list errors be ignored relating to getting the release list.
     /// This is so the user can not be annoyed by the error if they commonly use the program without an internet connection.
     pub disable_update_list_error_showing: bool,
+
+    /// Move the day lines in the graph relative to the UI delta, making it move with how much stuff the user has written
+    pub move_day_lines_with_ui: bool,
 }
 
 impl Default for ProgramOptions {
@@ -61,6 +64,7 @@ impl Default for ProgramOptions {
             show_streak: true,
             streak_leniency: 36,
             disable_update_list_error_showing: false,
+            move_day_lines_with_ui: true,
         }
     }
 }
