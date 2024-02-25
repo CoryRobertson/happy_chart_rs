@@ -225,7 +225,7 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
         .map_or_else(|| Pos2::new(0.0, 0.0), |a| a);
     let mut moused_over = false; // boolean used to know if we are already showing mouse over text, if so, not to render it if this is true
                                  // draw text loop, top most layer (mostly)
-    for (_idx,day) in app.days.iter().enumerate() {
+    for (_idx, day) in app.days.iter().enumerate() {
         let x: f32 = improved_calculate_x(
             &app.days,
             day,
@@ -240,7 +240,7 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
         let rect_pos2 = Pos2::new(770.0, 180.0);
         let text = {
             if cfg!(debug_assertions) {
-                format!("idx: {} {}",_idx,day.to_string())
+                format!("idx: {} {}", _idx, day)
             } else {
                 day.to_string()
             }
@@ -271,7 +271,7 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
             // info text to display in top right window
             let info_text: String = {
                 if cfg!(debug_assertions) {
-                    format!("idx: {} {}",_idx,day.to_string())
+                    format!("idx: {} {}", _idx, day)
                 } else {
                     day.to_string()
                 }

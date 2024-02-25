@@ -22,7 +22,7 @@ egui = { version = "0.26.2", features = ["serde"]}
 serde = { version = "1.0.197", features = ["derive"] }
 chrono = { version = "0.4.34", features = ["serde"] }
 chrono-tz = { version = "0.8.6", features = ["serde"] }
-serde_json = "1.0.108"
+serde_json = "1.0.114"
 rfd = "0.14.0"
 image = "0.24.9"
 # deflate should be used for release packages

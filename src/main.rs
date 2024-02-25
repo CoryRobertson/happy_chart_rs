@@ -1,4 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![allow(clippy::uninlined_format_args)]
 
 use crate::common::{
     first_load, handle_screenshot_event, read_last_session_save_file, update_program,

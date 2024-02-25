@@ -24,11 +24,6 @@ impl From<DayStat> for ImprovedDayStat {
 }
 
 #[allow(deprecated)]
-pub fn _improved_vec_into_old(vec: &[ImprovedDayStat]) -> Vec<DayStat> {
-    vec.iter().cloned().map(|day| day.into()).collect()
-}
-
-#[allow(deprecated)]
 impl From<ImprovedDayStat> for DayStat {
     fn from(value: ImprovedDayStat) -> Self {
         let v = value.date.timestamp();

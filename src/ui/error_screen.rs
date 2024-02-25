@@ -3,7 +3,7 @@ use crate::state::error_states::HappyChartError;
 use crate::state::happy_chart_state::HappyChartState;
 use egui::Ui;
 
-pub(crate) fn draw_error_screen(app: &mut HappyChartState, ui: &mut Ui) {
+pub fn draw_error_screen(app: &mut HappyChartState, ui: &mut Ui) {
     app.error_states.iter().for_each(|error_state| {
         ui.label(format!("{}", error_state));
         ui.separator();

@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
 
 #[derive(Debug)]
-pub(crate) enum HappyChartError {
+pub enum HappyChartError {
     Serialization(serde_json::Error),
     Deserialization(serde_json::Error, serde_json::Error),
     ReadSaveFileIO(std::io::Error, PathBuf),
@@ -18,30 +18,30 @@ impl Display for HappyChartError {
             f,
             "{}",
             match self {
-                HappyChartError::Serialization(err) => {
+                Self::Serialization(err) => {
                     format!("HappyChartError::SerializationError {}", err)
                 }
-                HappyChartError::ReadSaveFileIO(err, path) => {
+                Self::ReadSaveFileIO(err, path) => {
                     format!(
                         "HappyChartError::ReadSaveFileIOError {} {}",
                         err,
                         path.to_str().unwrap_or("UNABLE TO DISPLAY PATH")
                     )
                 }
-                HappyChartError::WriteSaveFileIO(err, path) => {
+                Self::WriteSaveFileIO(err, path) => {
                     format!(
                         "HappyChartError::WriteSaveFileIOError {} {}",
                         err,
                         path.to_str().unwrap_or("UNABLE TO DISPLAY PATH")
                     )
                 }
-                HappyChartError::UpdateReleaseList(err) => {
+                Self::UpdateReleaseList(err) => {
                     format!("HappyChartError::UpdateReleaseListError {}", err)
                 }
-                HappyChartError::SaveBackupIO(err) => {
+                Self::SaveBackupIO(err) => {
                     format!("HappyChartError::SaveBackupIOError {}", err)
                 }
-                HappyChartError::Deserialization(improved_save_error, old_save_error) => {
+                Self::Deserialization(improved_save_error, old_save_error) => {
                     format!(
                         "HappyChartError::DeserializationError {} {}",
                         improved_save_error, old_save_error

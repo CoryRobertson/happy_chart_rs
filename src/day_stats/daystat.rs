@@ -27,11 +27,6 @@ impl DayStat {
         .naive_utc();
         Pacific.from_utc_datetime(&utc)
     }
-
-    /// Returns the difference in hours in the form of an absolute value, bit of a bad name as it really just subtracts the utc values.
-    pub fn get_hour_difference(&self, compare_day_stat: &Self) -> i64 {
-        (self.date - compare_day_stat.date).abs()
-    }
 }
 
 impl fmt::Display for DayStat {

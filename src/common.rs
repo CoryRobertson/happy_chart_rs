@@ -26,16 +26,6 @@ use zip::write::FileOptions;
 use zip::CompressionMethod;
 
 /// Calculates the x coordinate for each graph point
-#[deprecated]
-#[allow(dead_code, deprecated, clippy::get_first)]
-fn calculate_x(days: &[DayStat], day: &DayStat, graph_xscale: f32, xoffset: i32) -> f32 {
-    let first_day = days.get(0).unwrap_or(day);
-    let hours: f32 = day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
-    let x: f32 = hours.mul_add(graph_xscale, xoffset as f32);
-    x
-}
-
-/// Calculates the x coordinate for each graph point
 pub fn improved_calculate_x(
     days: &[ImprovedDayStat],
     day: &ImprovedDayStat,
@@ -186,7 +176,7 @@ pub fn handle_screenshot_event(image: &Arc<ColorImage>) {
 
 pub fn backup_program_state(
     ctx: &Context,
-    app: &mut HappyChartState,
+    app: &HappyChartState,
     is_manual: bool,
 ) -> Result<(), HappyChartError> {
     let time = Local::now();

@@ -41,7 +41,7 @@ impl Default for WeekdayAverages {
 }
 
 impl StateStats {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             avg_weekdays: WeekdayAverages::new(),
             longest_streak: Days {
@@ -81,8 +81,7 @@ impl StateStats {
 
                 // iterate through each day seeing if the previous day was less than 36 hours ago, if so then increment the streak counter
                 for day in remaining_days {
-                    if day.date.signed_duration_since(prev_day.date).num_hours() > leniency as i64
-                    {
+                    if day.date.signed_duration_since(prev_day.date).num_hours() > leniency as i64 {
                         break;
                     }
 
