@@ -9,6 +9,7 @@ use eframe::epaint::{Color32, FontId, Rounding, Stroke};
 use egui::{Context, Layout, Ui, ViewportCommand};
 use self_update::cargo_crate_version;
 
+#[tracing::instrument(skip(central_panel_ui, app))]
 pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
     central_panel_ui.horizontal(|ui| {
         ui.label("Rating: ");
@@ -67,6 +68,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
     }
 }
 
+#[tracing::instrument(skip(central_panel_ui, app))]
 pub fn click_drag_zoom_detection(
     central_panel_ui: &Ui,
     app: &mut HappyChartState,
@@ -101,15 +103,21 @@ pub fn click_drag_zoom_detection(
     }
 }
 
+
 /// Draw the lines that represent time itself, typically 24 hours
+#[tracing::instrument(skip(central_panel_ui, app))]
 pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState) {
     if app.days.len() > 1 {
+
+        // TODO: optimize the range calculation or the loop stuff
+
         // range for calculating how many lines in both directions on the x-axis
         let range = {
             if app.program_options.x_offset > 5000.0 {
                 app.program_options.x_offset as i32
             } else {
-                5000
+
+                1000
             }
         };
 
@@ -143,6 +151,7 @@ pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState) {
 }
 
 /// Draw the lines between each stat like a graph
+#[tracing::instrument(skip(central_panel_ui, app))]
 pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
     let mut prev_x = 0.0;
     let mut prev_y = 0.0;
@@ -175,6 +184,7 @@ pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
 }
 
 /// draw the circled for each stat, separate color based on each stat's rating
+#[tracing::instrument(skip(central_panel_ui, app))]
 pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState) {
     for (idx, day) in app.days.clone().iter().enumerate() {
         let x: f32 = improved_calculate_x(
@@ -219,6 +229,7 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState) {
 }
 
 /// Draw a stats info if it is moused over
+#[tracing::instrument(skip(central_panel_ui, app, ctx))]
 pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartState, ctx: &Context) {
     let mouse_pos = ctx
         .pointer_hover_pos()
@@ -286,6 +297,7 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
 }
 
 /// Draw the auto update ui on screen if needed
+#[tracing::instrument(skip(central_panel_ui, app,ctx))]
 pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &Context) {
     if let Some(release) = &app.update_available {
         let should_show_update = match &app.auto_update_seen_version {
@@ -333,6 +345,7 @@ pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState,
 }
 
 /// Draw the quit button as well as the options, about, and screenshot button
+#[tracing::instrument(skip(central_panel_ui, app,ctx))]
 pub fn draw_bottom_row_buttons(
     central_panel_ui: &mut Ui,
     app: &mut HappyChartState,

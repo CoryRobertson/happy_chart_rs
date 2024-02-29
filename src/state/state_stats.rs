@@ -41,6 +41,7 @@ impl Default for WeekdayAverages {
 }
 
 impl StateStats {
+
     pub const fn new() -> Self {
         Self {
             avg_weekdays: WeekdayAverages::new(),
@@ -53,6 +54,7 @@ impl StateStats {
     }
 
     /// Calculate the longest streak present in the day stat list
+    #[tracing::instrument]
     pub fn calc_streak(&mut self, list: &[ImprovedDayStat], leniency: u32) {
         let mut streak_start_index: usize = 0;
         let mut streak_end_index: usize = 0;
@@ -107,6 +109,7 @@ impl StateStats {
 }
 
 impl WeekdayAverages {
+
     pub const fn new() -> Self {
         Self {
             avg_monday: 0.0,
@@ -120,6 +123,7 @@ impl WeekdayAverages {
     }
 
     /// Calculate all averages and set them in the stats
+    #[tracing::instrument]
     pub fn calc_averages(&mut self, list: &[ImprovedDayStat]) {
         self.avg_monday = get_average_for_day_of_week(Weekday::Mon, list);
         self.avg_tuesday = get_average_for_day_of_week(Weekday::Tue, list);

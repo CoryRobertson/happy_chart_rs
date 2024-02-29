@@ -41,6 +41,7 @@ pub struct ProgramOptions {
 }
 
 impl Default for ProgramOptions {
+    #[tracing::instrument]
     fn default() -> Self {
         Self {
             graph_x_scale: 1.0,

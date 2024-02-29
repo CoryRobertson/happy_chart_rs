@@ -17,6 +17,8 @@ use crate::ui::options_menu::{
 };
 use eframe::{egui, Frame, NativeOptions};
 use egui::{Context, Vec2, ViewportBuilder};
+#[cfg(feature = "tracing")]
+use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 
 pub(crate) mod auto_update_status;
 
@@ -36,7 +38,11 @@ pub(crate) const BACKUP_FILE_EXTENSION: &str = "zip";
 pub(crate) const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 pub(crate) const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
+#[tracing::instrument]
 fn main() {
+    #[cfg(feature = "tracing")]
+    tracing::subscriber::set_global_default(tracing_subscriber::registry().with(tracing_tracy::TracyLayer::default())).expect("Unable to setup tracy layer");
+
     let window_size: Vec2 = read_last_session_save_file().window_size.into();
 
     let native_options = NativeOptions {
@@ -54,6 +60,7 @@ fn main() {
 
 /// Update loop for egui
 impl eframe::App for HappyChartState {
+    #[tracing::instrument(skip(self,ctx,_frame))]
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
         if self.first_load {
             first_load(self, ctx);

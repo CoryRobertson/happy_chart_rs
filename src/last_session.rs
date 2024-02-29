@@ -19,6 +19,7 @@ pub struct LastSession {
 }
 
 impl Default for LastSession {
+    #[tracing::instrument]
     fn default() -> Self {
         Self {
             window_size: [800.0, 600.0],

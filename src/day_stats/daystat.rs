@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize, Serializer};
 use std::fmt;
 use std::fmt::Formatter;
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[deprecated]
 pub struct DayStat {
     pub rating: f32,
@@ -18,6 +18,7 @@ pub struct DayStat {
 
 impl DayStat {
     /// Returns the date of this `DayStat` modified to pacific time, this can be made to support more time zones if needed.
+    #[tracing::instrument]
     pub fn get_date_time(&self) -> DateTime<Tz> {
         // pacific time zone conversion
         let utc = DateTime::<Utc>::from_utc(
@@ -30,6 +31,7 @@ impl DayStat {
 }
 
 impl fmt::Display for DayStat {
+    #[tracing::instrument(skip_all)]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         //let mut str = "";
 
@@ -46,6 +48,7 @@ impl fmt::Display for DayStat {
 }
 
 impl Serialize for DayStat {
+    #[tracing::instrument(skip_all)]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,

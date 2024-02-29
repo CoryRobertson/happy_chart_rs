@@ -26,6 +26,7 @@ use zip::write::FileOptions;
 use zip::CompressionMethod;
 
 /// Calculates the x coordinate for each graph point
+#[tracing::instrument]
 pub fn improved_calculate_x(
     days: &[ImprovedDayStat],
     day: &ImprovedDayStat,
@@ -39,6 +40,7 @@ pub fn improved_calculate_x(
 }
 
 /// Returns the coordinate point distance between two points
+#[tracing::instrument]
 pub fn distance(x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
     let g1 = (x2 - x1).powi(2);
     let g2 = (y2 - y1).powi(2);
@@ -46,6 +48,7 @@ pub fn distance(x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
 }
 
 /// Quit function run when the user clicks the quit button
+#[tracing::instrument(skip(ctx,app))]
 pub fn quit(ctx: &Context, app: &HappyChartState) -> Result<(), HappyChartError> {
     save_program_state(ctx, app)?;
 
@@ -53,6 +56,7 @@ pub fn quit(ctx: &Context, app: &HappyChartState) -> Result<(), HappyChartError>
     Ok(())
 }
 
+#[tracing::instrument]
 fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {
     format!(
         "{}{}-{}-{}{}.{}",
@@ -72,6 +76,7 @@ fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {
 }
 
 /// First load governs error states on its own, no need to read output
+#[tracing::instrument(skip(app,ctx))]
 pub fn first_load(app: &mut HappyChartState, ctx: &Context) {
     // all data we need to read one time on launch, all of this most of the time is unchanging throughout usage of the program, so it can only be recalculated on launch
     // for example, day quality averages do not need to change between launches
@@ -159,6 +164,7 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context) {
         .calc_streak(&app.days, app.program_options.streak_leniency);
 }
 
+#[tracing::instrument(skip(image))]
 pub fn handle_screenshot_event(image: &Arc<ColorImage>) {
     if let Some(path) = rfd::FileDialog::new()
         .add_filter("Image", &["png", "jpeg", "jpg", "bmp", "tiff"])
@@ -174,6 +180,7 @@ pub fn handle_screenshot_event(image: &Arc<ColorImage>) {
     }
 }
 
+#[tracing::instrument(skip(ctx,app))]
 pub fn backup_program_state(
     ctx: &Context,
     app: &HappyChartState,
@@ -218,6 +225,7 @@ pub fn backup_program_state(
     Ok(())
 }
 
+#[tracing::instrument(skip(ctx,app))]
 pub fn save_program_state(ctx: &Context, app: &HappyChartState) -> Result<(), HappyChartError> {
     let days = &app.days;
 
@@ -266,6 +274,7 @@ pub fn save_program_state(ctx: &Context, app: &HappyChartState) -> Result<(), Ha
     Ok(())
 }
 
+#[tracing::instrument]
 pub fn get_average_for_day_of_week(day_of_week: Weekday, days: &[ImprovedDayStat]) -> f32 {
     let ratings = days
         .iter()
@@ -276,6 +285,7 @@ pub fn get_average_for_day_of_week(day_of_week: Weekday, days: &[ImprovedDayStat
     ratings.iter().sum::<f32>() / ratings.len() as f32
 }
 
+#[tracing::instrument]
 pub fn update_program() -> JoinHandle<Result<Status, String>> {
     thread::spawn(|| {
         match self_update::backends::github::UpdateBuilder::new()
@@ -296,6 +306,7 @@ pub fn update_program() -> JoinHandle<Result<Status, String>> {
     })
 }
 
+#[tracing::instrument]
 pub fn get_release_list() -> Result<Vec<Release>, Box<dyn Error>> {
     let list = self_update::backends::github::ReleaseList::configure()
         .repo_owner("CoryRobertson")
@@ -308,6 +319,7 @@ pub fn get_release_list() -> Result<Vec<Release>, Box<dyn Error>> {
 }
 
 /// Reads the last session file, if exists, returns the deserialized contents, if it doesn't exist, returns a default `LastSession` struct.
+#[tracing::instrument]
 pub fn read_last_session_save_file() -> LastSession {
     let path = Path::new(LAST_SESSION_FILE_NAME);
 
@@ -343,6 +355,7 @@ pub fn read_last_session_save_file() -> LastSession {
 }
 
 /// Reads the save file, if found, returns the vector full of all the `DayStats`
+#[tracing::instrument]
 pub fn read_save_file() -> Result<Vec<ImprovedDayStat>, HappyChartError> {
     let new_path = PathBuf::from(NEW_SAVE_FILE_NAME);
     let path = Path::new(SAVE_FILE_NAME);
@@ -396,6 +409,7 @@ pub fn read_save_file() -> Result<Vec<ImprovedDayStat>, HappyChartError> {
 }
 
 // thank you online example <3
+#[tracing::instrument(skip(ui))]
 pub fn toggle_ui_compact(ui: &mut egui::Ui, on: &mut bool) -> egui::Response {
     let desired_size = ui.spacing().interact_size.y * egui::vec2(2.0, 1.0);
     let (rect, mut response) = ui.allocate_exact_size(desired_size, egui::Sense::click());

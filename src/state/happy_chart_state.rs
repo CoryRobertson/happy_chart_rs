@@ -65,10 +65,12 @@ impl UiDelta {
         }
     }
 
+    #[tracing::instrument]
     pub fn get_delta(&self) -> f32 {
         self.current_amount - self.starting_amount
     }
 
+    #[tracing::instrument]
     pub fn update_current(&mut self, new_amount: f32) {
         self.current_amount = new_amount;
     }
@@ -87,6 +89,7 @@ impl HappyChartState {
     /// Magic number that makes day lines look just right
     const DAY_LINE_OFFSET: f32 = 165.0;
 
+    #[tracing::instrument(skip(_cc))]
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         Self {
             rating: 0.0,
@@ -111,6 +114,7 @@ impl HappyChartState {
         }
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn remove_old_backup_files(&self) {
         let list = self.get_backup_file_list();
 
@@ -131,6 +135,7 @@ impl HappyChartState {
         }
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn get_backup_file_list(&self) -> Vec<DirEntry> {
         if self.program_options.backup_age_keep_days < 0 {
             return vec![];
@@ -178,6 +183,7 @@ impl HappyChartState {
         }
     }
 
+    #[tracing::instrument(skip_all)]
     pub fn get_day_line_y_value(&self) -> f32 {
         Self::DAY_LINE_OFFSET - self.program_options.day_line_height_offset + {
             if self.program_options.move_day_lines_with_ui {

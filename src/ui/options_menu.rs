@@ -8,6 +8,7 @@ use egui::{Context, Ui};
 use self_update::Status;
 
 /// Draw an indicator in the options menu for if an update is taking place, or needed
+#[tracing::instrument(skip(options_panel_ui, app))]
 pub fn options_update_thread_block(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
     // update thread block, handles showing spinner, and checking if the update is done
     let update_thread = app.update_thread.replace(None);
@@ -40,6 +41,7 @@ pub fn options_update_thread_block(options_panel_ui: &mut Ui, app: &mut HappyCha
 }
 
 /// Color options collapsing menu
+#[tracing::instrument(skip(options_panel_ui, app))]
 pub fn draw_color_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
     options_panel_ui.collapsing("Color options", |ui| {
         ui.horizontal(|ui| {
@@ -66,6 +68,7 @@ pub fn draw_color_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartSt
 }
 
 /// Graphing options collapsing menu
+#[tracing::instrument(skip(options_panel_ui, app))]
 pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
     options_panel_ui.collapsing("Graphing options", |options_panel_ui| {
         options_panel_ui.horizontal(|options_panel_ui| {
@@ -128,6 +131,7 @@ pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChar
 }
 
 /// Day stat options collapsing menu
+#[tracing::instrument(skip(options_panel_ui, app))]
 pub fn draw_stat_drawing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
     options_panel_ui.collapsing("Stat drawing options", |options_panel_ui| {
         // mouse over radius
@@ -185,6 +189,7 @@ pub fn draw_stat_drawing_options_menu(options_panel_ui: &mut Ui, app: &mut Happy
 }
 
 /// Backup settings collapsing menu
+#[tracing::instrument(skip(options_panel_ui, app,ctx))]
 pub fn draw_backup_settings_options_menu(
     options_panel_ui: &mut Ui,
     app: &mut HappyChartState,

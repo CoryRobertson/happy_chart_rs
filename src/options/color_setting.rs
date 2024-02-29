@@ -24,6 +24,7 @@ pub const fn get_info_window_color() -> Color32 {
 
 /// Color for each point on graph, rating determines color, higher rating = closer to green, lower = closer to red
 /// Rating is expected to cap out at 100.0
+#[tracing::instrument]
 pub fn get_shape_color_from_rating(rating: f32) -> Color32 {
     let new_rating = rating / 100.0;
 
@@ -37,6 +38,7 @@ pub fn get_shape_color_from_rating(rating: f32) -> Color32 {
 /// Color for the lines that show each day, when they are turned on.
 #[deprecated]
 #[allow(dead_code)]
+#[tracing::instrument]
 pub fn get_day_line_color() -> Color32 {
     Color32::from_rgba_unmultiplied(50, 50, 50, 100)
 }
