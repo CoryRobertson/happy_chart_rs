@@ -86,7 +86,7 @@ impl eframe::App for HappyChartState {
             click_drag_zoom_detection(ui, self, pointer_interact_pos.as_ref());
 
             if self.program_options.draw_day_lines {
-                draw_day_lines(ui, self);
+                draw_day_lines(ui, self,ctx);
             }
 
             if self.program_options.draw_daystat_lines {

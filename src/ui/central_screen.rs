@@ -106,35 +106,36 @@ pub fn click_drag_zoom_detection(
 
 /// Draw the lines that represent time itself, typically 24 hours
 #[tracing::instrument(skip(central_panel_ui, app))]
-pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState) {
+pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Context) {
     if app.days.len() > 1 {
-
-        // TODO: optimize the range calculation or the loop stuff
 
         // range for calculating how many lines in both directions on the x-axis
         let range = {
             if app.program_options.x_offset > 5000.0 {
                 app.program_options.x_offset as i32
             } else {
-
-                1000
+                5000
             }
         };
 
-        for i2 in -range..range {
+        let default_day_stat = ImprovedDayStat::default();
+
+        let first_day_in_stat_list = app.days.first().unwrap_or(&default_day_stat);
+
+        let fake_day = ImprovedDayStat {
+            rating: 0.0,
+            date: first_day_in_stat_list.date.checked_add_days(Days::new(1)).unwrap_or_default(), // fake day that starts from where the first day is, with one day added
+            note: String::new(),
+        };
+
+        let screen_rect_max = ctx.screen_rect().max;
+
+        for i2 in -50..range {
             // make a fake day with the first day on the list as the first day, and add 24 hours to it each time in utc time to calculate where each line goes
             let line_points: [Pos2; 2] = {
-                let def = ImprovedDayStat::default();
-                let d = app.days.first().unwrap_or(&def);
-
-                let fake_day = ImprovedDayStat {
-                    rating: 0.0,
-                    date: d.date.checked_add_days(Days::new(1)).unwrap_or_default(), // fake day that starts from where the first day is, with one day added
-                    note: String::new(),
-                };
                 let y: f32 = app.get_day_line_y_value();
                 let x = {
-                    let first_day = d;
+                    let first_day = first_day_in_stat_list;
                     let hours: f32 = fake_day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
 
                     let x: f32 = (hours * app.program_options.graph_x_scale) * i2 as f32;
@@ -142,6 +143,15 @@ pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState) {
                 };
                 [Pos2::new(x, y), Pos2::new(x, 800.0)]
             };
+
+            // if the x value calculated for the line being drawn is off-screen, we don't need to draw it.
+            if !(0f32..screen_rect_max.x).contains(&line_points[0].x) {
+                if ((screen_rect_max.x + 1.0)..).contains(&line_points[0].x) {
+                    break;
+                }
+                continue;
+            }
+
             central_panel_ui.painter().line_segment(
                 line_points,
                 Stroke::new(2.0, app.program_options.color_settings.day_line_color),
