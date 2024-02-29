@@ -103,12 +103,10 @@ pub fn click_drag_zoom_detection(
     }
 }
 
-
 /// Draw the lines that represent time itself, typically 24 hours
 #[tracing::instrument(skip(central_panel_ui, app))]
 pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Context) {
     if app.days.len() > 1 {
-
         // range for calculating how many lines in both directions on the x-axis
         let range = {
             if app.program_options.x_offset > 5000.0 {
@@ -124,7 +122,10 @@ pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Contex
 
         let fake_day = ImprovedDayStat {
             rating: 0.0,
-            date: first_day_in_stat_list.date.checked_add_days(Days::new(1)).unwrap_or_default(), // fake day that starts from where the first day is, with one day added
+            date: first_day_in_stat_list
+                .date
+                .checked_add_days(Days::new(1))
+                .unwrap_or_default(), // fake day that starts from where the first day is, with one day added
             note: String::new(),
         };
 
@@ -307,7 +308,7 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
 }
 
 /// Draw the auto update ui on screen if needed
-#[tracing::instrument(skip(central_panel_ui, app,ctx))]
+#[tracing::instrument(skip(central_panel_ui, app, ctx))]
 pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &Context) {
     if let Some(release) = &app.update_available {
         let should_show_update = match &app.auto_update_seen_version {
@@ -355,7 +356,7 @@ pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState,
 }
 
 /// Draw the quit button as well as the options, about, and screenshot button
-#[tracing::instrument(skip(central_panel_ui, app,ctx))]
+#[tracing::instrument(skip(central_panel_ui, app, ctx))]
 pub fn draw_bottom_row_buttons(
     central_panel_ui: &mut Ui,
     app: &mut HappyChartState,

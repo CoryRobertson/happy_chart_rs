@@ -41,7 +41,6 @@ impl Default for WeekdayAverages {
 }
 
 impl StateStats {
-
     pub const fn new() -> Self {
         Self {
             avg_weekdays: WeekdayAverages::new(),
@@ -109,7 +108,6 @@ impl StateStats {
 }
 
 impl WeekdayAverages {
-
     pub const fn new() -> Self {
         Self {
             avg_monday: 0.0,

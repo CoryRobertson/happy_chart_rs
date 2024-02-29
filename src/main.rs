@@ -41,7 +41,10 @@ pub(crate) const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 #[tracing::instrument]
 fn main() {
     #[cfg(feature = "tracing")]
-    tracing::subscriber::set_global_default(tracing_subscriber::registry().with(tracing_tracy::TracyLayer::default())).expect("Unable to setup tracy layer");
+    tracing::subscriber::set_global_default(
+        tracing_subscriber::registry().with(tracing_tracy::TracyLayer::default()),
+    )
+    .expect("Unable to setup tracy layer");
 
     let window_size: Vec2 = read_last_session_save_file().window_size.into();
 
@@ -60,7 +63,7 @@ fn main() {
 
 /// Update loop for egui
 impl eframe::App for HappyChartState {
-    #[tracing::instrument(skip(self,ctx,_frame))]
+    #[tracing::instrument(skip(self, ctx, _frame))]
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
         if self.first_load {
             first_load(self, ctx);
@@ -86,7 +89,7 @@ impl eframe::App for HappyChartState {
             click_drag_zoom_detection(ui, self, pointer_interact_pos.as_ref());
 
             if self.program_options.draw_day_lines {
-                draw_day_lines(ui, self,ctx);
+                draw_day_lines(ui, self, ctx);
             }
 
             if self.program_options.draw_daystat_lines {

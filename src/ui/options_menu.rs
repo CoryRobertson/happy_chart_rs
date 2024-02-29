@@ -189,7 +189,7 @@ pub fn draw_stat_drawing_options_menu(options_panel_ui: &mut Ui, app: &mut Happy
 }
 
 /// Backup settings collapsing menu
-#[tracing::instrument(skip(options_panel_ui, app,ctx))]
+#[tracing::instrument(skip(options_panel_ui, app, ctx))]
 pub fn draw_backup_settings_options_menu(
     options_panel_ui: &mut Ui,
     app: &mut HappyChartState,

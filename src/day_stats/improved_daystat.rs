@@ -89,12 +89,10 @@ impl Display for ImprovedDayStat {
 }
 
 impl ImprovedDayStat {
-
     #[tracing::instrument]
     pub fn get_current_time_system() -> DateTime<Local> {
         Local::now()
     }
-
 
     #[tracing::instrument]
     #[allow(dead_code)]
@@ -110,7 +108,6 @@ impl ImprovedDayStat {
 }
 
 impl Default for ImprovedDayStat {
-
     #[tracing::instrument]
     fn default() -> Self {
         Self {

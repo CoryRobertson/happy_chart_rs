@@ -48,7 +48,7 @@ pub fn distance(x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
 }
 
 /// Quit function run when the user clicks the quit button
-#[tracing::instrument(skip(ctx,app))]
+#[tracing::instrument(skip(ctx, app))]
 pub fn quit(ctx: &Context, app: &HappyChartState) -> Result<(), HappyChartError> {
     save_program_state(ctx, app)?;
 
@@ -76,7 +76,7 @@ fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {
 }
 
 /// First load governs error states on its own, no need to read output
-#[tracing::instrument(skip(app,ctx))]
+#[tracing::instrument(skip(app, ctx))]
 pub fn first_load(app: &mut HappyChartState, ctx: &Context) {
     // all data we need to read one time on launch, all of this most of the time is unchanging throughout usage of the program, so it can only be recalculated on launch
     // for example, day quality averages do not need to change between launches
@@ -180,7 +180,7 @@ pub fn handle_screenshot_event(image: &Arc<ColorImage>) {
     }
 }
 
-#[tracing::instrument(skip(ctx,app))]
+#[tracing::instrument(skip(ctx, app))]
 pub fn backup_program_state(
     ctx: &Context,
     app: &HappyChartState,
@@ -225,7 +225,7 @@ pub fn backup_program_state(
     Ok(())
 }
 
-#[tracing::instrument(skip(ctx,app))]
+#[tracing::instrument(skip(ctx, app))]
 pub fn save_program_state(ctx: &Context, app: &HappyChartState) -> Result<(), HappyChartError> {
     let days = &app.days;
 
