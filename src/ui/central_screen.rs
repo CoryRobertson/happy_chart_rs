@@ -6,7 +6,7 @@ use crate::{BUILD_TIMESTAMP, GIT_DESCRIBE};
 use chrono::Days;
 use eframe::emath::{Align2, Pos2, Rect, Vec2};
 use eframe::epaint::{Color32, FontId, Rounding, Stroke};
-use egui::{Context, Layout, Ui, ViewportCommand};
+use egui::{Context, Layout, Rangef, Ui, ViewportCommand};
 use self_update::cargo_crate_version;
 
 #[tracing::instrument(skip(central_panel_ui, app))]
@@ -130,31 +130,32 @@ pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Contex
         };
 
         let screen_rect_max = ctx.screen_rect().max;
+        let line_y_value_maximum = screen_rect_max.y;
+
+        let line_y_value_start: f32 = app.get_day_line_y_value();
 
         for i2 in -50..range {
             // make a fake day with the first day on the list as the first day, and add 24 hours to it each time in utc time to calculate where each line goes
-            let line_points: [Pos2; 2] = {
-                let y: f32 = app.get_day_line_y_value();
-                let x = {
-                    let first_day = first_day_in_stat_list;
-                    let hours: f32 = fake_day.get_hour_difference(first_day) as f32 / 3600.0; // number of hours compared to the previous point
+            let line_x_coordinate: f32 = {
+                let hours: f32 =
+                    fake_day.get_hour_difference(first_day_in_stat_list) as f32 / 3600.0; // number of hours compared to the previous point
 
-                    let x: f32 = (hours * app.program_options.graph_x_scale) * i2 as f32;
-                    x + app.program_options.x_offset
-                };
-                [Pos2::new(x, y), Pos2::new(x, 800.0)]
+                let x: f32 = (hours * app.program_options.graph_x_scale) * i2 as f32;
+
+                x + app.program_options.x_offset
             };
 
             // if the x value calculated for the line being drawn is off-screen, we don't need to draw it.
-            if !(0f32..screen_rect_max.x).contains(&line_points[0].x) {
-                if ((screen_rect_max.x + 1.0)..).contains(&line_points[0].x) {
+            if !(0f32..screen_rect_max.x).contains(&line_x_coordinate) {
+                if ((screen_rect_max.x + 1.0)..).contains(&line_x_coordinate) {
                     break;
                 }
                 continue;
             }
 
-            central_panel_ui.painter().line_segment(
-                line_points,
+            central_panel_ui.painter().vline(
+                line_x_coordinate,
+                Rangef::new(line_y_value_start, line_y_value_maximum),
                 Stroke::new(2.0, app.program_options.color_settings.day_line_color),
             );
         }

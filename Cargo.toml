@@ -31,7 +31,7 @@ image = "0.24.9"
 self_update = { version = "0.39.0", features = ["archive-zip","compression-flate2","compression-zip-bzip2","compression-zip-deflate"]}
 zip = "^0.6.6"
 tracing = { version = "0.1.40" }
-tracing-tracy = { version = "0.11.0", optional = true, features = ["broadcast","enable","flush-on-exit"]}
+tracing-tracy = { version = "0.11.0", optional = true, features = ["default","flush-on-exit"]}
 tracing-subscriber = "0.3.18"
 
 [features]
