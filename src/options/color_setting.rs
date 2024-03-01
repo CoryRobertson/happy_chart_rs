@@ -57,6 +57,8 @@ pub struct ColorSettings {
 
     pub stat_outline_color: Color32,
     pub stat_outline_streak_color: Color32,
+
+    pub stat_mouse_over_color: Color32,
 }
 
 impl Default for ColorSettings {
@@ -68,6 +70,7 @@ impl Default for ColorSettings {
             day_line_color: Color32::from_rgba_unmultiplied(50, 50, 50, 100),
             stat_outline_color: Color32::BLACK,
             stat_outline_streak_color: Color32::WHITE,
+            stat_mouse_over_color: Color32::from_rgb(25, 189, 255),
         }
     }
 }

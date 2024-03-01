@@ -49,7 +49,7 @@ impl eframe::App for HappyChartState {
             }
 
             if self.program_options.draw_daystat_circles {
-                draw_stat_circles(ui, self);
+                draw_stat_circles(ui, self, ctx);
             }
 
             draw_stat_mouse_over_info(ui, self, ctx);

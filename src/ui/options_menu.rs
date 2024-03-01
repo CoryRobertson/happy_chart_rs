@@ -59,6 +59,10 @@ pub fn draw_color_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartSt
                 &mut app.program_options.color_settings.stat_outline_streak_color,
             )
             .on_hover_text("Day stat outline streak color");
+            ui.color_edit_button_srgba(
+                &mut app.program_options.color_settings.stat_mouse_over_color,
+            )
+            .on_hover_text("Day stat mouse over color");
         });
 
         if ui.button("Reset colors to defaults").clicked() {

@@ -45,7 +45,7 @@ impl Default for ProgramOptions {
     fn default() -> Self {
         Self {
             graph_x_scale: 1.0,
-            graph_y_scale: 1.0,
+            graph_y_scale: 2.7,
             x_offset: 0.0,
             draw_day_lines: false,
             x_offset_slider_speed: 0.1,

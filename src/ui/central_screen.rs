@@ -9,6 +9,8 @@ use eframe::epaint::{Color32, FontId, Rounding, Stroke};
 use egui::{Context, Layout, Rangef, Ui, ViewportCommand};
 use self_update::cargo_crate_version;
 
+const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
+
 #[tracing::instrument(skip(central_panel_ui, app))]
 pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
     central_panel_ui.horizontal(|ui| {
@@ -165,6 +167,8 @@ pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Contex
 /// Draw the lines between each stat like a graph
 #[tracing::instrument(skip(central_panel_ui, app))]
 pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
+    // TODO use ui offset delta for drawing here
+
     let mut prev_x = 0.0;
     let mut prev_y = 0.0;
     // draw lines loop, bottom layer
@@ -176,11 +180,14 @@ pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
             app.program_options.x_offset,
         );
 
-        let y: f32 = day
-            .rating
-            .mul_add(-app.program_options.graph_y_scale, 500.0)
-            - app.program_options.day_stat_height_offset;
-        let points = [Pos2::new(prev_x, prev_y), Pos2::new(x, y)];
+        let y: f32 = day.rating.mul_add(
+            -app.program_options.graph_y_scale,
+            STAT_HEIGHT_CONSTANT_OFFSET,
+        ) - app.program_options.day_stat_height_offset;
+        let points = [
+            Pos2::new(prev_x, prev_y + app.get_day_line_y_value()),
+            Pos2::new(x, y + app.get_day_line_y_value()),
+        ];
 
         if (prev_x != 0.0 && prev_y != 0.0) || i == 1 {
             // draw line segments connecting the dots
@@ -196,8 +203,14 @@ pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
 }
 
 /// draw the circled for each stat, separate color based on each stat's rating
-#[tracing::instrument(skip(central_panel_ui, app))]
-pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState) {
+#[tracing::instrument(skip(central_panel_ui, app, ctx))]
+pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Context) {
+    let mouse_pos = ctx
+        .pointer_hover_pos()
+        .map_or_else(|| Pos2::new(0.0, 0.0), |a| a);
+    let mut moused_over = false;
+    let dist_max = app.program_options.mouse_over_radius;
+
     for (idx, day) in app.days.clone().iter().enumerate() {
         let x: f32 = improved_calculate_x(
             &app.days,
@@ -205,37 +218,43 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState) {
             app.program_options.graph_x_scale,
             app.program_options.x_offset,
         );
-        let y: f32 = day
-            .rating
-            .mul_add(-app.program_options.graph_y_scale, 500.0)
-            - app.program_options.day_stat_height_offset;
+        let y: f32 = day.rating.mul_add(
+            -app.program_options.graph_y_scale,
+            STAT_HEIGHT_CONSTANT_OFFSET,
+        ) - app.program_options.day_stat_height_offset
+            + app.get_day_line_y_value();
 
-        let streak_color = if idx >= app.stats.longest_streak.streak_start_index
-            && idx < app.stats.longest_streak.streak_end_index
-            && app.program_options.show_streak
-        {
-            app.program_options.color_settings.stat_outline_streak_color
-        } else {
-            app.program_options.color_settings.stat_outline_color
-        };
+        let stat_outline_color =
+            if distance(mouse_pos.x, mouse_pos.y, x, y) < dist_max && !moused_over {
+                moused_over = true;
+                app.program_options.color_settings.stat_mouse_over_color
+            } else if idx >= app.stats.longest_streak.streak_start_index
+                && idx < app.stats.longest_streak.streak_end_index
+                && app.program_options.show_streak
+            {
+                app.program_options.color_settings.stat_outline_streak_color
+            } else {
+                app.program_options.color_settings.stat_outline_color
+            };
 
         //draw circles on each coordinate point
         central_panel_ui.painter().circle_filled(
             Pos2::new(x, y),
             app.program_options.daystat_circle_outline_radius,
-            streak_color,
+            stat_outline_color,
         );
 
-        let color = if !app.filter_term.is_empty() && day.note.contains(&app.filter_term) {
-            Color32::LIGHT_BLUE
-        } else {
-            color_setting::get_shape_color_from_rating(day.rating)
-        };
+        let stat_rating_color =
+            if !app.filter_term.is_empty() && day.note.contains(&app.filter_term) {
+                Color32::LIGHT_BLUE
+            } else {
+                color_setting::get_shape_color_from_rating(day.rating)
+            };
 
         central_panel_ui.painter().circle_filled(
             Pos2::new(x, y),
             app.program_options.daystat_circle_size,
-            color,
+            stat_rating_color,
         );
     }
 }
@@ -243,6 +262,8 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState) {
 /// Draw a stats info if it is moused over
 #[tracing::instrument(skip(central_panel_ui, app, ctx))]
 pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartState, ctx: &Context) {
+    // TODO use ui offset delta for drawing here
+
     let mouse_pos = ctx
         .pointer_hover_pos()
         .map_or_else(|| Pos2::new(0.0, 0.0), |a| a);
@@ -255,10 +276,11 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
             app.program_options.graph_x_scale,
             app.program_options.x_offset,
         );
-        let y: f32 = day
-            .rating
-            .mul_add(-app.program_options.graph_y_scale, 500.0)
-            - app.program_options.day_stat_height_offset;
+        let y: f32 = day.rating.mul_add(
+            -app.program_options.graph_y_scale,
+            STAT_HEIGHT_CONSTANT_OFFSET,
+        ) - app.program_options.day_stat_height_offset
+            + app.get_day_line_y_value();
         let rect_pos1 = Pos2::new(520.0, 10.0);
         let rect_pos2 = Pos2::new(770.0, 180.0);
         let text = {
