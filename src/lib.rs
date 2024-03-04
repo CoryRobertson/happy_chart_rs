@@ -6,6 +6,8 @@ pub(crate) mod options;
 pub(crate) mod state;
 pub(crate) mod ui;
 
+pub(crate) mod mood_tag;
+
 pub mod prelude {
     pub use crate::common::read_last_session_save_file;
     pub use crate::state::happy_chart_state::HappyChartState;
@@ -19,6 +21,7 @@ pub(crate) const MANUAL_BACKUP_SUFFIX: &str = "_manual";
 pub(crate) const BACKUP_FILE_EXTENSION: &str = "zip";
 pub(crate) const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 pub(crate) const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
+
 
 // TODO: mood tags to notes that are optional
 // TODO: summarization of the previous week / previous month e.g. average mood scores, most frequent mood tags and comparisons to previous months

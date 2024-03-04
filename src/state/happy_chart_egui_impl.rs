@@ -6,6 +6,7 @@ use crate::ui::central_screen::{
     draw_stat_circles, draw_stat_line_segments, draw_stat_mouse_over_info, main_screen_button_ui,
 };
 use crate::ui::error_screen::draw_error_screen;
+use crate::ui::mood_selector_menu::draw_mood_selector_screen;
 use crate::ui::options_menu::{
     draw_backup_settings_options_menu, draw_color_options_menu, draw_graphing_options_menu,
     draw_stat_drawing_options_menu, options_update_thread_block,
@@ -88,6 +89,12 @@ impl eframe::App for HappyChartState {
         if self.showing_about_page {
             egui::Window::new("About").show(ctx, |ui| {
                 draw_about_page(ui, self);
+            });
+        }
+
+        if self.showing_mood_tag_selector {
+            egui::Window::new("Select mood").show(ctx, |ui| {
+                draw_mood_selector_screen(ctx, ui, self);
             });
         }
 

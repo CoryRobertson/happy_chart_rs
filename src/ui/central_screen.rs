@@ -8,6 +8,7 @@ use eframe::emath::{Align2, Pos2, Rect, Vec2};
 use eframe::epaint::{Color32, FontId, Rounding, Stroke};
 use egui::{Context, Layout, Rangef, Ui, ViewportCommand};
 use self_update::cargo_crate_version;
+use crate::mood_tag::MoodTag;
 
 const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
 
@@ -17,6 +18,9 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
         ui.label("Rating: ");
         ui.add(egui::Slider::new(&mut app.rating, 0.0..=100.0))
             .on_hover_text("The rating of the given day to be saved to the graph point.");
+        if !app.showing_mood_tag_selector && ui.button("Select mood").clicked() {
+            app.showing_mood_tag_selector = true;
+        }
     });
 
     central_panel_ui.horizontal(|ui| {
@@ -26,11 +30,18 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
     });
 
     if central_panel_ui.button("Add day").clicked() {
-        app.days.push(ImprovedDayStat {
-            rating: app.rating as f32,
-            date: ImprovedDayStat::get_current_time_system(),
-            note: app.note_input.clone(),
-        });
+        app.days.push(ImprovedDayStat::new(
+            app.rating as f32,
+            ImprovedDayStat::get_current_time_system(),
+            &app.note_input,
+            app.mood_selection_list.clone(),
+        ));
+
+        // app.days.push(ImprovedDayStat {
+        //     rating: app.rating as f32,
+        //     date: ImprovedDayStat::get_current_time_system(),
+        //     note: app.note_input.clone(),
+        // });
         app.stats.avg_weekdays.calc_averages(&app.days);
         app.stats
             .calc_streak(&app.days, app.program_options.streak_leniency);
@@ -122,14 +133,15 @@ pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Contex
 
         let first_day_in_stat_list = app.days.first().unwrap_or(&default_day_stat);
 
-        let fake_day = ImprovedDayStat {
-            rating: 0.0,
-            date: first_day_in_stat_list
-                .date
+        let fake_day = ImprovedDayStat::new(
+            0.0,
+            first_day_in_stat_list
+                .get_date()
                 .checked_add_days(Days::new(1))
-                .unwrap_or_default(), // fake day that starts from where the first day is, with one day added
-            note: String::new(),
-        };
+                .unwrap_or_default(),
+            "",
+            vec![],
+        ); // fake day that starts from where the first day is, with one day added
 
         let screen_rect_max = ctx.screen_rect().max;
         let line_y_value_maximum = screen_rect_max.y;
@@ -180,7 +192,7 @@ pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
             app.program_options.x_offset,
         );
 
-        let y: f32 = day.rating.mul_add(
+        let y: f32 = day.get_rating().mul_add(
             -app.program_options.graph_y_scale,
             STAT_HEIGHT_CONSTANT_OFFSET,
         ) - app.program_options.day_stat_height_offset;
@@ -218,7 +230,7 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Con
             app.program_options.graph_x_scale,
             app.program_options.x_offset,
         );
-        let y: f32 = day.rating.mul_add(
+        let y: f32 = day.get_rating().mul_add(
             -app.program_options.graph_y_scale,
             STAT_HEIGHT_CONSTANT_OFFSET,
         ) - app.program_options.day_stat_height_offset
@@ -245,10 +257,19 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Con
         );
 
         let stat_rating_color =
-            if !app.filter_term.is_empty() && day.note.contains(&app.filter_term) {
-                Color32::LIGHT_BLUE
+            if !app.filter_term.is_empty() && (day.get_note().contains(&app.filter_term) || {
+                match MoodTag::get_mood_by_name(&app.filter_term) {
+                    None => {
+                        false
+                    }
+                    Some(mood_tag) => {
+                        day.get_mood_tags().contains(&mood_tag)
+                    }
+                }
+            }) {
+                Color32::BLUE
             } else {
-                color_setting::get_shape_color_from_rating(day.rating)
+                color_setting::get_shape_color_from_rating(day.get_rating())
             };
 
         central_panel_ui.painter().circle_filled(
@@ -262,7 +283,6 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Con
 /// Draw a stats info if it is moused over
 #[tracing::instrument(skip(central_panel_ui, app, ctx))]
 pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartState, ctx: &Context) {
-    // TODO use ui offset delta for drawing here
 
     let mouse_pos = ctx
         .pointer_hover_pos()
@@ -276,7 +296,7 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
             app.program_options.graph_x_scale,
             app.program_options.x_offset,
         );
-        let y: f32 = day.rating.mul_add(
+        let y: f32 = day.get_rating().mul_add(
             -app.program_options.graph_y_scale,
             STAT_HEIGHT_CONSTANT_OFFSET,
         ) - app.program_options.day_stat_height_offset
@@ -285,7 +305,7 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
         let rect_pos2 = Pos2::new(770.0, 180.0);
         let text = {
             if cfg!(debug_assertions) {
-                format!("idx: {} {}", _idx, day)
+                format!("idx: {} {}\n", _idx, day)
             } else {
                 day.to_string()
             }
@@ -316,9 +336,9 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
             // info text to display in top right window
             let info_text: String = {
                 if cfg!(debug_assertions) {
-                    format!("idx: {} {}", _idx, day)
+                    format!("idx: {}\nDate: {}\nRating: {}\nMood Tags: {:?}\nNote: {}", _idx, day.get_date(), day.get_rating(),day.get_mood_tags(),day.get_note())
                 } else {
-                    day.to_string()
+                    format!("Date: {}\nRating: {}\nMood Tags: {:?}\nNote: {}", day.get_date(), day.get_rating(),day.get_mood_tags(),day.get_note())
                 }
             };
 

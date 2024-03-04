@@ -91,8 +91,11 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context) {
         }
     }
 
-    app.days
-        .sort_by(|day1, day2| day1.date.timestamp().cmp(&day2.date.timestamp()));
+    app.days.sort_by(|day1, day2| {
+        day1.get_date()
+            .timestamp()
+            .cmp(&day2.get_date().timestamp())
+    });
 
     app.starting_length = app.days.len();
     let ls = read_last_session_save_file();
@@ -278,8 +281,8 @@ pub fn save_program_state(ctx: &Context, app: &HappyChartState) -> Result<(), Ha
 pub fn get_average_for_day_of_week(day_of_week: Weekday, days: &[ImprovedDayStat]) -> f32 {
     let ratings = days
         .iter()
-        .filter(|stat| stat.date.weekday() == day_of_week)
-        .map(|stat| stat.rating)
+        .filter(|stat| stat.get_date().weekday() == day_of_week)
+        .map(|stat| stat.get_rating())
         .collect::<Vec<f32>>();
 
     ratings.iter().sum::<f32>() / ratings.len() as f32

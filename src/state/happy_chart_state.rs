@@ -1,5 +1,6 @@
 use crate::auto_update_status::AutoUpdateStatus;
 use crate::day_stats::improved_daystat::ImprovedDayStat;
+use crate::mood_tag::MoodTag;
 use crate::options::program_options::ProgramOptions;
 use crate::state::error_states::HappyChartError;
 use crate::state::state_stats::StateStats;
@@ -46,6 +47,9 @@ pub struct HappyChartState {
 
     /// List of error states that are present, we show the user every item in this list if any exist
     pub error_states: Vec<HappyChartError>,
+
+    pub showing_mood_tag_selector: bool,
+    pub mood_selection_list: Vec<MoodTag>,
 
     /// The position of the day lines offset to be calculated from
     pub central_screen_ui_delta_pos: Option<UiDelta>,
@@ -110,6 +114,8 @@ impl HappyChartState {
             showing_about_page: false,
             stats: StateStats::new(),
             error_states: vec![],
+            showing_mood_tag_selector: false,
+            mood_selection_list: vec![],
             central_screen_ui_delta_pos: None,
         }
     }
