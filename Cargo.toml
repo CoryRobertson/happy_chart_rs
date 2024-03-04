@@ -17,8 +17,8 @@ strip = true
 lto = true
 
 [dependencies]
-eframe = { version = "0.26.2", features = ["serde"]}
-egui = { version = "0.26.2", features = ["serde"]}
+eframe = { version = "0.26.2", features = ["serde", "accesskit"]}
+egui = { version = "0.26.2", features = ["serde", "accesskit"]}
 serde = { version = "1.0.197", features = ["derive"] }
 chrono = { version = "0.4.34", features = ["serde"] }
 chrono-tz = { version = "0.8.6", features = ["serde"] }
