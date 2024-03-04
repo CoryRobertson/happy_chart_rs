@@ -12,7 +12,7 @@ use crate::{
 use chrono::{DateTime, Datelike, Local, Weekday};
 use eframe::egui;
 use eframe::epaint::ColorImage;
-use egui::{Context, Pos2, Rect, ViewportCommand};
+use egui::{Color32, Context, Pos2, Rect, ViewportCommand};
 use self_update::update::Release;
 use self_update::{cargo_crate_version, Status};
 use std::error::Error;
@@ -21,6 +21,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::thread::JoinHandle;
+use std::time::SystemTime;
 use std::{fs, thread};
 use zip::write::FileOptions;
 use zip::CompressionMethod;
@@ -106,6 +107,7 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context) {
     if let Some(ver) = ls.last_version_checked {
         app.auto_update_seen_version = Some(ver);
     }
+    app.tutorial_state = ls.tutorial_state;
 
     if Local::now()
         .signed_duration_since(ls.last_open_date)
@@ -296,6 +298,7 @@ pub fn save_program_state(ctx: &Context, app: &HappyChartState) -> Result<(), Ha
                 .map(ToString::to_string)
         },
         last_backup_date: app.last_backup_date,
+        tutorial_state: app.tutorial_state,
     };
 
     let session_ser =
@@ -332,6 +335,22 @@ pub fn get_average_for_day_of_week(day_of_week: Weekday, days: &[ImprovedDayStat
         .collect::<Vec<f32>>();
 
     ratings.iter().sum::<f32>() / ratings.len() as f32
+}
+
+#[tracing::instrument]
+pub fn get_tutorial_highlight_glowing_color(offset: u8) -> Color32 {
+    let now = SystemTime::now();
+
+    let diff = now
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .map_or(0, |diff| diff.as_secs());
+
+    match (diff + offset as u64) % 3 {
+        0 => Color32::GRAY,
+        1 => Color32::LIGHT_GRAY,
+        2 => Color32::WHITE,
+        _ => Color32::WHITE,
+    }
 }
 
 #[tracing::instrument]

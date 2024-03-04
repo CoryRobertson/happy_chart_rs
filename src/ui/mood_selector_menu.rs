@@ -1,5 +1,7 @@
+use crate::common::get_tutorial_highlight_glowing_color;
 use crate::mood_tag::MoodTag;
 use crate::prelude::HappyChartState;
+use crate::state::tutorial_state::TutorialGoal;
 use egui::scroll_area::ScrollBarVisibility;
 use egui::{Context, ScrollArea, Ui};
 use strum::IntoEnumIterator;
@@ -34,6 +36,16 @@ pub fn draw_mood_selector_screen(_ctx: &Context, ui: &mut Ui, app: &mut HappyCha
     }
 
     ui.label("Add moods:");
+
+    let old_widget_visuals = ui.style().visuals.widgets.inactive;
+
+    if app.mood_selection_list.is_empty() && matches!(app.tutorial_state, TutorialGoal::SelectAMood)
+    {
+        let mut modified_widget_visuals = ui.style().visuals.widgets.inactive;
+        modified_widget_visuals.bg_fill = get_tutorial_highlight_glowing_color(0);
+        modified_widget_visuals.fg_stroke.color = get_tutorial_highlight_glowing_color(2);
+        ui.style_mut().visuals.widgets.inactive = modified_widget_visuals;
+    }
     ScrollArea::vertical()
         .enable_scrolling(true)
         .auto_shrink(true)
@@ -63,6 +75,8 @@ pub fn draw_mood_selector_screen(_ctx: &Context, ui: &mut Ui, app: &mut HappyCha
                 }
             });
         });
+
+    ui.style_mut().visuals.widgets.inactive = old_widget_visuals;
 
     ui.separator();
 

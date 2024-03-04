@@ -22,8 +22,6 @@ pub(crate) const BACKUP_FILE_EXTENSION: &str = "zip";
 pub(crate) const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 pub(crate) const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
-// TODO: summarization of the previous week / previous month e.g. average mood scores, most frequent mood tags and comparisons to previous months
 // TODO: activity tags to add to a note, an activity tag is a selection of things that a user added to
 //   a list of things they commonly do, so they can see for example, days the user went for a bike ride, or days where the user socialized
 // TODO: save data encryption using AES 256 prompt user to decrypt their save file if it is encrypted using a password prompt
-// TODO: add a tutorial system, skippable

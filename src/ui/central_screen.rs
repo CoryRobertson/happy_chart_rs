@@ -1,8 +1,11 @@
-use crate::common::{distance, improved_calculate_x, quit, update_program};
+use crate::common::{
+    distance, get_tutorial_highlight_glowing_color, improved_calculate_x, quit, update_program,
+};
 use crate::day_stats::improved_daystat::ImprovedDayStat;
 use crate::mood_tag::MoodTag;
 use crate::options::color_setting;
 use crate::state::happy_chart_state::{HappyChartState, UiDelta};
+use crate::state::tutorial_state::TutorialGoal;
 use crate::{BUILD_TIMESTAMP, GIT_DESCRIBE};
 use chrono::Days;
 use eframe::emath::{Align2, Pos2, Rect, Vec2};
@@ -16,18 +19,66 @@ const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
 pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
     central_panel_ui.horizontal(|ui| {
         ui.label("Rating: ");
-        ui.add(egui::Slider::new(&mut app.rating, 0.0..=100.0))
-            .on_hover_text("The rating of the given day to be saved to the graph point.");
+
+        let old_widget_visuals = ui.style().visuals.widgets.inactive;
+
+        if matches!(app.tutorial_state, TutorialGoal::AddRating(_)) {
+            let mut modified_widget_visuals = ui.style().visuals.widgets.inactive;
+            modified_widget_visuals.bg_fill = get_tutorial_highlight_glowing_color(0);
+            modified_widget_visuals.fg_stroke.color = get_tutorial_highlight_glowing_color(2);
+            ui.style_mut().visuals.widgets.inactive = modified_widget_visuals;
+        }
+
+        if ui
+            .add(egui::Slider::new(&mut app.rating, 0.0..=100.0))
+            .on_hover_text("The rating of the given day to be saved to the graph point.")
+            .dragged()
+        {
+            if let TutorialGoal::AddRating(b) = &mut app.tutorial_state {
+                *b = true;
+            }
+        }
+
+        ui.style_mut().visuals.widgets.inactive = old_widget_visuals;
+
+        if matches!(app.tutorial_state, TutorialGoal::OpenSelectMood) {
+            let mut modified_widget_visuals = ui.style().visuals.widgets.inactive;
+            modified_widget_visuals.bg_fill = get_tutorial_highlight_glowing_color(0);
+            modified_widget_visuals.bg_stroke.color = get_tutorial_highlight_glowing_color(2);
+            modified_widget_visuals.fg_stroke.color = get_tutorial_highlight_glowing_color(1);
+            ui.style_mut().visuals.widgets.inactive = modified_widget_visuals;
+        }
+
         if !app.showing_mood_tag_selector && ui.button("Select mood").clicked() {
+            if app.tutorial_state == TutorialGoal::OpenSelectMood {
+                app.tutorial_state = TutorialGoal::SelectAMood;
+            }
             app.showing_mood_tag_selector = true;
+        }
+
+        ui.style_mut().visuals.widgets.inactive = old_widget_visuals;
+
+        if !app.mood_selection_list.is_empty() {
+            app.mood_selection_list.iter().for_each(|mood| {
+                ui.label(&mood.get_text());
+            });
         }
     });
 
     central_panel_ui.horizontal(|ui| {
         ui.label("Note: ");
         ui.text_edit_multiline(&mut app.note_input)
-            .on_hover_text("The note to add to the next added graph point.");
+            .on_hover_text("The note to add to the next journal entry.");
     });
+
+    let old_widget_visuals = central_panel_ui.style().visuals.widgets.inactive;
+
+    if matches!(app.tutorial_state, TutorialGoal::AddDay) {
+        let mut modified_widget_visuals = central_panel_ui.style().visuals.widgets.inactive;
+        modified_widget_visuals.bg_fill = get_tutorial_highlight_glowing_color(0);
+        modified_widget_visuals.fg_stroke.color = get_tutorial_highlight_glowing_color(2);
+        central_panel_ui.style_mut().visuals.widgets.inactive = modified_widget_visuals;
+    }
 
     if central_panel_ui.button("Add day").clicked() {
         app.days.push(ImprovedDayStat::new(
@@ -37,11 +88,10 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
             app.mood_selection_list.clone(),
         ));
 
-        // app.days.push(ImprovedDayStat {
-        //     rating: app.rating as f32,
-        //     date: ImprovedDayStat::get_current_time_system(),
-        //     note: app.note_input.clone(),
-        // });
+        if matches!(app.tutorial_state, TutorialGoal::AddDay) {
+            app.tutorial_state = TutorialGoal::OpenOptions;
+        }
+
         app.stats.avg_weekdays.calc_averages(&app.days);
         app.stats
             .calc_streak(&app.days, app.program_options.streak_leniency);
@@ -51,6 +101,8 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
             ImprovedDayStat::get_current_time_system()
         );
     }
+
+    central_panel_ui.style_mut().visuals.widgets.inactive = old_widget_visuals;
 
     if central_panel_ui.button("Remove day").clicked() && !app.days.is_empty() {
         app.days.remove(app.days.len() - 1);
@@ -437,6 +489,9 @@ pub fn draw_bottom_row_buttons(
 
             if !app.showing_options_menu && ui.button("Options").clicked() {
                 app.showing_options_menu = true;
+                if app.tutorial_state == TutorialGoal::OpenOptions {
+                    app.tutorial_state = TutorialGoal::DoneWithTutorial;
+                }
             }
 
             if !app.showing_about_page && ui.button("About").clicked() {

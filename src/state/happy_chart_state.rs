@@ -4,6 +4,7 @@ use crate::mood_tag::MoodTag;
 use crate::options::program_options::ProgramOptions;
 use crate::state::error_states::HappyChartError;
 use crate::state::state_stats::StateStats;
+use crate::state::tutorial_state::TutorialGoal;
 use crate::{BACKUP_FILENAME_PREFIX, BACKUP_FILE_EXTENSION, MANUAL_BACKUP_SUFFIX};
 use chrono::{DateTime, Local};
 use self_update::update::Release;
@@ -55,6 +56,8 @@ pub struct HappyChartState {
 
     /// The position of the day lines offset to be calculated from
     pub central_screen_ui_delta_pos: Option<UiDelta>,
+
+    pub tutorial_state: TutorialGoal,
 }
 
 #[derive(Debug, Clone)]
@@ -120,6 +123,7 @@ impl HappyChartState {
             mood_selection_list: vec![],
             showing_statistics_screen: false,
             central_screen_ui_delta_pos: None,
+            tutorial_state: Default::default(),
         }
     }
 

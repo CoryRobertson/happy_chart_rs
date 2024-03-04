@@ -1,5 +1,6 @@
 use crate::common::{export_stats_to_csv, first_load, handle_screenshot_event, update_program};
 use crate::state::happy_chart_state::HappyChartState;
+use crate::state::tutorial_state::TutorialGoal;
 use crate::ui::about_screen::draw_about_page;
 use crate::ui::central_screen::{
     click_drag_zoom_detection, draw_auto_update_ui, draw_bottom_row_buttons, draw_day_lines,
@@ -12,6 +13,7 @@ use crate::ui::options_menu::{
     draw_stat_drawing_options_menu, options_update_thread_block,
 };
 use crate::ui::statistics_screen::draw_previous_duration_stats_screen;
+use crate::ui::tutorial_screen::draw_tutorial_screen;
 use eframe::Frame;
 use egui::Context;
 
@@ -90,6 +92,10 @@ impl eframe::App for HappyChartState {
                     }
                 }
 
+                if ui.button("Restart tutorial").clicked() {
+                    self.tutorial_state = TutorialGoal::BeginTutorial;
+                }
+
                 if ui.button("Close Options Menu").clicked() {
                     self.showing_options_menu = false;
                 }
@@ -117,6 +123,12 @@ impl eframe::App for HappyChartState {
         if !self.error_states.is_empty() {
             egui::Window::new("An error occurred :(").show(ctx, |ui| {
                 draw_error_screen(self, ui);
+            });
+        }
+
+        if self.tutorial_state != TutorialGoal::TutorialClosed {
+            egui::Window::new("Tutorial").show(ctx, |ui| {
+                draw_tutorial_screen(ctx, ui, self);
             });
         }
     }

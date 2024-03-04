@@ -4,3 +4,4 @@ pub mod error_screen;
 pub mod mood_selector_menu;
 pub mod options_menu;
 pub mod statistics_screen;
+pub mod tutorial_screen;
