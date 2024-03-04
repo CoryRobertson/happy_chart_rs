@@ -50,15 +50,18 @@ pub enum MoodTag {
 }
 
 impl MoodTag {
+    #[tracing::instrument]
     pub fn get_mood_by_name(text: &str) -> Option<Self> {
         let search_term = text.to_lowercase();
         MoodTag::iter().find(|mood| format!("{:?}", mood).to_lowercase().contains(&search_term))
     }
 
+    #[tracing::instrument]
     pub fn get_text(&self) -> String {
         format!("{:?}", self)
     }
 
+    #[tracing::instrument]
     pub fn get_emoji_text(&self) -> &str {
         match self {
             MoodTag::Happy => "😃",

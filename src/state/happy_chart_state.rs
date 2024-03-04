@@ -51,6 +51,8 @@ pub struct HappyChartState {
     pub showing_mood_tag_selector: bool,
     pub mood_selection_list: Vec<MoodTag>,
 
+    pub showing_statistics_screen: bool,
+
     /// The position of the day lines offset to be calculated from
     pub central_screen_ui_delta_pos: Option<UiDelta>,
 }
@@ -116,6 +118,7 @@ impl HappyChartState {
             error_states: vec![],
             showing_mood_tag_selector: false,
             mood_selection_list: vec![],
+            showing_statistics_screen: false,
             central_screen_ui_delta_pos: None,
         }
     }

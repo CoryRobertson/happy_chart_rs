@@ -443,6 +443,10 @@ pub fn draw_bottom_row_buttons(
                 app.showing_about_page = true;
             }
 
+            if !app.showing_statistics_screen && ui.button("Stats").clicked() {
+                app.showing_statistics_screen = true;
+            }
+
             if ui.button("Save Screenshot").clicked() {
                 // frame.request_screenshot();
                 ctx.send_viewport_cmd(ViewportCommand::Screenshot);

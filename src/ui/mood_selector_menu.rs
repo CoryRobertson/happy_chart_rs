@@ -4,6 +4,7 @@ use egui::scroll_area::ScrollBarVisibility;
 use egui::{Context, ScrollArea, Ui};
 use strum::IntoEnumIterator;
 
+#[tracing::instrument(skip_all)]
 pub fn draw_mood_selector_screen(_ctx: &Context, ui: &mut Ui, app: &mut HappyChartState) {
     if !app.mood_selection_list.is_empty() {
         ui.label("Selected moods: ");

@@ -1,5 +1,4 @@
-use crate::common::{first_load, handle_screenshot_event, update_program};
-use crate::state::error_states::HappyChartError;
+use crate::common::{export_stats_to_csv, first_load, handle_screenshot_event, update_program};
 use crate::state::happy_chart_state::HappyChartState;
 use crate::ui::about_screen::draw_about_page;
 use crate::ui::central_screen::{
@@ -12,9 +11,9 @@ use crate::ui::options_menu::{
     draw_backup_settings_options_menu, draw_color_options_menu, draw_graphing_options_menu,
     draw_stat_drawing_options_menu, options_update_thread_block,
 };
+use crate::ui::statistics_screen::draw_previous_duration_stats_screen;
 use eframe::Frame;
 use egui::Context;
-use std::io::Error;
 
 /// Update loop for egui
 impl eframe::App for HappyChartState {
@@ -87,50 +86,7 @@ impl eframe::App for HappyChartState {
                         .add_filter("Data", &["csv"])
                         .save_file()
                     {
-                        match csv::WriterBuilder::new().from_path(&path) {
-                            Ok(mut export_writer) => {
-                                self.days.iter().for_each(|day_stat| {
-                                    let written_data = &[
-                                        day_stat.get_date().to_string(),
-                                        day_stat.get_rating().to_string(),
-                                        day_stat.get_note().to_string(),
-                                        day_stat.get_mood_tags().iter().enumerate().fold(
-                                            String::new(),
-                                            |acc, (index, mood_tag)| {
-                                                if index == day_stat.get_mood_tags().len() - 1 {
-                                                    format!("{}{}", acc, mood_tag.get_text())
-                                                } else {
-                                                    format!("{}{},", acc, mood_tag.get_text())
-                                                }
-                                            },
-                                        ),
-                                    ];
-
-                                    // println!("{:?}", written_data);
-
-                                    match export_writer.write_record(written_data) {
-                                        Ok(_) => {}
-                                        Err(err) => {
-                                            self.error_states.push(HappyChartError::ExportIO(
-                                                Error::from(err),
-                                                None,
-                                            ));
-                                        }
-                                    }
-                                });
-
-                                if let Err(export_error) = export_writer.flush() {
-                                    self.error_states
-                                        .push(HappyChartError::ExportIO(export_error, Some(path)));
-                                }
-                            }
-                            Err(export_error) => {
-                                self.error_states.push(HappyChartError::ExportIO(
-                                    Error::from(export_error),
-                                    Some(path),
-                                ));
-                            }
-                        }
+                        export_stats_to_csv(path, self);
                     }
                 }
 
@@ -149,6 +105,12 @@ impl eframe::App for HappyChartState {
         if self.showing_mood_tag_selector {
             egui::Window::new("Select mood").show(ctx, |ui| {
                 draw_mood_selector_screen(ctx, ui, self);
+            });
+        }
+
+        if self.showing_statistics_screen {
+            egui::Window::new("Stats").show(ctx, |ui| {
+                draw_previous_duration_stats_screen(ctx, ui, self);
             });
         }
 
