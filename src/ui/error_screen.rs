@@ -84,7 +84,20 @@ pub fn draw_error_screen(app: &mut HappyChartState, ui: &mut Ui) {
                     ui.label("Happy chart does not believe that the backup path exists, it might be missing permissions, or the path could be invalid.");
                 }
             }
+            HappyChartError::ExportIO(export_io_error, path) => {
+                ui.label("An error occurred while attempting to export your save data to another format");
+                match path {
+                    None => {}
+                    Some(p) => {
+                        ui.horizontal(|ui| {
+                            ui.label("Happy chart was unable to successfully write to this path: ");
+                            ui.label(p.to_str().unwrap_or("UNABLE TO DISPLAY PATH"));
+                        });
+                    }
+                }
 
+                ui.label(&format!("The full IO error is: {}", export_io_error));
+            }
         }
         ui.separator();
     });

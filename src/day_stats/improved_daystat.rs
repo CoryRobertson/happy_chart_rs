@@ -26,7 +26,6 @@ impl Default for ImprovedDayStat {
     }
 }
 
-
 impl Display for ImprovedDayStat {
     #[tracing::instrument(skip_all)]
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -104,7 +103,6 @@ impl ImprovedDayStat {
         (self.date.timestamp() - compare_day_stat.date.timestamp()).abs()
     }
 }
-
 
 #[allow(deprecated)]
 impl From<DayStat> for ImprovedDayStat {

@@ -22,9 +22,6 @@ pub(crate) const BACKUP_FILE_EXTENSION: &str = "zip";
 pub(crate) const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 pub(crate) const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
-
-// TODO: mood tags to notes that are optional
 // TODO: summarization of the previous week / previous month e.g. average mood scores, most frequent mood tags and comparisons to previous months
-// TODO: allow user to export their day stat ratings to CSV format
 // TODO: activity tags to add to a note, an activity tag is a selection of things that a user added to
 //   a list of things they commonly do, so they can see for example, days the user went for a bike ride, or days where the user socialized

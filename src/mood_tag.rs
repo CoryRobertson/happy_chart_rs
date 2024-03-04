@@ -56,43 +56,43 @@ impl MoodTag {
     }
 
     pub fn get_text(&self) -> String {
-        format!("{:?}",self)
+        format!("{:?}", self)
     }
 
     pub fn get_emoji_text(&self) -> &str {
         match self {
-            MoodTag::Happy => {"😃"}
-            MoodTag::Caring => {"💓"}
-            MoodTag::Grateful => {"🙇"}
-            MoodTag::Excited => {"😆"}
-            MoodTag::Sad => {"😢"}
-            MoodTag::Lonely => {"🚫🍺"}
-            MoodTag::Hurt => {"😧"}
-            MoodTag::Disappointed => {"😞"}
-            MoodTag::Loved => {"😍"}
-            MoodTag::Respected => {"🚩"}
-            MoodTag::Valued => {"💲🙂"}
-            MoodTag::Accepted => {"👍"}
-            MoodTag::Confident => {"😎"}
-            MoodTag::Brave => {"🦸"}
-            MoodTag::Hopeful => {"✌️"}
-            MoodTag::Powerful => {"💪"}
-            MoodTag::Playful => {"⛹️"}
-            MoodTag::Creative => {"🎨"}
-            MoodTag::Curious => {"🐈"}
-            MoodTag::Affectionate => {"💌"}
-            MoodTag::Embarrassed => {"😳"}
-            MoodTag::Ashamed => {"😞"}
-            MoodTag::Excluded => {"🙅"}
-            MoodTag::Guilty => {"😰"}
-            MoodTag::Angry => {"😠"}
-            MoodTag::Bored => {"😐"}
-            MoodTag::Jealous => {"😒"}
-            MoodTag::Annoyed => {"🙄"}
-            MoodTag::Scared => {"😰"}
-            MoodTag::Anxious => {"😓"}
-            MoodTag::Powerless => {"🚫⚡️"}
-            MoodTag::Overwhelmed => {"😬"}
+            MoodTag::Happy => "😃",
+            MoodTag::Caring => "💓",
+            MoodTag::Grateful => "🙇",
+            MoodTag::Excited => "😆",
+            MoodTag::Sad => "😢",
+            MoodTag::Lonely => "🚫🍺",
+            MoodTag::Hurt => "😧",
+            MoodTag::Disappointed => "😞",
+            MoodTag::Loved => "😍",
+            MoodTag::Respected => "🚩",
+            MoodTag::Valued => "💲🙂",
+            MoodTag::Accepted => "👍",
+            MoodTag::Confident => "😎",
+            MoodTag::Brave => "🦸",
+            MoodTag::Hopeful => "✌️",
+            MoodTag::Powerful => "💪",
+            MoodTag::Playful => "⛹️",
+            MoodTag::Creative => "🎨",
+            MoodTag::Curious => "🐈",
+            MoodTag::Affectionate => "💌",
+            MoodTag::Embarrassed => "😳",
+            MoodTag::Ashamed => "😞",
+            MoodTag::Excluded => "🙅",
+            MoodTag::Guilty => "😰",
+            MoodTag::Angry => "😠",
+            MoodTag::Bored => "😐",
+            MoodTag::Jealous => "😒",
+            MoodTag::Annoyed => "🙄",
+            MoodTag::Scared => "😰",
+            MoodTag::Anxious => "😓",
+            MoodTag::Powerless => "🚫⚡️",
+            MoodTag::Overwhelmed => "😬",
         }
     }
 }

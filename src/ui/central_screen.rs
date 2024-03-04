@@ -1,5 +1,6 @@
 use crate::common::{distance, improved_calculate_x, quit, update_program};
 use crate::day_stats::improved_daystat::ImprovedDayStat;
+use crate::mood_tag::MoodTag;
 use crate::options::color_setting;
 use crate::state::happy_chart_state::{HappyChartState, UiDelta};
 use crate::{BUILD_TIMESTAMP, GIT_DESCRIBE};
@@ -8,7 +9,6 @@ use eframe::emath::{Align2, Pos2, Rect, Vec2};
 use eframe::epaint::{Color32, FontId, Rounding, Stroke};
 use egui::{Context, Layout, Rangef, Ui, ViewportCommand};
 use self_update::cargo_crate_version;
-use crate::mood_tag::MoodTag;
 
 const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
 
@@ -256,21 +256,17 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Con
             stat_outline_color,
         );
 
-        let stat_rating_color =
-            if !app.filter_term.is_empty() && (day.get_note().contains(&app.filter_term) || {
+        let stat_rating_color = if !app.filter_term.is_empty()
+            && (day.get_note().contains(&app.filter_term) || {
                 match MoodTag::get_mood_by_name(&app.filter_term) {
-                    None => {
-                        false
-                    }
-                    Some(mood_tag) => {
-                        day.get_mood_tags().contains(&mood_tag)
-                    }
+                    None => false,
+                    Some(mood_tag) => day.get_mood_tags().contains(&mood_tag),
                 }
             }) {
-                Color32::BLUE
-            } else {
-                color_setting::get_shape_color_from_rating(day.get_rating())
-            };
+            Color32::BLUE
+        } else {
+            color_setting::get_shape_color_from_rating(day.get_rating())
+        };
 
         central_panel_ui.painter().circle_filled(
             Pos2::new(x, y),
@@ -283,7 +279,6 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Con
 /// Draw a stats info if it is moused over
 #[tracing::instrument(skip(central_panel_ui, app, ctx))]
 pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartState, ctx: &Context) {
-
     let mouse_pos = ctx
         .pointer_hover_pos()
         .map_or_else(|| Pos2::new(0.0, 0.0), |a| a);
@@ -302,7 +297,7 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
         ) - app.program_options.day_stat_height_offset
             + app.get_day_line_y_value();
         let rect_pos1 = Pos2::new(520.0, 10.0);
-        let rect_pos2 = Pos2::new(770.0, 180.0);
+        let rect_pos2 = Pos2::new(770.0, 160.0);
         let text = {
             if cfg!(debug_assertions) {
                 format!("idx: {} {}\n", _idx, day)
@@ -336,9 +331,22 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
             // info text to display in top right window
             let info_text: String = {
                 if cfg!(debug_assertions) {
-                    format!("idx: {}\nDate: {}\nRating: {}\nMood Tags: {:?}\nNote: {}", _idx, day.get_date(), day.get_rating(),day.get_mood_tags(),day.get_note())
+                    format!(
+                        "idx: {}\nDate: {}\nRating: {}\nMood Tags: {:?}\nNote: {}",
+                        _idx,
+                        day.get_date(),
+                        day.get_rating(),
+                        day.get_mood_tags(),
+                        day.get_note()
+                    )
                 } else {
-                    format!("Date: {}\nRating: {}\nMood Tags: {:?}\nNote: {}", day.get_date(), day.get_rating(),day.get_mood_tags(),day.get_note())
+                    format!(
+                        "Date: {}\nRating: {}\nMood Tags: {:?}\nNote: {}",
+                        day.get_date(),
+                        day.get_rating(),
+                        day.get_mood_tags(),
+                        day.get_note()
+                    )
                 }
             };
 

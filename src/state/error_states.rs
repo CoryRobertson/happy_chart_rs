@@ -10,6 +10,7 @@ pub enum HappyChartError {
     WriteSaveFileIO(std::io::Error, PathBuf),
     UpdateReleaseList(Box<dyn Error>),
     SaveBackupIO(std::io::Error),
+    ExportIO(std::io::Error, Option<PathBuf>),
 }
 
 impl Display for HappyChartError {
@@ -46,6 +47,15 @@ impl Display for HappyChartError {
                     format!(
                         "HappyChartError::DeserializationError {} {}",
                         improved_save_error, old_save_error
+                    )
+                }
+                HappyChartError::ExportIO(err, path) => {
+                    format!(
+                        "HappyChartError::ExportIO {} {}",
+                        err,
+                        path.as_ref().map_or("UNABLE TO DISPLAY PATH", |p| p
+                            .to_str()
+                            .unwrap_or("UNABLE TO DISPLAY PATH"))
                     )
                 }
             }

@@ -41,7 +41,6 @@ pub fn draw_mood_selector_screen(_ctx: &Context, ui: &mut Ui, app: &mut HappyCha
         .max_height(400.0)
         .show(ui, |ui| {
             egui::Grid::new("mood selection grid").show(ui, |ui| {
-
                 let row_width = 4;
 
                 let mood_iteration_list = MoodTag::iter()
