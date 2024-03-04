@@ -74,9 +74,51 @@ pub fn draw_previous_duration_stats_screen(_ctx: &Context, ui: &mut Ui, app: &mu
         } else {
             ui.label("There are not enough stats to show useful data yet, get charting! :)");
         }
-        ui.separator();
-        if ui.button("Close").clicked() {
-            app.showing_statistics_screen = false;
-        }
     }
+
+    ui.separator();
+    ui.label(format!("Day stats recorded: {}", app.days.len()));
+    if !app.days.is_empty() {
+        ui.label(format!(
+            "Average sunday: {:.0}",
+            app.stats.avg_weekdays.avg_sunday
+        ));
+        ui.label(format!(
+            "Average monday: {:.0}",
+            app.stats.avg_weekdays.avg_monday
+        ));
+        ui.label(format!(
+            "Average tuesday: {:.0}",
+            app.stats.avg_weekdays.avg_tuesday
+        ));
+        ui.label(format!(
+            "Average wednesday: {:.0}",
+            app.stats.avg_weekdays.avg_wednesday
+        ));
+        ui.label(format!(
+            "Average thursday: {:.0}",
+            app.stats.avg_weekdays.avg_thursday
+        ));
+        ui.label(format!(
+            "Average friday: {:.0}",
+            app.stats.avg_weekdays.avg_friday
+        ));
+        ui.label(format!(
+            "Average saturday: {:.0}",
+            app.stats.avg_weekdays.avg_saturday
+        ));
+        ui.label(format!(
+            "Longest streak {}",
+            app.stats.longest_streak.longest_streak
+        ));
+        ui.label(format!(
+            "Streak start-end {}-{}",
+            app.stats.longest_streak.streak_start_index, app.stats.longest_streak.streak_end_index
+        ));
+    }
+
+    if ui.button("Close").clicked() {
+        app.showing_statistics_screen = false;
+    }
+
 }
