@@ -123,7 +123,7 @@ impl HappyChartState {
             mood_selection_list: vec![],
             showing_statistics_screen: false,
             central_screen_ui_delta_pos: None,
-            tutorial_state: Default::default(),
+            tutorial_state: TutorialGoal::default(),
         }
     }
 

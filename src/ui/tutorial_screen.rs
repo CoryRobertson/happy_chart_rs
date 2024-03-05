@@ -1,3 +1,4 @@
+use crate::common::tutorial_button_colors;
 use crate::prelude::HappyChartState;
 use crate::state::tutorial_state::TutorialGoal;
 use egui::{Context, Ui};
@@ -17,6 +18,7 @@ pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartStat
             ui.label("This tutorial will cover basic usage of the program, there are many features you won't need to learn or use to make great use of the program, but feel free to explore around! :)");
             ui.horizontal(|ui| {
                 ui.label("For starters, click");
+                tutorial_button_colors(ui);
                 if ui.button("here").clicked() {
                     app.tutorial_state = TutorialGoal::AddRating(false);
                 }
@@ -32,6 +34,7 @@ pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartStat
             if *added_rating {
                 ui.horizontal(|ui| {
                     ui.label("Click");
+                    tutorial_button_colors(ui);
                     if ui.button("here").clicked() {
                         app.tutorial_state = TutorialGoal::OpenSelectMood;
                     }
@@ -53,6 +56,7 @@ pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartStat
              You can add as few or as many as you choose to, without duplicates, so a given journal entry.");
             ui.horizontal(|ui| {
                 ui.label("Click");
+                tutorial_button_colors(ui);
                 if !app.mood_selection_list.is_empty() && ui.button("here").clicked() {
                     app.tutorial_state = TutorialGoal::WriteNote;
                 }
@@ -65,6 +69,7 @@ pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartStat
             It is not required to write a note, however they are very useful when looking at past journal entries, so you can find out why you had a good or bad day.");
             ui.horizontal(|ui| {
                 ui.label("Click");
+                tutorial_button_colors(ui);
                 if ui.button("here").clicked() {
                     app.tutorial_state = TutorialGoal::AddDay;
                 }
@@ -91,6 +96,9 @@ pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartStat
             ui.hyperlink("https://github.com/CoryRobertson/happy_chart_rs");
             ui.label("I hope this program provides value to you the same it does for me!");
             ui.separator();
+
+            tutorial_button_colors(ui);
+
             if ui.button("Close tutorial").clicked() {
                 app.tutorial_state = TutorialGoal::TutorialClosed;
             }

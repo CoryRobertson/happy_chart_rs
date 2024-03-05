@@ -1,5 +1,6 @@
 use crate::common::{
-    distance, get_tutorial_highlight_glowing_color, improved_calculate_x, quit, update_program,
+    distance, get_tutorial_lowlight_glowing_color, improved_calculate_x, quit,
+    tutorial_button_colors, update_program,
 };
 use crate::day_stats::improved_daystat::ImprovedDayStat;
 use crate::mood_tag::MoodTag;
@@ -23,10 +24,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
         let old_widget_visuals = ui.style().visuals.widgets.inactive;
 
         if matches!(app.tutorial_state, TutorialGoal::AddRating(_)) {
-            let mut modified_widget_visuals = ui.style().visuals.widgets.inactive;
-            modified_widget_visuals.bg_fill = get_tutorial_highlight_glowing_color(0);
-            modified_widget_visuals.fg_stroke.color = get_tutorial_highlight_glowing_color(2);
-            ui.style_mut().visuals.widgets.inactive = modified_widget_visuals;
+            tutorial_button_colors(ui);
         }
 
         if ui
@@ -42,11 +40,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
         ui.style_mut().visuals.widgets.inactive = old_widget_visuals;
 
         if matches!(app.tutorial_state, TutorialGoal::OpenSelectMood) {
-            let mut modified_widget_visuals = ui.style().visuals.widgets.inactive;
-            modified_widget_visuals.bg_fill = get_tutorial_highlight_glowing_color(0);
-            modified_widget_visuals.bg_stroke.color = get_tutorial_highlight_glowing_color(2);
-            modified_widget_visuals.fg_stroke.color = get_tutorial_highlight_glowing_color(1);
-            ui.style_mut().visuals.widgets.inactive = modified_widget_visuals;
+            tutorial_button_colors(ui);
         }
 
         if !app.showing_mood_tag_selector && ui.button("Select mood").clicked() {
@@ -67,6 +61,12 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
 
     central_panel_ui.horizontal(|ui| {
         ui.label("Note: ");
+
+        if matches!(app.tutorial_state, TutorialGoal::WriteNote) {
+            ui.visuals_mut().extreme_bg_color = get_tutorial_lowlight_glowing_color(0);
+            tutorial_button_colors(ui);
+        }
+
         ui.text_edit_multiline(&mut app.note_input)
             .on_hover_text("The note to add to the next journal entry.");
     });
@@ -74,10 +74,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
     let old_widget_visuals = central_panel_ui.style().visuals.widgets.inactive;
 
     if matches!(app.tutorial_state, TutorialGoal::AddDay) {
-        let mut modified_widget_visuals = central_panel_ui.style().visuals.widgets.inactive;
-        modified_widget_visuals.bg_fill = get_tutorial_highlight_glowing_color(0);
-        modified_widget_visuals.fg_stroke.color = get_tutorial_highlight_glowing_color(2);
-        central_panel_ui.style_mut().visuals.widgets.inactive = modified_widget_visuals;
+        tutorial_button_colors(central_panel_ui);
     }
 
     if central_panel_ui.button("Add day").clicked() {
@@ -486,6 +483,10 @@ pub fn draw_bottom_row_buttons(
 
             ui.style_mut().visuals.override_text_color =
                 Option::from(app.program_options.color_settings.text_color);
+            let old_widget_visuals = ui.style().visuals.widgets.inactive;
+            if matches!(app.tutorial_state, TutorialGoal::OpenOptions) {
+                tutorial_button_colors(ui);
+            }
 
             if !app.showing_options_menu && ui.button("Options").clicked() {
                 app.showing_options_menu = true;
@@ -493,6 +494,8 @@ pub fn draw_bottom_row_buttons(
                     app.tutorial_state = TutorialGoal::DoneWithTutorial;
                 }
             }
+
+            ui.style_mut().visuals.widgets.inactive = old_widget_visuals;
 
             if !app.showing_about_page && ui.button("About").clicked() {
                 app.showing_about_page = true;

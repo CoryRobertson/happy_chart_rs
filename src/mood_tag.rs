@@ -53,7 +53,7 @@ impl MoodTag {
     #[tracing::instrument]
     pub fn get_mood_by_name(text: &str) -> Option<Self> {
         let search_term = text.to_lowercase();
-        MoodTag::iter().find(|mood| format!("{:?}", mood).to_lowercase().contains(&search_term))
+        Self::iter().find(|mood| format!("{:?}", mood).to_lowercase().contains(&search_term))
     }
 
     #[tracing::instrument]
@@ -64,38 +64,38 @@ impl MoodTag {
     #[tracing::instrument]
     pub fn get_emoji_text(&self) -> &str {
         match self {
-            MoodTag::Happy => "😃",
-            MoodTag::Caring => "💓",
-            MoodTag::Grateful => "🙇",
-            MoodTag::Excited => "😆",
-            MoodTag::Sad => "😢",
-            MoodTag::Lonely => "🚫🍺",
-            MoodTag::Hurt => "😧",
-            MoodTag::Disappointed => "😞",
-            MoodTag::Loved => "😍",
-            MoodTag::Respected => "🚩",
-            MoodTag::Valued => "💲🙂",
-            MoodTag::Accepted => "👍",
-            MoodTag::Confident => "😎",
-            MoodTag::Brave => "🦸",
-            MoodTag::Hopeful => "✌️",
-            MoodTag::Powerful => "💪",
-            MoodTag::Playful => "⛹️",
-            MoodTag::Creative => "🎨",
-            MoodTag::Curious => "🐈",
-            MoodTag::Affectionate => "💌",
-            MoodTag::Embarrassed => "😳",
-            MoodTag::Ashamed => "😞",
-            MoodTag::Excluded => "🙅",
-            MoodTag::Guilty => "😰",
-            MoodTag::Angry => "😠",
-            MoodTag::Bored => "😐",
-            MoodTag::Jealous => "😒",
-            MoodTag::Annoyed => "🙄",
-            MoodTag::Scared => "😰",
-            MoodTag::Anxious => "😓",
-            MoodTag::Powerless => "🚫⚡️",
-            MoodTag::Overwhelmed => "😬",
+            Self::Happy => "😃",
+            Self::Caring => "💓",
+            Self::Grateful => "🙇",
+            Self::Excited => "😆",
+            Self::Sad => "😢",
+            Self::Lonely => "🚫🍺",
+            Self::Hurt => "😧",
+            Self::Disappointed => "😞",
+            Self::Loved => "😍",
+            Self::Respected => "🚩",
+            Self::Valued => "💲🙂",
+            Self::Accepted => "👍",
+            Self::Confident => "😎",
+            Self::Brave => "🦸",
+            Self::Hopeful => "✌️",
+            Self::Powerful => "💪",
+            Self::Playful => "⛹️",
+            Self::Creative => "🎨",
+            Self::Curious => "🐈",
+            Self::Affectionate => "💌",
+            Self::Embarrassed => "😳",
+            Self::Ashamed => "😞",
+            Self::Excluded => "🙅",
+            Self::Guilty => "😰",
+            Self::Angry => "😠",
+            Self::Bored => "😐",
+            Self::Jealous => "😒",
+            Self::Annoyed => "🙄",
+            Self::Scared => "😰",
+            Self::Anxious => "😓",
+            Self::Powerless => "🚫⚡️",
+            Self::Overwhelmed => "😬",
         }
     }
 }

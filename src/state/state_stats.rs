@@ -86,7 +86,7 @@ impl StateStats {
                         .get_date()
                         .signed_duration_since(prev_day.get_date())
                         .num_hours()
-                        > leniency as i64
+                        > i64::from(leniency)
                     {
                         break;
                     }

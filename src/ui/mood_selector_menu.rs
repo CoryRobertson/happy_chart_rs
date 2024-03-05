@@ -1,4 +1,4 @@
-use crate::common::get_tutorial_highlight_glowing_color;
+use crate::common::{get_tutorial_highlight_glowing_color, get_tutorial_lowlight_glowing_color};
 use crate::mood_tag::MoodTag;
 use crate::prelude::HappyChartState;
 use crate::state::tutorial_state::TutorialGoal;
@@ -16,7 +16,7 @@ pub fn draw_mood_selector_screen(_ctx: &Context, ui: &mut Ui, app: &mut HappyCha
                 .mood_selection_list
                 .clone()
                 .iter()
-                .cloned()
+                .copied()
                 .enumerate()
                 .collect::<Vec<(usize, MoodTag)>>();
             for (index, mood) in iteration_list {
@@ -44,6 +44,7 @@ pub fn draw_mood_selector_screen(_ctx: &Context, ui: &mut Ui, app: &mut HappyCha
         let mut modified_widget_visuals = ui.style().visuals.widgets.inactive;
         modified_widget_visuals.bg_fill = get_tutorial_highlight_glowing_color(0);
         modified_widget_visuals.fg_stroke.color = get_tutorial_highlight_glowing_color(2);
+        modified_widget_visuals.weak_bg_fill = get_tutorial_lowlight_glowing_color(0);
         ui.style_mut().visuals.widgets.inactive = modified_widget_visuals;
     }
     ScrollArea::vertical()

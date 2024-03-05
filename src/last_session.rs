@@ -31,7 +31,7 @@ impl Default for LastSession {
             last_open_date: Local::now(),
             last_version_checked: None,
             last_backup_date: Local::now(),
-            tutorial_state: Default::default(),
+            tutorial_state: TutorialGoal::default(),
         }
     }
 }

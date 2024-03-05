@@ -49,7 +49,7 @@ impl Display for HappyChartError {
                         improved_save_error, old_save_error
                     )
                 }
-                HappyChartError::ExportIO(err, path) => {
+                Self::ExportIO(err, path) => {
                     format!(
                         "HappyChartError::ExportIO {} {}",
                         err,
