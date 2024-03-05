@@ -58,6 +58,9 @@ pub struct HappyChartState {
     pub central_screen_ui_delta_pos: Option<UiDelta>,
 
     pub tutorial_state: TutorialGoal,
+
+    pub encryption_key: String,
+    pub encryption_key_second_check: String,
 }
 
 #[derive(Debug, Clone)]
@@ -124,6 +127,8 @@ impl HappyChartState {
             showing_statistics_screen: false,
             central_screen_ui_delta_pos: None,
             tutorial_state: TutorialGoal::default(),
+            encryption_key: "".to_string(),
+            encryption_key_second_check: "".to_string(),
         }
     }
 

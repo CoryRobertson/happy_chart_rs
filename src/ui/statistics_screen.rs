@@ -115,6 +115,7 @@ pub fn draw_previous_duration_stats_screen(_ctx: &Context, ui: &mut Ui, app: &mu
             "Streak start-end {}-{}",
             app.stats.longest_streak.streak_start_index, app.stats.longest_streak.streak_end_index
         ));
+        // TODO: heatmap using a calendar widget to show quality on each day average?
     }
 
     if ui.button("Close").clicked() {

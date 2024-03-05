@@ -5,7 +5,6 @@ pub(crate) mod last_session;
 pub(crate) mod options;
 pub(crate) mod state;
 pub(crate) mod ui;
-
 pub(crate) mod mood_tag;
 
 pub mod prelude {
@@ -24,4 +23,3 @@ pub(crate) const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
 // TODO: activity tags to add to a note, an activity tag is a selection of things that a user added to
 //   a list of things they commonly do, so they can see for example, days the user went for a bike ride, or days where the user socialized
-// TODO: save data encryption using AES 256 prompt user to decrypt their save file if it is encrypted using a password prompt

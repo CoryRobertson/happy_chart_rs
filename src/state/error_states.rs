@@ -5,12 +5,16 @@ use std::path::PathBuf;
 #[derive(Debug)]
 pub enum HappyChartError {
     Serialization(serde_json::Error),
-    Deserialization(serde_json::Error, serde_json::Error),
+    Deserialization(serde_json::Error, Option<serde_json::Error>),
     ReadSaveFileIO(std::io::Error, PathBuf),
     WriteSaveFileIO(std::io::Error, PathBuf),
     UpdateReleaseList(Box<dyn Error>),
     SaveBackupIO(std::io::Error),
     ExportIO(std::io::Error, Option<PathBuf>),
+    EncryptedSaveFile(Vec<u8>),
+    EncryptionKeysDontMatch,
+    EncryptionError(cocoon::Error),
+    DecryptionError(cocoon::Error),
 }
 
 impl Display for HappyChartError {
@@ -45,7 +49,7 @@ impl Display for HappyChartError {
                 }
                 Self::Deserialization(improved_save_error, old_save_error) => {
                     format!(
-                        "HappyChartError::DeserializationError {} {}",
+                        "HappyChartError::DeserializationError {} {:?}",
                         improved_save_error, old_save_error
                     )
                 }
@@ -57,6 +61,18 @@ impl Display for HappyChartError {
                             .to_str()
                             .unwrap_or("UNABLE TO DISPLAY PATH"))
                     )
+                }
+                Self::EncryptedSaveFile(_) => {
+                    "HappyChartError::EncryptedSaveFile".to_string()
+                }
+                Self::EncryptionKeysDontMatch => {
+                    "HappyChartError::EncryptionKeysDontMatch".to_string()
+                }
+                Self::EncryptionError(err) => {
+                    format!("HappyChartError::EncryptionError {:?}", err)
+                }
+                Self::DecryptionError(err) => {
+                    format!("HappyChartError::DecryptionError {:?}", err)
                 }
             }
         )

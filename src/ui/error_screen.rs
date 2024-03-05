@@ -5,7 +5,8 @@ use egui::Ui;
 
 #[tracing::instrument(skip(ui, app))]
 pub fn draw_error_screen(app: &mut HappyChartState, ui: &mut Ui) {
-    app.error_states.iter().for_each(|error_state| {
+    app.error_states.iter()
+        .for_each(|error_state| {
         ui.label(format!("{}", error_state));
         ui.separator();
         match error_state {
@@ -18,7 +19,7 @@ pub fn draw_error_screen(app: &mut HappyChartState, ui: &mut Ui) {
                 ui.label("Happy chart encountered an error while reading a save file, the save file could be corrupted, or contains invalid data somehow.");
                 ui.label("Restoring a backup could be a valid solution, or manually editing the save file to check for validity, though this is not recommended.");
                 ui.label(format!("The most likely save file error is\n {}", improved_save_error));
-                ui.label(format!("However, if the last version you used of the program was a very old version, it could instead be this error:\n {}", old_save_error));
+                ui.label(format!("However, if the last version you used of the program was a very old version, it could instead be this error:\n {:?}", old_save_error));
 
             }
             HappyChartError::ReadSaveFileIO(_, path) => {
@@ -97,6 +98,18 @@ pub fn draw_error_screen(app: &mut HappyChartState, ui: &mut Ui) {
                 }
 
                 ui.label(&format!("The full IO error is: {}", export_io_error));
+            }
+            HappyChartError::EncryptedSaveFile(_) => {
+                ui.label("Your save file is encrypted.");
+            }
+            HappyChartError::EncryptionKeysDontMatch => {
+                ui.label("Your encryption keys do not match, please check that they do. Or disable save file encryption.");
+            }
+            HappyChartError::EncryptionError(err) => {
+                ui.label(format!("An error occurred while encrypting your save file: {:?}", err));
+            }
+            HappyChartError::DecryptionError(err) => {
+                ui.label(format!("An error occurred while decrypting your save file: {:?}", err));
             }
         }
         ui.separator();

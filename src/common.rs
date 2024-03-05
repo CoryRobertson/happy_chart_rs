@@ -10,6 +10,7 @@ use crate::{
     NEW_SAVE_FILE_NAME, SAVE_FILE_NAME,
 };
 use chrono::{DateTime, Datelike, Local, Weekday};
+use cocoon::MiniCocoon;
 use eframe::egui;
 use eframe::epaint::ColorImage;
 use egui::{Color32, Context, Pos2, Rect, Ui, ViewportCommand};
@@ -319,9 +320,28 @@ pub fn save_program_state(ctx: &Context, app: &HappyChartState) -> Result<(), Ha
     let mut save_file = File::create(save_path)
         .map_err(|io_error| HappyChartError::WriteSaveFileIO(io_error, PathBuf::from(save_path)))?;
 
-    save_file
-        .write_all(ser.as_bytes())
-        .map_err(|err| HappyChartError::WriteSaveFileIO(err, PathBuf::from(save_path)))?;
+    if app.program_options.encrypt_save_file {
+        if app.encryption_key.ne(&app.encryption_key_second_check) {
+            return Err(HappyChartError::EncryptionKeysDontMatch);
+        }
+
+        let mut key = app.encryption_key.to_string();
+        if key.len() < 32 {
+            key.push_str("00000000000000000000000000000000");
+        }
+
+        let mut cocoon = MiniCocoon::from_key(&key.as_bytes()[0..32], &[0; 32]);
+        let decrypt = cocoon
+            .wrap(ser.as_ref())
+            .map_err(HappyChartError::EncryptionError)?;
+        save_file
+            .write_all(&decrypt)
+            .map_err(|err| HappyChartError::WriteSaveFileIO(err, PathBuf::from(save_path)))?;
+    } else {
+        save_file
+            .write_all(ser.as_bytes())
+            .map_err(|err| HappyChartError::WriteSaveFileIO(err, PathBuf::from(save_path)))?;
+    }
 
     Ok(())
 }
@@ -460,8 +480,8 @@ pub fn read_save_file() -> Result<Vec<ImprovedDayStat>, HappyChartError> {
         },
     };
 
-    let mut s = String::new();
-    let read_len = match file.read_to_string(&mut s) {
+    let mut s = vec![];
+    let read_len = match file.read_to_end(&mut s) {
         Ok(read_len) => {
             println!("successfully read save file");
             read_len
@@ -473,16 +493,16 @@ pub fn read_save_file() -> Result<Vec<ImprovedDayStat>, HappyChartError> {
     };
 
     // attempt to read old save file format
-    match serde_json::from_str::<Vec<ImprovedDayStat>>(&s[0..read_len]) {
+    match serde_json::from_slice::<Vec<ImprovedDayStat>>(&s[0..read_len]) {
         Ok(vec) => {
             println!("found modern save file");
             // new save file format found, return it
             Ok(vec)
         }
-        Err(err_improved) => {
+        Err(_err_improved) => {
             // not old save file format, attempt to read it as new save file format
             #[allow(deprecated)]
-            match serde_json::from_str::<Vec<DayStat>>(&s[0..read_len]) {
+            match serde_json::from_slice::<Vec<DayStat>>(&s[0..read_len]) {
                 Ok(v) => {
                     println!("found legacy save file, converting");
                     // old save file format found, convert it into new save file format
@@ -490,9 +510,12 @@ pub fn read_save_file() -> Result<Vec<ImprovedDayStat>, HappyChartError> {
                         .map(|old_day_stat| old_day_stat.into())
                         .collect::<Vec<ImprovedDayStat>>())
                 }
-                Err(err_old) => {
+                Err(_err_old) => {
                     // cant read old or new save file format, so empty vec.
-                    Err(HappyChartError::Deserialization(err_improved, err_old))
+
+                    return Err(HappyChartError::EncryptedSaveFile(
+                        (s[0..read_len]).to_vec(),
+                    ));
                 }
             }
         }

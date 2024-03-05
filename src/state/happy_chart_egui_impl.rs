@@ -1,4 +1,5 @@
 use crate::common::{export_stats_to_csv, first_load, handle_screenshot_event, update_program};
+use crate::state::error_states::HappyChartError;
 use crate::state::happy_chart_state::HappyChartState;
 use crate::state::tutorial_state::TutorialGoal;
 use crate::ui::about_screen::draw_about_page;
@@ -15,7 +16,8 @@ use crate::ui::options_menu::{
 use crate::ui::statistics_screen::draw_previous_duration_stats_screen;
 use crate::ui::tutorial_screen::draw_tutorial_screen;
 use eframe::Frame;
-use egui::Context;
+use egui::{Context, TextEdit};
+use crate::ui::encryption::draw_decryption_screen;
 
 /// Update loop for egui
 impl eframe::App for HappyChartState {
@@ -96,6 +98,24 @@ impl eframe::App for HappyChartState {
                     self.tutorial_state = TutorialGoal::BeginTutorial;
                 }
 
+                ui.checkbox(
+                    &mut self.program_options.encrypt_save_file,
+                    "Encrypt save file:",
+                );
+                if self.program_options.encrypt_save_file {
+                    ui.horizontal(|ui| {
+                        ui.label("Encryption key:");
+                        ui.add(TextEdit::singleline(&mut self.encryption_key).password(true));
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Enter encryption key again:");
+                        ui.add(
+                            TextEdit::singleline(&mut self.encryption_key_second_check)
+                                .password(true),
+                        );
+                    });
+                }
+
                 if ui.button("Close Options Menu").clicked() {
                     self.showing_options_menu = false;
                 }
@@ -121,9 +141,28 @@ impl eframe::App for HappyChartState {
         }
 
         if !self.error_states.is_empty() {
-            egui::Window::new("An error occurred :(").show(ctx, |ui| {
-                draw_error_screen(self, ui);
-            });
+            if self
+                .error_states
+                .iter()
+                .any(|err| matches!(err, HappyChartError::EncryptedSaveFile(_)))
+            {
+                egui::Window::new("Unlock your save file").show(ctx, |ui| {
+                    if let Err(err) = draw_decryption_screen(ui, self) {
+                        self.error_states.push(err);
+                    }
+                    if self
+                        .error_states
+                        .iter()
+                        .any(|err| matches!(err, HappyChartError::DecryptionError(_)))
+                    {
+                        ui.label("Error decrypting save file, check the password.");
+                    }
+                });
+            } else {
+                egui::Window::new("An error occurred :(").show(ctx, |ui| {
+                    draw_error_screen(self, ui);
+                });
+            }
         }
 
         if self.tutorial_state != TutorialGoal::TutorialClosed {

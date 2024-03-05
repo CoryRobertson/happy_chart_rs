@@ -38,6 +38,8 @@ pub struct ProgramOptions {
 
     /// Move the day lines in the graph relative to the UI delta, making it move with how much stuff the user has written
     pub move_day_lines_with_ui: bool,
+
+    pub encrypt_save_file: bool,
 }
 
 impl Default for ProgramOptions {
@@ -66,6 +68,7 @@ impl Default for ProgramOptions {
             streak_leniency: 36,
             disable_update_list_error_showing: false,
             move_day_lines_with_ui: true,
+            encrypt_save_file: false,
         }
     }
 }
