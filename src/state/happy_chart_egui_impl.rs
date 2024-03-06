@@ -7,7 +7,7 @@ use crate::ui::central_screen::{
     click_drag_zoom_detection, draw_auto_update_ui, draw_bottom_row_buttons, draw_day_lines,
     draw_stat_circles, draw_stat_line_segments, draw_stat_mouse_over_info, main_screen_button_ui,
 };
-use crate::ui::encryption::draw_decryption_screen;
+use crate::ui::encryption::{draw_decryption_screen, draw_fix_encryption_keys_screen};
 use crate::ui::error_screen::draw_error_screen;
 use crate::ui::mood_selector_menu::draw_mood_selector_screen;
 use crate::ui::options_menu::{
@@ -17,7 +17,7 @@ use crate::ui::options_menu::{
 use crate::ui::statistics_screen::draw_previous_duration_stats_screen;
 use crate::ui::tutorial_screen::draw_tutorial_screen;
 use eframe::Frame;
-use egui::{Context, TextEdit};
+use egui::Context;
 
 /// Update loop for egui
 impl eframe::App for HappyChartState {
@@ -102,18 +102,9 @@ impl eframe::App for HappyChartState {
                     &mut self.program_options.encrypt_save_file,
                     "Encrypt save file:",
                 );
+
                 if self.program_options.encrypt_save_file {
-                    ui.horizontal(|ui| {
-                        ui.label("Encryption key:");
-                        ui.add(TextEdit::singleline(&mut self.encryption_key).password(true));
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label("Enter encryption key again:");
-                        ui.add(
-                            TextEdit::singleline(&mut self.encryption_key_second_check)
-                                .password(true),
-                        );
-                    });
+                    draw_fix_encryption_keys_screen(ui, self);
                 }
 
                 // debug save file generation, makes a pretty sine wave

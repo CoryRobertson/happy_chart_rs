@@ -453,9 +453,12 @@ pub fn draw_bottom_row_buttons(
             let quit_button = ui.button("Save & Quit");
 
             if quit_button.clicked() {
-                // attempt to quit the application, but present an error state if one occurs during the quit process
-                if let Err(err) = quit(ctx, app) {
-                    app.error_states.push(err);
+                // Only let the user quit the program through save and quit if there are no outstanding errors
+                if app.error_states.is_empty() {
+                    // attempt to quit the application, but present an error state if one occurs during the quit process
+                    if let Err(err) = quit(ctx, app) {
+                        app.error_states.push(err);
+                    }
                 }
             }
 

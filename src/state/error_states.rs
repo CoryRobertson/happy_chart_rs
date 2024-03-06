@@ -11,10 +11,23 @@ pub enum HappyChartError {
     UpdateReleaseList(Box<dyn Error>),
     SaveBackupIO(std::io::Error),
     ExportIO(std::io::Error, Option<PathBuf>),
+    /// Error thrown if the save file read was unreadable, suggesting it is encrypted, this error does not open the regular error screen, and instead prompts the user to enter an encryption key
     EncryptedSaveFile(Vec<u8>),
     EncryptionKeysDontMatch,
     EncryptionError(cocoon::Error),
     DecryptionError(cocoon::Error),
+    EncryptKeyTooShort {
+        /// true if the primary key is too short
+        primary_key_problem: bool,
+        /// true if the secondary key is too short
+        secondary_key_problem: bool,
+    },
+    EncryptKeyTooLong {
+        /// true if the primary key is too long
+        primary_key_problem: bool,
+        /// true if the secondary key is too long
+        secondary_key_problem: bool,
+    },
 }
 
 impl Display for HappyChartError {
@@ -73,6 +86,12 @@ impl Display for HappyChartError {
                 }
                 Self::DecryptionError(err) => {
                     format!("HappyChartError::DecryptionError {:?}", err)
+                }
+                Self::EncryptKeyTooShort { .. } => {
+                    "HappyChartError::EncryptKeyTooShort".to_string()
+                }
+                Self::EncryptKeyTooLong { .. } => {
+                    "HappyChartError::EncryptKeyTooLong".to_string()
                 }
             }
         )

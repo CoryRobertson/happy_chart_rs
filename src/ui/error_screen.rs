@@ -1,6 +1,8 @@
 use crate::options::program_options::ProgramOptions;
 use crate::state::error_states::HappyChartError;
 use crate::state::happy_chart_state::HappyChartState;
+use crate::ui::encryption::draw_fix_encryption_keys_screen;
+use crate::{MAX_ENCRYPT_KEY_LENGTH, MIN_ENCRYPT_KEY_LENGTH};
 use egui::Ui;
 
 #[tracing::instrument(skip(ui, app))]
@@ -111,9 +113,30 @@ pub fn draw_error_screen(app: &mut HappyChartState, ui: &mut Ui) {
             HappyChartError::DecryptionError(err) => {
                 ui.label(format!("An error occurred while decrypting your save file: {:?}", err));
             }
+            HappyChartError::EncryptKeyTooShort{ .. } => {
+                ui.label(format!("Your encryption key is too short, you can either disable save file encryption, or add to its length. The minimum length is {}.", MIN_ENCRYPT_KEY_LENGTH));
+            }
+            HappyChartError::EncryptKeyTooLong{ .. } => {
+                ui.label(format!("Your encryption key is too long, you can either disable save file encryption, or remove from its length. The maximum length is {}.", MAX_ENCRYPT_KEY_LENGTH));
+            }
         }
         ui.separator();
     });
+
+    if app.error_states.iter().any(|err| {
+        matches!(
+            err,
+            HappyChartError::EncryptKeyTooShort { .. }
+                | HappyChartError::EncryptionKeysDontMatch
+                | HappyChartError::EncryptKeyTooLong { .. }
+        )
+    }) {
+        draw_fix_encryption_keys_screen(ui, app);
+        ui.checkbox(
+            &mut app.program_options.encrypt_save_file,
+            "Encrypt save file",
+        );
+    }
 
     if ui
         .button("Close and dismiss errors")

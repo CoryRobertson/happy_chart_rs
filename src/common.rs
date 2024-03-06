@@ -7,7 +7,7 @@ use crate::state::error_states::HappyChartError;
 use crate::state::happy_chart_state::HappyChartState;
 use crate::{
     BACKUP_FILENAME_PREFIX, BACKUP_FILE_EXTENSION, LAST_SESSION_FILE_NAME, MANUAL_BACKUP_SUFFIX,
-    NEW_SAVE_FILE_NAME, SAVE_FILE_NAME,
+    MAX_ENCRYPT_KEY_LENGTH, MIN_ENCRYPT_KEY_LENGTH, NEW_SAVE_FILE_NAME, SAVE_FILE_NAME,
 };
 use chrono::{DateTime, Datelike, Local, Weekday};
 use cocoon::MiniCocoon;
@@ -314,6 +314,11 @@ pub fn save_program_state(ctx: &Context, app: &HappyChartState) -> Result<(), Ha
         .write_all(session_ser.as_bytes())
         .map_err(|err| HappyChartError::WriteSaveFileIO(err, PathBuf::from(last_session_path)))?;
 
+    // only check for save file encryption issues if the user has encryption enabled, and we have already written the last session file
+    if app.program_options.encrypt_save_file {
+        encryption_save_file_checks(app)?;
+    }
+
     let ser = serde_json::to_string(days).map_err(HappyChartError::Serialization)?;
     let save_path = Path::new(NEW_SAVE_FILE_NAME);
 
@@ -321,10 +326,6 @@ pub fn save_program_state(ctx: &Context, app: &HappyChartState) -> Result<(), Ha
         .map_err(|io_error| HappyChartError::WriteSaveFileIO(io_error, PathBuf::from(save_path)))?;
 
     if app.program_options.encrypt_save_file {
-        if app.encryption_key.ne(&app.encryption_key_second_check) {
-            return Err(HappyChartError::EncryptionKeysDontMatch);
-        }
-
         let mut key = app.encryption_key.to_string();
         if key.len() < 32 {
             key.push_str("00000000000000000000000000000000");
@@ -341,6 +342,35 @@ pub fn save_program_state(ctx: &Context, app: &HappyChartState) -> Result<(), Ha
         save_file
             .write_all(ser.as_bytes())
             .map_err(|err| HappyChartError::WriteSaveFileIO(err, PathBuf::from(save_path)))?;
+    }
+
+    Ok(())
+}
+
+pub fn encryption_save_file_checks(app: &HappyChartState) -> Result<(), HappyChartError> {
+    // keys are not the same
+    if app.encryption_key.ne(&app.encryption_key_second_check) {
+        return Err(HappyChartError::EncryptionKeysDontMatch);
+    }
+
+    // either key is too short
+    if app.encryption_key.len() < MIN_ENCRYPT_KEY_LENGTH
+        && app.encryption_key_second_check.len() < MIN_ENCRYPT_KEY_LENGTH
+    {
+        return Err(HappyChartError::EncryptKeyTooShort {
+            primary_key_problem: app.encryption_key.len() < MIN_ENCRYPT_KEY_LENGTH,
+            secondary_key_problem: app.encryption_key_second_check.len() < MIN_ENCRYPT_KEY_LENGTH,
+        });
+    }
+
+    // either key is too long
+    if app.encryption_key.len() > MAX_ENCRYPT_KEY_LENGTH
+        && app.encryption_key_second_check.len() > MAX_ENCRYPT_KEY_LENGTH
+    {
+        return Err(HappyChartError::EncryptKeyTooLong {
+            primary_key_problem: app.encryption_key.len() > MAX_ENCRYPT_KEY_LENGTH,
+            secondary_key_problem: app.encryption_key_second_check.len() > MAX_ENCRYPT_KEY_LENGTH,
+        });
     }
 
     Ok(())
