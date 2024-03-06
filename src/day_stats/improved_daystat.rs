@@ -50,6 +50,7 @@ impl Display for ImprovedDayStat {
         f.write_str(&self.rating.to_string())?;
         f.write_str("\n")?;
         f.write_str(&self.note)?;
+        f.write_str("\n")?;
         if !self.mood_tags.is_empty() {
             f.write_str("Mood tags:\n")?;
             for mood in &self.mood_tags {

@@ -401,7 +401,7 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
 
             central_panel_ui.put(
                 Rect::from_two_pos(rect_pos1, rect_pos2),
-                egui::widgets::Label::new(&info_text),
+                egui::widgets::Label::new(&text),
             );
         }
     }

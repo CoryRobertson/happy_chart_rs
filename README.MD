@@ -11,6 +11,11 @@ Happy chart is a program I wrote using:
 - image
 - rfd
 - self_update
+- zip
+- tracing
+- strum
+- csv
+- cocoon
 
 ### Purpose:
 Happy chart is an idea I had, where I wanted to graph the subjective quality of each day, at the time I used a spreadsheet software but realized it would be a really fun programming project to make in rust, which I'm trying to practice anyway.
@@ -26,6 +31,12 @@ I would also love to know if anyone uses this program, and what they do and don'
 - Screenshotting system
 - Mild amount of customization and settings to play with
 - Automatic program data backups ( if enabled )
+- Journal entry mood tagging
+- Export save file to CSV
+- Statistics calculations of journal entries
+- Save fil encryption
+- Skip-able embedded basic usage tutorial
+
 
 ### Contributions and suggestions:
 I love working on this program, if you have any ideas, please feel free to send a pull request, or create an issue. I will always consider them!
