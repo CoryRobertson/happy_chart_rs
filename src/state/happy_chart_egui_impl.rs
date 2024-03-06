@@ -7,6 +7,7 @@ use crate::ui::central_screen::{
     click_drag_zoom_detection, draw_auto_update_ui, draw_bottom_row_buttons, draw_day_lines,
     draw_stat_circles, draw_stat_line_segments, draw_stat_mouse_over_info, main_screen_button_ui,
 };
+use crate::ui::encryption::draw_decryption_screen;
 use crate::ui::error_screen::draw_error_screen;
 use crate::ui::mood_selector_menu::draw_mood_selector_screen;
 use crate::ui::options_menu::{
@@ -17,7 +18,6 @@ use crate::ui::statistics_screen::draw_previous_duration_stats_screen;
 use crate::ui::tutorial_screen::draw_tutorial_screen;
 use eframe::Frame;
 use egui::{Context, TextEdit};
-use crate::ui::encryption::draw_decryption_screen;
 
 /// Update loop for egui
 impl eframe::App for HappyChartState {
@@ -114,6 +114,37 @@ impl eframe::App for HappyChartState {
                                 .password(true),
                         );
                     });
+                }
+
+                // debug save file generation, makes a pretty sine wave
+                #[cfg(debug_assertions)]
+                if ui.button("Generate debug day list").clicked() {
+                    use crate::prelude::ImprovedDayStat;
+                    use chrono::{Days, Local};
+                    use std::f32::consts::PI;
+
+                    let now = Local::now();
+
+                    let day_count = 100;
+
+                    let day_stats = (0..day_count)
+                        .filter_map(|index| now.checked_add_days(Days::new(index)))
+                        .enumerate()
+                        .map(|(index, d)| {
+                            (
+                                ((((index as f32) / day_count as f32) * PI * 2.0).sin() * 50.0)
+                                    + 50.0, // convert index into a ratio out of the length,
+                                // then make it wrap around an entire cycle of sin by multiplying it by 2PI,
+                                // then make it have an amplitude of 50 by multiplying it by 50, and adding 50, so it doesn't go negative
+                                d,
+                            )
+                        })
+                        .map(|(rating, date)| ImprovedDayStat::new(rating, date, "", vec![]))
+                        .collect::<Vec<ImprovedDayStat>>();
+
+                    self.days = day_stats;
+                    self.program_options.x_offset = 20.0;
+                    self.program_options.graph_x_scale = ((100.0 / day_count as f32) / 3.0) * 0.9;
                 }
 
                 if ui.button("Close Options Menu").clicked() {

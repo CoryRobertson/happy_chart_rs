@@ -40,6 +40,9 @@ pub fn draw_decryption_screen(
             !matches!(err, HappyChartError::DecryptionError(_))
                 && !matches!(err, HappyChartError::EncryptedSaveFile(_))
         });
+        app.stats
+            .calc_streak(&app.days, app.program_options.streak_leniency);
+        app.stats.avg_weekdays.calc_averages(&app.days);
     }
 
     Ok(())

@@ -2,13 +2,15 @@ pub(crate) mod auto_update_status;
 pub(crate) mod common;
 pub(crate) mod day_stats;
 pub(crate) mod last_session;
+pub(crate) mod mood_tag;
 pub(crate) mod options;
 pub(crate) mod state;
 pub(crate) mod ui;
-pub(crate) mod mood_tag;
 
 pub mod prelude {
     pub use crate::common::read_last_session_save_file;
+    pub use crate::day_stats::improved_daystat::*;
+    pub use crate::mood_tag::*;
     pub use crate::state::happy_chart_state::HappyChartState;
 }
 

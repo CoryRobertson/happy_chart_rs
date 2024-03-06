@@ -377,28 +377,6 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
             central_panel_ui.style_mut().visuals.override_text_color =
                 Option::from(app.program_options.color_settings.text_color);
 
-            // info text to display in top right window
-            let info_text: String = {
-                if cfg!(debug_assertions) {
-                    format!(
-                        "idx: {}\nDate: {}\nRating: {}\nMood Tags: {:?}\nNote: {}",
-                        _idx,
-                        day.get_date(),
-                        day.get_rating(),
-                        day.get_mood_tags(),
-                        day.get_note()
-                    )
-                } else {
-                    format!(
-                        "Date: {}\nRating: {}\nMood Tags: {:?}\nNote: {}",
-                        day.get_date(),
-                        day.get_rating(),
-                        day.get_mood_tags(),
-                        day.get_note()
-                    )
-                }
-            };
-
             central_panel_ui.put(
                 Rect::from_two_pos(rect_pos1, rect_pos2),
                 egui::widgets::Label::new(&text),
