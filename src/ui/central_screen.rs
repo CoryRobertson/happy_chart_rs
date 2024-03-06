@@ -450,7 +450,9 @@ pub fn draw_bottom_row_buttons(
         }
 
         ui.horizontal(|ui| {
-            let quit_button = ui.button("Save & Quit");
+            let quit_button = ui
+                .add_enabled(app.error_states.is_empty(),egui::Button::new("Save & Quit"))
+                .on_disabled_hover_text("There are outstanding errors present, please resolve them in order to Save & Quit");
 
             if quit_button.clicked() {
                 // Only let the user quit the program through save and quit if there are no outstanding errors

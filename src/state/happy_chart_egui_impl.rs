@@ -1,3 +1,6 @@
+use eframe::Frame;
+use egui::Context;
+
 use crate::common::{export_stats_to_csv, first_load, handle_screenshot_event, update_program};
 use crate::state::error_states::HappyChartError;
 use crate::state::happy_chart_state::HappyChartState;
@@ -7,24 +10,22 @@ use crate::ui::central_screen::{
     click_drag_zoom_detection, draw_auto_update_ui, draw_bottom_row_buttons, draw_day_lines,
     draw_stat_circles, draw_stat_line_segments, draw_stat_mouse_over_info, main_screen_button_ui,
 };
-use crate::ui::encryption::{draw_decryption_screen, draw_fix_encryption_keys_screen};
+use crate::ui::encryption::draw_decryption_screen;
 use crate::ui::error_screen::draw_error_screen;
 use crate::ui::mood_selector_menu::draw_mood_selector_screen;
 use crate::ui::options_menu::{
-    draw_backup_settings_options_menu, draw_color_options_menu, draw_graphing_options_menu,
-    draw_stat_drawing_options_menu, options_update_thread_block,
+    draw_backup_settings_options_menu, draw_color_options_menu, draw_encryption_settings_menu,
+    draw_graphing_options_menu, draw_stat_drawing_options_menu, options_update_thread_block,
 };
 use crate::ui::statistics_screen::draw_previous_duration_stats_screen;
 use crate::ui::tutorial_screen::draw_tutorial_screen;
-use eframe::Frame;
-use egui::Context;
 
 /// Update loop for egui
 impl eframe::App for HappyChartState {
     #[tracing::instrument(skip(self, ctx, _frame))]
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
         if self.first_load {
-            first_load(self, ctx);
+            first_load(self, ctx, true);
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -85,6 +86,8 @@ impl eframe::App for HappyChartState {
 
                 draw_backup_settings_options_menu(ui, self, ctx);
 
+                draw_encryption_settings_menu(ui, self);
+
                 if ui.button("Export stats to CSV").clicked() {
                     if let Some(path) = rfd::FileDialog::new()
                         .add_filter("Data", &["csv"])
@@ -96,15 +99,6 @@ impl eframe::App for HappyChartState {
 
                 if ui.button("Restart tutorial").clicked() {
                     self.tutorial_state = TutorialGoal::BeginTutorial;
-                }
-
-                ui.checkbox(
-                    &mut self.program_options.encrypt_save_file,
-                    "Encrypt save file:",
-                );
-
-                if self.program_options.encrypt_save_file {
-                    draw_fix_encryption_keys_screen(ui, self);
                 }
 
                 // debug save file generation, makes a pretty sine wave
@@ -169,7 +163,7 @@ impl eframe::App for HappyChartState {
                 .any(|err| matches!(err, HappyChartError::EncryptedSaveFile(_)))
             {
                 egui::Window::new("Unlock your save file").show(ctx, |ui| {
-                    if let Err(err) = draw_decryption_screen(ui, self) {
+                    if let Err(err) = draw_decryption_screen(ui, self, ctx) {
                         self.error_states.push(err);
                     }
                     if self

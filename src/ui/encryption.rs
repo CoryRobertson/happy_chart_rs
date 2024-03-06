@@ -1,15 +1,17 @@
-use crate::common::{encryption_save_file_checks, tutorial_button_colors};
+use crate::common::{encryption_save_file_checks, first_load, tutorial_button_colors};
 use crate::day_stats::improved_daystat::ImprovedDayStat;
 use crate::prelude::HappyChartState;
 use crate::state::error_states::HappyChartError;
 use crate::{MAX_ENCRYPT_KEY_LENGTH, MIN_ENCRYPT_KEY_LENGTH};
 use cocoon::MiniCocoon;
 use eframe::epaint::Color32;
-use egui::{RichText, TextEdit, Ui};
+use egui::{Context, RichText, TextEdit, Ui};
 
+#[tracing::instrument(skip_all)]
 pub fn draw_decryption_screen(
     ui: &mut Ui,
     app: &mut HappyChartState,
+    ctx: &Context,
 ) -> Result<(), HappyChartError> {
     let mut save_file_decrypted_successfully: Option<usize> = None;
     if let Some((index, HappyChartError::EncryptedSaveFile(encrypted_data))) = app
@@ -18,7 +20,7 @@ pub fn draw_decryption_screen(
         .enumerate()
         .find(|(_, err)| matches!(err, HappyChartError::EncryptedSaveFile(_)))
     {
-        ui.label("Encryption key: ");
+        ui.label("Encryption key:");
         let key_input_resp = ui.add(TextEdit::singleline(&mut app.encryption_key).password(true));
         let unlock_button = ui.button("Unlock");
 
@@ -52,14 +54,13 @@ pub fn draw_decryption_screen(
             !matches!(err, HappyChartError::DecryptionError(_))
                 && !matches!(err, HappyChartError::EncryptedSaveFile(_))
         });
-        app.stats
-            .calc_streak(&app.days, app.program_options.streak_leniency);
-        app.stats.avg_weekdays.calc_averages(&app.days);
+        first_load(app, ctx, false);
     }
 
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub fn draw_fix_encryption_keys_screen(ui: &mut Ui, app: &mut HappyChartState) {
     let error_issue = encryption_save_file_checks(app);
 

@@ -3,8 +3,10 @@ use crate::common::{backup_program_state, toggle_ui_compact};
 use crate::options::color_setting::ColorSettings;
 use crate::options::program_options::ProgramOptions;
 use crate::state::happy_chart_state::HappyChartState;
+use crate::ui::encryption::draw_fix_encryption_keys_screen;
 use chrono::Local;
-use egui::{Context, Ui};
+use eframe::epaint::Color32;
+use egui::{Context, RichText, Ui};
 use self_update::Status;
 
 /// Draw an indicator in the options menu for if an update is taking place, or needed
@@ -131,6 +133,24 @@ pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChar
         options_panel_ui
             .checkbox(&mut app.program_options.move_day_lines_with_ui,"Move Day lines with ui: ")
             .on_hover_text("Make the day lines in the graph move with the ui instead of being in a static position.");
+    });
+}
+
+#[tracing::instrument(skip_all)]
+pub fn draw_encryption_settings_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
+    options_panel_ui.collapsing("Encryption Settings",|collapsing_encryption_settings| {
+        collapsing_encryption_settings.checkbox(
+            &mut app.program_options.encrypt_save_file,
+            "Encrypt save file:",
+        ).on_hover_text("It is strongly recommended to enable regular save file backups if encryption is enabled,\
+                 it is also recommended to write down or otherwise store the encryption password,\
+                  as there is no way to recover a save file otherwise.");
+
+        if app.program_options.encrypt_save_file {
+            draw_fix_encryption_keys_screen(collapsing_encryption_settings, app);
+            collapsing_encryption_settings.label(RichText::new("There is no way to recover a save file that is encrypted if the password is lost apart from a backup.")
+                .color(Color32::LIGHT_RED));
+        }
     });
 }
 

@@ -79,17 +79,19 @@ fn get_backup_file_name(time: &DateTime<Local>, is_manual: bool) -> String {
 
 /// First load governs error states on its own, no need to read output
 #[tracing::instrument(skip(app, ctx))]
-pub fn first_load(app: &mut HappyChartState, ctx: &Context) {
+pub fn first_load(app: &mut HappyChartState, ctx: &Context, load_save: bool) {
     // all data we need to read one time on launch, all of this most of the time is unchanging throughout usage of the program, so it can only be recalculated on launch
     // for example, day quality averages do not need to change between launches
     app.first_load = false;
 
-    match read_save_file() {
-        Ok(save_file_days) => {
-            app.days = save_file_days;
-        }
-        Err(err) => {
-            app.error_states.push(err);
+    if load_save {
+        match read_save_file() {
+            Ok(save_file_days) => {
+                app.days = save_file_days;
+            }
+            Err(err) => {
+                app.error_states.push(err);
+            }
         }
     }
 
@@ -100,71 +102,72 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context) {
     });
 
     app.starting_length = app.days.len();
-    let ls = read_last_session_save_file();
-    app.open_modulus = ls.open_modulus;
-    app.program_options = ls.program_options;
-    app.last_open_date = ls.last_open_date;
-    app.last_backup_date = ls.last_backup_date;
-    if let Some(ver) = ls.last_version_checked {
-        app.auto_update_seen_version = Some(ver);
-    }
-    app.tutorial_state = ls.tutorial_state;
 
-    if Local::now()
-        .signed_duration_since(ls.last_open_date)
-        .num_hours()
-        >= 12
-    {
-        match get_release_list() {
-            Ok(list) => {
-                if let Some(release) = list.first() {
-                    if let Ok(greater_bump) = self_update::version::bump_is_greater(
-                        cargo_crate_version!(),
-                        &release.version,
-                    ) {
-                        if greater_bump {
-                            println!(
-                                "Update available! {} {} {}",
-                                release.name, release.version, release.date
-                            );
-                            app.update_available = Some(release.clone());
-                            app.update_status = AutoUpdateStatus::OutOfDate;
-                        } else {
-                            println!("No update available.");
-                            app.update_status =
-                                AutoUpdateStatus::UpToDate(cargo_crate_version!().to_string());
+    if load_save {
+        let ls = read_last_session_save_file();
+        app.open_modulus = ls.open_modulus;
+        app.program_options = ls.program_options;
+        app.last_open_date = ls.last_open_date;
+        app.last_backup_date = ls.last_backup_date;
+        if let Some(ver) = ls.last_version_checked {
+            app.auto_update_seen_version = Some(ver);
+        }
+        app.tutorial_state = ls.tutorial_state;
+        if Local::now()
+            .signed_duration_since(ls.last_open_date)
+            .num_hours()
+            >= 12
+        {
+            match get_release_list() {
+                Ok(list) => {
+                    if let Some(release) = list.first() {
+                        if let Ok(greater_bump) = self_update::version::bump_is_greater(
+                            cargo_crate_version!(),
+                            &release.version,
+                        ) {
+                            if greater_bump {
+                                println!(
+                                    "Update available! {} {} {}",
+                                    release.name, release.version, release.date
+                                );
+                                app.update_available = Some(release.clone());
+                                app.update_status = AutoUpdateStatus::OutOfDate;
+                            } else {
+                                println!("No update available.");
+                                app.update_status =
+                                    AutoUpdateStatus::UpToDate(cargo_crate_version!().to_string());
+                            }
                         }
                     }
                 }
-            }
-            Err(err) => {
-                if !app.program_options.disable_update_list_error_showing {
-                    app.error_states
-                        .push(HappyChartError::UpdateReleaseList(err));
+                Err(err) => {
+                    if !app.program_options.disable_update_list_error_showing {
+                        app.error_states
+                            .push(HappyChartError::UpdateReleaseList(err));
+                    }
                 }
             }
         }
-    }
 
-    // check if user last backup day is +- 3 hours between the margin of their auto backup day count
-    if app.program_options.auto_backup_days > -1
-        && Local::now()
-            .signed_duration_since(ls.last_backup_date)
-            .num_days()
-            > i64::from(app.program_options.auto_backup_days)
-    {
-        match backup_program_state(ctx, app, false) {
-            Ok(_) => {
-                app.last_backup_date = Local::now();
-            }
-            Err(err) => {
-                app.error_states.push(err);
+        // check if user last backup day is +- 3 hours between the margin of their auto backup day count
+        if app.program_options.auto_backup_days > -1
+            && Local::now()
+                .signed_duration_since(ls.last_backup_date)
+                .num_days()
+                > i64::from(app.program_options.auto_backup_days)
+        {
+            match backup_program_state(ctx, app, false) {
+                Ok(_) => {
+                    app.last_backup_date = Local::now();
+                }
+                Err(err) => {
+                    app.error_states.push(err);
+                }
             }
         }
     }
 
     app.remove_old_backup_files();
-
     app.stats.avg_weekdays.calc_averages(&app.days);
     app.stats
         .calc_streak(&app.days, app.program_options.streak_leniency);
