@@ -233,7 +233,10 @@ pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
     let mut prev_x = 0.0;
     let mut prev_y = 0.0;
     // draw lines loop, bottom layer
-    for (i, day) in app.days[0..app.get_day_index_animation()].iter().enumerate() {
+    for (i, day) in app.days[0..app.get_day_index_animation()]
+        .iter()
+        .enumerate()
+    {
         let x: f32 = improved_calculate_x(
             &app.days,
             day,
@@ -272,7 +275,11 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Con
     let mut moused_over = false;
     let dist_max = app.program_options.mouse_over_radius;
 
-    for (idx, day) in app.days[0..app.get_day_index_animation()].to_vec().iter().enumerate() {
+    for (idx, day) in app.days[0..app.get_day_index_animation()]
+        .to_vec()
+        .iter()
+        .enumerate()
+    {
         let x: f32 = improved_calculate_x(
             &app.days,
             day,
@@ -333,7 +340,10 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
         .map_or_else(|| Pos2::new(0.0, 0.0), |a| a);
     let mut moused_over = false; // boolean used to know if we are already showing mouse over text, if so, not to render it if this is true
                                  // draw text loop, top most layer (mostly)
-    for (_idx, day) in app.days[0..app.get_day_index_animation()].iter().enumerate() {
+    for (_idx, day) in app.days[0..app.get_day_index_animation()]
+        .iter()
+        .enumerate()
+    {
         let x: f32 = improved_calculate_x(
             &app.days,
             day,

@@ -25,7 +25,6 @@ use egui::Context;
 impl eframe::App for HappyChartState {
     #[tracing::instrument(skip(self, ctx, _frame))]
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
-
         if self.first_load {
             first_load(self, ctx, true);
         }

@@ -61,7 +61,7 @@ pub struct HappyChartState {
 
     pub encryption_key: String,
     pub encryption_key_second_check: String,
-    
+
     pub program_open_time: SystemTime,
 
     pub open_animation_animating: bool,
@@ -146,14 +146,15 @@ impl HappyChartState {
             return self.days.len();
         }
 
-        let time = SystemTime::now().duration_since(self.program_open_time).map_or(Self::OPEN_ANIMATION_DURATION, |dur| dur.as_secs_f32());
+        let time = SystemTime::now()
+            .duration_since(self.program_open_time)
+            .map_or(Self::OPEN_ANIMATION_DURATION, |dur| dur.as_secs_f32());
         let len = self.days.len() as f32;
-        let frac = (time / Self::OPEN_ANIMATION_DURATION).clamp(0.0,1.0);
+        let frac = (time / Self::OPEN_ANIMATION_DURATION).clamp(0.0, 1.0);
         let idx = (len * frac) + 1.0; // we add 1 just encase there is a floating point issue, this should never happen, but it also doesn't hurt.
 
-        (idx as usize).clamp(0,self.days.len())
+        (idx as usize).clamp(0, self.days.len())
     }
-
 
     #[tracing::instrument(skip_all)]
     pub fn remove_old_backup_files(&self) {
