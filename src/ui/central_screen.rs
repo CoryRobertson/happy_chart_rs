@@ -261,8 +261,6 @@ pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
     }
 }
 
-// TODO: add an edit note menu, opens a small sub screen where the user can modify the rating of a day, maybe we store the previous rating too? not sure?
-
 /// draw the circled for each stat, separate color based on each stat's rating
 #[tracing::instrument(skip(central_panel_ui, app, ctx))]
 pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Context) {
@@ -331,13 +329,25 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Con
 
 /// Draw a stats info if it is moused over
 #[tracing::instrument(skip(central_panel_ui, app, ctx))]
-pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartState, ctx: &Context) {
+pub fn draw_stat_mouse_over_info(
+    central_panel_ui: &mut Ui,
+    app: &mut HappyChartState,
+    ctx: &Context,
+) {
     let mouse_pos = ctx
         .pointer_hover_pos()
         .map_or_else(|| Pos2::new(0.0, 0.0), |a| a);
     let mut moused_over = false; // boolean used to know if we are already showing mouse over text, if so, not to render it if this is true
                                  // draw text loop, top most layer (mostly)
-    for (_idx, day) in app.days[0..app.get_day_index_animation()]
+
+    let select_note = {
+        let right_click_down = central_panel_ui.input(|i| i.pointer.secondary_down());
+        let left_click_down = central_panel_ui.input(|i| i.pointer.primary_down());
+        let ctrl_down = central_panel_ui.input(|i| i.modifiers.ctrl);
+        !right_click_down && left_click_down && ctrl_down
+    };
+
+    for (idx, day) in app.days[0..app.get_day_index_animation()]
         .iter()
         .enumerate()
     {
@@ -356,7 +366,7 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
         let rect_pos2 = Pos2::new(770.0, 160.0);
         let text = {
             if cfg!(debug_assertions) {
-                format!("idx: {} {}\n", _idx, day)
+                format!("idx: {} {}\n", idx, day)
             } else {
                 day.to_string()
             }
@@ -384,12 +394,19 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
             central_panel_ui.style_mut().visuals.override_text_color =
                 Option::from(app.program_options.color_settings.text_color);
 
-            central_panel_ui.with_layer_id(LayerId::new(Order::Tooltip,Id::new("mouse over id")),|ui| {
-                ui.put(
-                    Rect::from_two_pos(rect_pos1, rect_pos2),
-                    egui::widgets::Label::new(&text),
-                );
-            });
+            central_panel_ui.with_layer_id(
+                LayerId::new(Order::Tooltip, Id::new("mouse over id")),
+                |ui| {
+                    ui.put(
+                        Rect::from_two_pos(rect_pos1, rect_pos2),
+                        egui::widgets::Label::new(&text),
+                    );
+                },
+            );
+
+            if select_note {
+                app.note_edit_selected = Some(idx);
+            }
         }
     }
 }
@@ -437,19 +454,9 @@ pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState,
                     egui::widgets::Label::new(format!("Update available:\n{}\nCurrent version:\nv{}\n\"Update happy chart\" to automagically update\nThis message will not display on next launch", release.name,cargo_crate_version!())),
                 );
             });
-
         }
     }
 
-    // if let Some(release) = &app.update_available {
-    //     let should_show_update = match &app.auto_update_seen_version {
-    //         None => true,
-    //         Some(ver) => {
-    //             self_update::version::bump_is_greater(ver, &release.version).unwrap_or(true)
-    //         }
-    //     };
-    //
-    // }
     central_panel_ui.horizontal(|ui| {
         if let Some(thread) = app.update_thread.get_mut() {
             if !thread.is_finished() {

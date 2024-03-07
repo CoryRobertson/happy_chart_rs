@@ -65,6 +65,9 @@ pub struct HappyChartState {
 
     /// Represents the height which is where it is safe to draw things relating to the graph
     pub central_ui_safezone_start: f32,
+
+    /// Index of the desired note to edit
+    pub note_edit_selected: Option<usize>,
 }
 
 #[derive(Debug, Clone)]
@@ -152,6 +155,7 @@ impl HappyChartState {
             program_open_time: SystemTime::now(),
             open_animation_animating: true,
             central_ui_safezone_start: 0.0,
+            note_edit_selected: None,
         }
     }
 

@@ -71,6 +71,10 @@ impl ImprovedDayStat {
         }
     }
 
+    pub fn modify_rating(&mut self) -> &mut f32 {
+        &mut self.rating
+    }
+
     pub fn get_rating(&self) -> f32 {
         self.rating
     }

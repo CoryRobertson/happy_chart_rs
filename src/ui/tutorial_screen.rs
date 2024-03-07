@@ -95,10 +95,10 @@ pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartStat
               Feel free to check out the source code, or write an issue, or suggestion at the github repository.");
             ui.hyperlink("https://github.com/CoryRobertson/happy_chart_rs");
             ui.label("I hope this program provides value to you the same it does for me!");
+            ui.label("Just a few useful things to try: right click dragging on your journal entry graph,\
+             right click dragging with left click held in your journal entry graph, and control left clicking on a entry.");
             ui.separator();
-
             tutorial_button_colors(ui);
-
             if ui.button("Close tutorial").clicked() {
                 app.tutorial_state = TutorialGoal::TutorialClosed;
             }

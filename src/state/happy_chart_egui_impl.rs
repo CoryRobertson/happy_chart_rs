@@ -12,6 +12,7 @@ use crate::ui::central_screen::{
 use crate::ui::encryption::draw_decryption_screen;
 use crate::ui::error_screen::draw_error_screen;
 use crate::ui::mood_selector_menu::draw_mood_selector_screen;
+use crate::ui::note_edit_screen::draw_note_edit_screen;
 use crate::ui::options_menu::{
     draw_backup_settings_options_menu, draw_color_options_menu, draw_encryption_settings_menu,
     draw_graphing_options_menu, draw_stat_drawing_options_menu, options_update_thread_block,
@@ -192,6 +193,12 @@ impl eframe::App for HappyChartState {
         if self.tutorial_state != TutorialGoal::TutorialClosed {
             egui::Window::new("Tutorial").show(ctx, |ui| {
                 draw_tutorial_screen(ctx, ui, self);
+            });
+        }
+
+        if self.note_edit_selected.is_some() {
+            egui::Window::new("Note editor").show(ctx, |ui| {
+                draw_note_edit_screen(ui, self);
             });
         }
     }

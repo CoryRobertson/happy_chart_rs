@@ -37,6 +37,8 @@ pub fn get_release_list() -> Result<Vec<Release>, Box<dyn Error>> {
     println!("{:?}", list);
     Ok(list)
 }
+
+#[tracing::instrument(skip_all)]
 pub fn should_show_update(app: &HappyChartState) -> (bool, Option<&Release>) {
     if let Some(release) = &app.update_available {
         let should_show_update = match &app.auto_update_seen_version {

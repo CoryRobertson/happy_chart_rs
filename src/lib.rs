@@ -23,6 +23,7 @@ pub(crate) const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
 
 pub(crate) const MIN_ENCRYPT_KEY_LENGTH: usize = 4;
 pub(crate) const MAX_ENCRYPT_KEY_LENGTH: usize = 32;
+pub(crate) const NOTE_OLD_NUM_DAYS: u32 = 3;
 
 // TODO: activity tags to add to a note, an activity tag is a selection of things that a user added to
 //   a list of things they commonly do, so they can see for example, days the user went for a bike ride, or days where the user socialized
