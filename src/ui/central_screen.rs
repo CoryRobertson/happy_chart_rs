@@ -5,13 +5,13 @@ use crate::common::quit;
 use crate::common::update::{should_show_update, update_program};
 use crate::day_stats::improved_daystat::ImprovedDayStat;
 use crate::options::color_setting;
-use crate::state::happy_chart_state::{HappyChartState, UiDelta};
+use crate::state::happy_chart_state::HappyChartState;
 use crate::state::tutorial_state::TutorialGoal;
 use crate::{BUILD_TIMESTAMP, GIT_DESCRIBE};
 use chrono::Days;
 use eframe::emath::{Align2, Pos2, Rect, Vec2};
 use eframe::epaint::{Color32, FontId, Rounding, Stroke};
-use egui::{Context, Layout, Rangef, Ui, ViewportCommand};
+use egui::{Context, Id, LayerId, Layout, Order, Rangef, Ui, ViewportCommand};
 use self_update::cargo_crate_version;
 
 const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
@@ -122,12 +122,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
     if !should_show_update(app).0 {
         if let Some(rect) = bottom_search_rect {
             let pos = rect.max;
-            match &mut app.central_screen_ui_delta_pos {
-                None => app.central_screen_ui_delta_pos = Some(UiDelta::new(pos.y)),
-                Some(ui_delta) => {
-                    ui_delta.update_current(pos.y);
-                }
-            }
+            app.central_ui_safezone_start = pos.y;
         }
     }
 }
@@ -230,7 +225,6 @@ pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Contex
 /// Draw the lines between each stat like a graph
 #[tracing::instrument(skip(central_panel_ui, app))]
 pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
-
     let mut prev_x = 0.0;
     let mut prev_y = 0.0;
     // draw lines loop, bottom layer
@@ -268,8 +262,6 @@ pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
 }
 
 // TODO: add an edit note menu, opens a small sub screen where the user can modify the rating of a day, maybe we store the previous rating too? not sure?
-
-// TODO: ui delta does not properly go downwards when an update is available, make it go to the bottom of that button Y coordinate if there is one.
 
 /// draw the circled for each stat, separate color based on each stat's rating
 #[tracing::instrument(skip(central_panel_ui, app, ctx))]
@@ -392,10 +384,12 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
             central_panel_ui.style_mut().visuals.override_text_color =
                 Option::from(app.program_options.color_settings.text_color);
 
-            central_panel_ui.put(
-                Rect::from_two_pos(rect_pos1, rect_pos2),
-                egui::widgets::Label::new(&text),
-            );
+            central_panel_ui.with_layer_id(LayerId::new(Order::Tooltip,Id::new("mouse over id")),|ui| {
+                ui.put(
+                    Rect::from_two_pos(rect_pos1, rect_pos2),
+                    egui::widgets::Label::new(&text),
+                );
+            });
         }
     }
 }
@@ -405,33 +399,21 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
 pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &Context) {
     let update_touple = should_show_update(app);
 
-    if let (should_show,Some(release)) = (update_touple.0,update_touple.1.cloned()) {
+    if let (should_show, Some(release)) = (update_touple.0, update_touple.1.cloned()) {
         if should_show {
             if central_panel_ui.button("Dismiss update").clicked() {
                 app.auto_update_seen_version = Some(release.version.to_string());
-                app.central_screen_ui_delta_pos = None;
                 return;
             }
 
             let update_button = central_panel_ui.button("Update happy chart");
 
-
             let update_button_rect_max = update_button.rect;
 
-
             let pos = update_button_rect_max.max;
-            match &mut app.central_screen_ui_delta_pos {
-                None => {
-                    app.central_screen_ui_delta_pos = Some(UiDelta::new(pos.y - 40.0))
-                },
-                Some(ui_delta) => {
-                    ui_delta.update_current(pos.y);
-                }
-            }
-
+            app.central_ui_safezone_start = pos.y;
 
             if update_button.clicked() {
-                app.central_screen_ui_delta_pos = None;
                 app.update_thread.replace(Some(update_program()));
                 app.auto_update_seen_version = Some(release.version.to_string());
             }
@@ -449,10 +431,13 @@ pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState,
             central_panel_ui.style_mut().visuals.override_text_color =
                 Option::from(app.program_options.color_settings.text_color);
 
-            central_panel_ui.put(
-                Rect::from_two_pos(Pos2::new(mid_point_x, quarter_point_y), Pos2::new(mid_point_x + 250.0, quarter_point_y + 120.0)),
-                egui::widgets::Label::new(format!("Update available:\n{}\nCurrent version:\nv{}\n\"Update happy chart\" to automagically update\nThis message will not display on next launch", release.name,cargo_crate_version!())),
-            );
+            central_panel_ui.with_layer_id(LayerId::new(Order::Tooltip,Id::new("update screen")),|ui| {
+                ui.put(
+                    Rect::from_two_pos(Pos2::new(mid_point_x, quarter_point_y), Pos2::new(mid_point_x + 250.0, quarter_point_y + 120.0)),
+                    egui::widgets::Label::new(format!("Update available:\n{}\nCurrent version:\nv{}\n\"Update happy chart\" to automagically update\nThis message will not display on next launch", release.name,cargo_crate_version!())),
+                );
+            });
+
         }
     }
 

@@ -1,9 +1,9 @@
+use crate::prelude::HappyChartState;
 use self_update::update::Release;
 use self_update::{cargo_crate_version, Status};
 use std::error::Error;
 use std::thread;
 use std::thread::JoinHandle;
-use crate::prelude::HappyChartState;
 
 #[tracing::instrument]
 pub fn update_program() -> JoinHandle<Result<Status, String>> {
@@ -45,6 +45,8 @@ pub fn should_show_update(app: &HappyChartState) -> (bool, Option<&Release>) {
                 self_update::version::bump_is_greater(ver, &release.version).unwrap_or(true)
             }
         };
-        (should_show_update,Some(release))
-    } else { (false, None) }
+        (should_show_update, Some(release))
+    } else {
+        (false, None)
+    }
 }

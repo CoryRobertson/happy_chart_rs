@@ -124,7 +124,7 @@ pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChar
 
         // day line height
         options_panel_ui.horizontal(|options_panel_ui| {
-            options_panel_ui.label("Day line height:");
+            options_panel_ui.label("Graph starting height:");
             options_panel_ui.add(
                 egui::DragValue::new(&mut app.program_options.day_line_height_offset).speed(0.1),
             );
@@ -137,10 +137,6 @@ pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChar
         options_panel_ui
             .checkbox(&mut app.program_options.do_opening_animation,"Opening animation: ")
             .on_hover_text("Make the day stats draw in an animated way on program open.");
-
-        if options_panel_ui.button("Reset ui delta").on_hover_text("If the graph ui is covering things, this will probably fix it.").clicked() {
-            app.central_screen_ui_delta_pos = None;
-        }
 
     });
 }

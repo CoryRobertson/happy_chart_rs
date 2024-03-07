@@ -54,9 +54,6 @@ pub struct HappyChartState {
 
     pub showing_statistics_screen: bool,
 
-    /// The position of the day lines offset to be calculated from
-    pub central_screen_ui_delta_pos: Option<UiDelta>,
-
     pub tutorial_state: TutorialGoal,
 
     pub encryption_key: String,
@@ -65,20 +62,33 @@ pub struct HappyChartState {
     pub program_open_time: SystemTime,
 
     pub open_animation_animating: bool,
+
+    /// Represents the height which is where it is safe to draw things relating to the graph
+    pub central_ui_safezone_start: f32,
 }
 
 #[derive(Debug, Clone)]
+#[deprecated]
+#[allow(dead_code)]
 pub struct UiDelta {
     starting_amount: f32,
     current_amount: f32,
 }
 
+#[allow(deprecated)]
 impl UiDelta {
-    pub const fn new(starting: f32) -> Self {
+    pub const fn new(starting_amount: f32) -> Self {
         Self {
-            starting_amount: starting,
-            current_amount: starting,
+            starting_amount,
+            current_amount: starting_amount,
         }
+    }
+
+    pub fn get_starting(&self) -> f32 {
+        self.starting_amount
+    }
+    pub fn get_current(&self) -> f32 {
+        self.current_amount
     }
 
     #[tracing::instrument]
@@ -88,10 +98,14 @@ impl UiDelta {
 
     #[tracing::instrument]
     pub fn update_current(&mut self, new_amount: f32) {
+        if self.current_amount < self.starting_amount {
+            self.starting_amount = new_amount;
+        }
         self.current_amount = new_amount;
     }
 }
 
+#[allow(deprecated)]
 impl Default for UiDelta {
     fn default() -> Self {
         Self {
@@ -103,8 +117,10 @@ impl Default for UiDelta {
 
 impl HappyChartState {
     /// Magic number that makes day lines look just right
-    const DAY_LINE_OFFSET: f32 = 165.0;
+    const DAY_LINE_OFFSET: f32 = 10.0;
     const OPEN_ANIMATION_DURATION: f32 = 1.5;
+
+    const COMMON_GRAPH_STARTING_HEIGHT: f32 = 155.0;
 
     #[tracing::instrument(skip(_cc))]
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
@@ -130,12 +146,12 @@ impl HappyChartState {
             showing_mood_tag_selector: false,
             mood_selection_list: vec![],
             showing_statistics_screen: false,
-            central_screen_ui_delta_pos: None,
             tutorial_state: TutorialGoal::default(),
             encryption_key: "".to_string(),
             encryption_key_second_check: "".to_string(),
             program_open_time: SystemTime::now(),
             open_animation_animating: true,
+            central_ui_safezone_start: 0.0,
         }
     }
 
@@ -227,14 +243,14 @@ impl HappyChartState {
 
     #[tracing::instrument(skip_all)]
     pub fn get_day_line_y_value(&self) -> f32 {
-        Self::DAY_LINE_OFFSET - self.program_options.day_line_height_offset + {
-            if self.program_options.move_day_lines_with_ui {
-                self.central_screen_ui_delta_pos
-                    .as_ref()
-                    .map_or(0.0, |ui_delta| ui_delta.get_delta())
-            } else {
-                0.0
-            } // use 0 as an offset if the user does not want the day lines to move with the ui
+        if self.program_options.move_day_lines_with_ui {
+            self.central_ui_safezone_start
+                + Self::DAY_LINE_OFFSET
+                + self.program_options.day_line_height_offset
+        } else {
+            self.program_options.day_line_height_offset
+                + Self::DAY_LINE_OFFSET
+                + Self::COMMON_GRAPH_STARTING_HEIGHT
         }
     }
 }
