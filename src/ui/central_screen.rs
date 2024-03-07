@@ -266,6 +266,8 @@ pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
     }
 }
 
+// TODO: ui delta does not properly go downwards when an update is available, make it go to the bottom of that button Y coordinate if there is one.
+
 /// draw the circled for each stat, separate color based on each stat's rating
 #[tracing::instrument(skip(central_panel_ui, app, ctx))]
 pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Context) {
