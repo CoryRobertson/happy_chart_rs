@@ -266,6 +266,8 @@ pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
     }
 }
 
+// TODO: add an edit note menu, opens a small sub screen where the user can modify the rating of a day, maybe we store the previous rating too? not sure?
+
 // TODO: ui delta does not properly go downwards when an update is available, make it go to the bottom of that button Y coordinate if there is one.
 
 /// draw the circled for each stat, separate color based on each stat's rating
