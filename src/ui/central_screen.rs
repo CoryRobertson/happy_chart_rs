@@ -2,7 +2,7 @@ use crate::common::color::{get_tutorial_lowlight_glowing_color, tutorial_button_
 use crate::common::math::{distance, improved_calculate_x};
 use crate::common::mood_tag::MoodTag;
 use crate::common::quit;
-use crate::common::update::update_program;
+use crate::common::update::{should_show_update, update_program};
 use crate::day_stats::improved_daystat::ImprovedDayStat;
 use crate::options::color_setting;
 use crate::state::happy_chart_state::{HappyChartState, UiDelta};
@@ -119,12 +119,14 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
     });
 
     // use the rectangle position of the search bar in the central screen as a way to calculate offsets for day lines
-    if let Some(rect) = bottom_search_rect {
-        let pos = rect.max;
-        match &mut app.central_screen_ui_delta_pos {
-            None => app.central_screen_ui_delta_pos = Some(UiDelta::new(pos.y)),
-            Some(ui_delta) => {
-                ui_delta.update_current(pos.y);
+    if !should_show_update(app).0 {
+        if let Some(rect) = bottom_search_rect {
+            let pos = rect.max;
+            match &mut app.central_screen_ui_delta_pos {
+                None => app.central_screen_ui_delta_pos = Some(UiDelta::new(pos.y)),
+                Some(ui_delta) => {
+                    ui_delta.update_current(pos.y);
+                }
             }
         }
     }
@@ -228,7 +230,6 @@ pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Contex
 /// Draw the lines between each stat like a graph
 #[tracing::instrument(skip(central_panel_ui, app))]
 pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
-    // TODO use ui offset delta for drawing here
 
     let mut prev_x = 0.0;
     let mut prev_y = 0.0;
@@ -402,18 +403,35 @@ pub fn draw_stat_mouse_over_info(central_panel_ui: &mut Ui, app: &HappyChartStat
 /// Draw the auto update ui on screen if needed
 #[tracing::instrument(skip(central_panel_ui, app, ctx))]
 pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &Context) {
-    if let Some(release) = &app.update_available {
-        let should_show_update = match &app.auto_update_seen_version {
-            None => true,
-            Some(ver) => {
-                self_update::version::bump_is_greater(ver, &release.version).unwrap_or(true)
-            }
-        };
-        if should_show_update {
+    let update_touple = should_show_update(app);
+
+    if let (should_show,Some(release)) = (update_touple.0,update_touple.1.cloned()) {
+        if should_show {
             if central_panel_ui.button("Dismiss update").clicked() {
                 app.auto_update_seen_version = Some(release.version.to_string());
+                app.central_screen_ui_delta_pos = None;
+                return;
             }
-            if central_panel_ui.button("Update happy chart").clicked() {
+
+            let update_button = central_panel_ui.button("Update happy chart");
+
+
+            let update_button_rect_max = update_button.rect;
+
+
+            let pos = update_button_rect_max.max;
+            match &mut app.central_screen_ui_delta_pos {
+                None => {
+                    app.central_screen_ui_delta_pos = Some(UiDelta::new(pos.y - 40.0))
+                },
+                Some(ui_delta) => {
+                    ui_delta.update_current(pos.y);
+                }
+            }
+
+
+            if update_button.clicked() {
+                app.central_screen_ui_delta_pos = None;
                 app.update_thread.replace(Some(update_program()));
                 app.auto_update_seen_version = Some(release.version.to_string());
             }
@@ -437,6 +455,16 @@ pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState,
             );
         }
     }
+
+    // if let Some(release) = &app.update_available {
+    //     let should_show_update = match &app.auto_update_seen_version {
+    //         None => true,
+    //         Some(ver) => {
+    //             self_update::version::bump_is_greater(ver, &release.version).unwrap_or(true)
+    //         }
+    //     };
+    //
+    // }
     central_panel_ui.horizontal(|ui| {
         if let Some(thread) = app.update_thread.get_mut() {
             if !thread.is_finished() {

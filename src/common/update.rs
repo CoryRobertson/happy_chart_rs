@@ -3,6 +3,7 @@ use self_update::{cargo_crate_version, Status};
 use std::error::Error;
 use std::thread;
 use std::thread::JoinHandle;
+use crate::prelude::HappyChartState;
 
 #[tracing::instrument]
 pub fn update_program() -> JoinHandle<Result<Status, String>> {
@@ -35,4 +36,15 @@ pub fn get_release_list() -> Result<Vec<Release>, Box<dyn Error>> {
     #[cfg(debug_assertions)]
     println!("{:?}", list);
     Ok(list)
+}
+pub fn should_show_update(app: &HappyChartState) -> (bool, Option<&Release>) {
+    if let Some(release) = &app.update_available {
+        let should_show_update = match &app.auto_update_seen_version {
+            None => true,
+            Some(ver) => {
+                self_update::version::bump_is_greater(ver, &release.version).unwrap_or(true)
+            }
+        };
+        (should_show_update,Some(release))
+    } else { (false, None) }
 }
