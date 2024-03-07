@@ -1,6 +1,6 @@
 #[allow(deprecated)]
 use crate::day_stats::daystat::DayStat;
-use crate::mood_tag::MoodTag;
+use crate::prelude::MoodTag;
 use chrono::{DateTime, Datelike, Local, Timelike};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};

@@ -1,6 +1,6 @@
-use crate::auto_update_status::AutoUpdateStatus;
+use crate::common::auto_update_status::AutoUpdateStatus;
+use crate::common::mood_tag::MoodTag;
 use crate::day_stats::improved_daystat::ImprovedDayStat;
-use crate::mood_tag::MoodTag;
 use crate::options::program_options::ProgramOptions;
 use crate::state::error_states::HappyChartError;
 use crate::state::state_stats::StateStats;
@@ -13,8 +13,8 @@ use std::cell::Cell;
 use std::fs;
 use std::fs::DirEntry;
 use std::thread::JoinHandle;
+use std::time::SystemTime;
 
-#[derive(Default)]
 pub struct HappyChartState {
     pub rating: f64,
     pub days: Vec<ImprovedDayStat>,
@@ -61,6 +61,10 @@ pub struct HappyChartState {
 
     pub encryption_key: String,
     pub encryption_key_second_check: String,
+    
+    pub program_open_time: SystemTime,
+
+    pub open_animation_animating: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -100,6 +104,7 @@ impl Default for UiDelta {
 impl HappyChartState {
     /// Magic number that makes day lines look just right
     const DAY_LINE_OFFSET: f32 = 165.0;
+    const OPEN_ANIMATION_DURATION: f32 = 1.5;
 
     #[tracing::instrument(skip(_cc))]
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
@@ -129,8 +134,26 @@ impl HappyChartState {
             tutorial_state: TutorialGoal::default(),
             encryption_key: "".to_string(),
             encryption_key_second_check: "".to_string(),
+            program_open_time: SystemTime::now(),
+            open_animation_animating: true,
         }
     }
+
+    /// Returns the index for the range of days to render in order to play nicely with the program open animation.
+    #[tracing::instrument(skip_all)]
+    pub fn get_day_index_animation(&self) -> usize {
+        if !self.open_animation_animating {
+            return self.days.len();
+        }
+
+        let time = SystemTime::now().duration_since(self.program_open_time).map_or(Self::OPEN_ANIMATION_DURATION, |dur| dur.as_secs_f32());
+        let len = self.days.len() as f32;
+        let frac = (time / Self::OPEN_ANIMATION_DURATION).clamp(0.0,1.0);
+        let idx = (len * frac) + 1.0; // we add 1 just encase there is a floating point issue, this should never happen, but it also doesn't hurt.
+
+        (idx as usize).clamp(0,self.days.len())
+    }
+
 
     #[tracing::instrument(skip_all)]
     pub fn remove_old_backup_files(&self) {

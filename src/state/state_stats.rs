@@ -1,4 +1,4 @@
-use crate::common::get_average_for_day_of_week;
+use crate::common::math::get_average_for_day_of_week;
 use crate::day_stats::improved_daystat::ImprovedDayStat;
 use chrono::Weekday;
 use serde::{Deserialize, Serialize};

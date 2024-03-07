@@ -1,5 +1,6 @@
-use crate::auto_update_status::AutoUpdateStatus;
-use crate::common::{backup_program_state, toggle_ui_compact};
+use crate::common::auto_update_status::AutoUpdateStatus;
+use crate::common::backup::backup_program_state;
+use crate::common::toggle_ui_compact;
 use crate::options::color_setting::ColorSettings;
 use crate::options::program_options::ProgramOptions;
 use crate::state::happy_chart_state::HappyChartState;
@@ -133,6 +134,9 @@ pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChar
         options_panel_ui
             .checkbox(&mut app.program_options.move_day_lines_with_ui,"Move Day lines with ui: ")
             .on_hover_text("Make the day lines in the graph move with the ui instead of being in a static position.");
+        options_panel_ui
+            .checkbox(&mut app.program_options.do_opening_animation,"Opening animation: ")
+            .on_hover_text("Make the day stats draw in an animated way on program open.");
     });
 }
 

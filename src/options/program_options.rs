@@ -40,6 +40,8 @@ pub struct ProgramOptions {
     pub move_day_lines_with_ui: bool,
 
     pub encrypt_save_file: bool,
+
+    pub do_opening_animation: bool,
 }
 
 impl Default for ProgramOptions {
@@ -69,6 +71,7 @@ impl Default for ProgramOptions {
             disable_update_list_error_showing: false,
             move_day_lines_with_ui: true,
             encrypt_save_file: false,
+            do_opening_animation: true,
         }
     }
 }

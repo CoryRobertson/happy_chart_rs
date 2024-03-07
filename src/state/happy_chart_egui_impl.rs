@@ -1,7 +1,6 @@
-use eframe::Frame;
-use egui::Context;
-
-use crate::common::{export_stats_to_csv, first_load, handle_screenshot_event, update_program};
+use crate::common::export::export_stats_to_csv;
+use crate::common::update::update_program;
+use crate::common::{first_load, handle_screenshot_event};
 use crate::state::error_states::HappyChartError;
 use crate::state::happy_chart_state::HappyChartState;
 use crate::state::tutorial_state::TutorialGoal;
@@ -19,13 +18,23 @@ use crate::ui::options_menu::{
 };
 use crate::ui::statistics_screen::draw_previous_duration_stats_screen;
 use crate::ui::tutorial_screen::draw_tutorial_screen;
+use eframe::Frame;
+use egui::Context;
 
 /// Update loop for egui
 impl eframe::App for HappyChartState {
     #[tracing::instrument(skip(self, ctx, _frame))]
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
+
         if self.first_load {
             first_load(self, ctx, true);
+        }
+
+        if self.open_animation_animating {
+            ctx.request_repaint();
+            if self.get_day_index_animation() == self.days.len() {
+                self.open_animation_animating = false;
+            }
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {

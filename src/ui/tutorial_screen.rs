@@ -1,4 +1,4 @@
-use crate::common::tutorial_button_colors;
+use crate::common::color::tutorial_button_colors;
 use crate::prelude::HappyChartState;
 use crate::state::tutorial_state::TutorialGoal;
 use egui::{Context, Ui};

@@ -1,5 +1,5 @@
+use crate::common::mood_tag::MoodTag;
 use crate::day_stats::improved_daystat::ImprovedDayStat;
-use crate::mood_tag::MoodTag;
 use crate::prelude::HappyChartState;
 use chrono::{Local, Months};
 use egui::{Context, Ui};

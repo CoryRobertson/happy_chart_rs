@@ -1,9 +1,9 @@
-use crate::common::{encryption_save_file_checks, first_load, tutorial_button_colors};
-use crate::day_stats::improved_daystat::ImprovedDayStat;
+use crate::common::color::tutorial_button_colors;
+use crate::common::encryption::{decrypt_save_file, encryption_save_file_checks};
+use crate::common::first_load;
 use crate::prelude::HappyChartState;
 use crate::state::error_states::HappyChartError;
 use crate::{MAX_ENCRYPT_KEY_LENGTH, MIN_ENCRYPT_KEY_LENGTH};
-use cocoon::MiniCocoon;
 use eframe::epaint::Color32;
 use egui::{Context, RichText, TextEdit, Ui};
 
@@ -33,18 +33,13 @@ pub fn draw_decryption_screen(
         if unlock_button.clicked()
             || (!app.encryption_key.is_empty() && key_input_resp.lost_focus())
         {
-            app.encryption_key_second_check = app.encryption_key.to_string();
-            let mut key = app.encryption_key.to_string();
-            if key.len() < 32 {
-                key.push_str("00000000000000000000000000000000");
-            }
+            let decrypted_save = decrypt_save_file(app, encrypted_data)?;
 
-            let cocoon = MiniCocoon::from_key(&key.as_bytes()[0..32], &[0; 32]);
-            let unwrapped = cocoon
-                .unwrap(encrypted_data)
-                .map_err(HappyChartError::DecryptionError)?;
-            app.days = serde_json::from_slice::<Vec<ImprovedDayStat>>(&unwrapped)
-                .map_err(|err| HappyChartError::Deserialization(err, None))?;
+            // set the second key equal to the first key so after the user unlocks the save file, they don't have to re-type their password
+            app.encryption_key_second_check = app.encryption_key.to_string();
+
+            app.days = decrypted_save;
+
             save_file_decrypted_successfully = Some(index);
         }
     }

@@ -1,5 +1,7 @@
-use crate::common::{get_tutorial_highlight_glowing_color, get_tutorial_lowlight_glowing_color};
-use crate::mood_tag::MoodTag;
+use crate::common::color::{
+    get_tutorial_highlight_glowing_color, get_tutorial_lowlight_glowing_color,
+};
+use crate::common::mood_tag::MoodTag;
 use crate::prelude::HappyChartState;
 use crate::state::tutorial_state::TutorialGoal;
 use egui::scroll_area::ScrollBarVisibility;
