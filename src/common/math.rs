@@ -2,7 +2,6 @@ use crate::prelude::ImprovedDayStat;
 use chrono::{Datelike, Weekday};
 
 /// Calculates the x coordinate for each graph point
-#[tracing::instrument]
 pub fn improved_calculate_x(
     days: &[ImprovedDayStat],
     day: &ImprovedDayStat,
@@ -16,13 +15,11 @@ pub fn improved_calculate_x(
 }
 
 /// Returns the coordinate point distance between two points
-#[tracing::instrument]
 pub fn distance(x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
     distance_squared(x1, y1, x2, y2).sqrt()
 }
 
 /// Returns the coordinate point distance between two points
-#[tracing::instrument]
 pub fn distance_squared(x1: f32, y1: f32, x2: f32, y2: f32) -> f32 {
     let g1 = (x2 - x1).powi(2);
     let g2 = (y2 - y1).powi(2);

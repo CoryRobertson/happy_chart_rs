@@ -1,5 +1,5 @@
 use crate::common::color::{get_tutorial_lowlight_glowing_color, tutorial_button_colors};
-use crate::common::math::distance;
+use crate::common::math::{distance, improved_calculate_x};
 use crate::common::mood_tag::MoodTag;
 use crate::common::quit;
 use crate::common::update::{should_show_update, update_program};
@@ -16,7 +16,7 @@ use self_update::cargo_crate_version;
 
 pub(crate) const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
 
-#[tracing::instrument(skip(central_panel_ui, app))]
+#[tracing::instrument(skip_all)]
 pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
     central_panel_ui.horizontal(|ui| {
         ui.label("Rating: ");
@@ -127,7 +127,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
     }
 }
 
-#[tracing::instrument(skip(central_panel_ui, app))]
+#[tracing::instrument(skip_all)]
 pub fn click_drag_zoom_detection(
     central_panel_ui: &Ui,
     app: &mut HappyChartState,
@@ -163,13 +163,8 @@ pub fn click_drag_zoom_detection(
 }
 
 /// Draw the lines that represent time itself, typically 24 hours
-#[tracing::instrument(skip(central_panel_ui, app))]
-pub fn draw_day_lines(
-    central_panel_ui: &Ui,
-    app: &HappyChartState,
-    ctx: &Context,
-    stat_cords: &[(f32, f32)],
-) {
+#[tracing::instrument(skip_all)]
+pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Context) {
     if app.days.len() > 1 {
         // range for calculating how many lines in both directions on the x-axis
         let range = {
@@ -237,20 +232,30 @@ pub fn draw_day_lines(
 }
 
 /// Draw the lines between each stat like a graph
-#[tracing::instrument(skip(central_panel_ui, app))]
-pub fn draw_stat_line_segments(
-    central_panel_ui: &Ui,
-    app: &HappyChartState,
-    stat_cords: &[(f32, f32)],
-) {
+#[tracing::instrument(skip_all)]
+pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
     let mut prev_x = 0.0;
     let mut prev_y = 0.0;
     // draw lines loop, bottom layer
-    for (i, (x, y)) in stat_cords[0..app.get_day_index_animation()]
+    for (i, day) in app.days[0..app.get_day_index_animation()]
         .iter()
         .enumerate()
     {
-        let points = [Pos2::new(prev_x, prev_y), Pos2::new(*x, *y)];
+        let x: f32 = improved_calculate_x(
+            &app.days,
+            day,
+            app.program_options.graph_x_scale,
+            app.program_options.x_offset,
+        );
+
+        let y: f32 = day.get_rating().mul_add(
+            -app.program_options.graph_y_scale,
+            STAT_HEIGHT_CONSTANT_OFFSET,
+        ) - app.program_options.day_stat_height_offset;
+        let points = [
+            Pos2::new(prev_x, prev_y + app.get_day_line_y_value()),
+            Pos2::new(x, y + app.get_day_line_y_value()),
+        ];
 
         if (prev_x != 0.0 && prev_y != 0.0) || i == 1 {
             // draw line segments connecting the dots
@@ -260,19 +265,14 @@ pub fn draw_stat_line_segments(
             );
         }
 
-        prev_x = *x;
-        prev_y = *y;
+        prev_x = x;
+        prev_y = y;
     }
 }
 
 /// draw the circled for each stat, separate color based on each stat's rating
-#[tracing::instrument(skip(central_panel_ui, app, ctx))]
-pub fn draw_stat_circles(
-    central_panel_ui: &Ui,
-    app: &HappyChartState,
-    ctx: &Context,
-    stat_cords: &[(f32, f32)],
-) {
+#[tracing::instrument(skip_all)]
+pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Context) {
     let mouse_pos = ctx
         .pointer_hover_pos()
         .map_or_else(|| Pos2::new(0.0, 0.0), |a| a);
@@ -284,10 +284,17 @@ pub fn draw_stat_circles(
         .iter()
         .enumerate()
     {
-        let (x, y) = match stat_cords.get(idx) {
-            None => continue,
-            Some((x, y)) => (*x, *y),
-        };
+        let x: f32 = improved_calculate_x(
+            &app.days,
+            day,
+            app.program_options.graph_x_scale,
+            app.program_options.x_offset,
+        );
+        let y: f32 = day.get_rating().mul_add(
+            -app.program_options.graph_y_scale,
+            STAT_HEIGHT_CONSTANT_OFFSET,
+        ) - app.program_options.day_stat_height_offset
+            + app.get_day_line_y_value();
 
         let stat_outline_color =
             if distance(mouse_pos.x, mouse_pos.y, x, y) < dist_max && !moused_over {
@@ -330,12 +337,11 @@ pub fn draw_stat_circles(
 }
 
 /// Draw a stats info if it is moused over
-#[tracing::instrument(skip(central_panel_ui, app, ctx))]
+#[tracing::instrument(skip_all)]
 pub fn draw_stat_mouse_over_info(
     central_panel_ui: &mut Ui,
     app: &mut HappyChartState,
     ctx: &Context,
-    stat_cords: &[(f32, f32)],
 ) {
     let mouse_pos = ctx
         .pointer_hover_pos()
@@ -354,11 +360,17 @@ pub fn draw_stat_mouse_over_info(
         .iter()
         .enumerate()
     {
-        let (x, y) = match stat_cords.get(idx) {
-            None => continue,
-            Some((x, y)) => (*x, *y),
-        };
-
+        let x: f32 = improved_calculate_x(
+            &app.days,
+            day,
+            app.program_options.graph_x_scale,
+            app.program_options.x_offset,
+        );
+        let y: f32 = day.get_rating().mul_add(
+            -app.program_options.graph_y_scale,
+            STAT_HEIGHT_CONSTANT_OFFSET,
+        ) - app.program_options.day_stat_height_offset
+            + app.get_day_line_y_value();
         let rect_pos1 = Pos2::new(520.0, 10.0);
         let rect_pos2 = Pos2::new(770.0, 160.0);
         let text = {
@@ -409,7 +421,7 @@ pub fn draw_stat_mouse_over_info(
 }
 
 /// Draw the auto update ui on screen if needed
-#[tracing::instrument(skip(central_panel_ui, app, ctx))]
+#[tracing::instrument(skip_all)]
 pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &Context) {
     let update_touple = should_show_update(app);
 
@@ -465,7 +477,7 @@ pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState,
 }
 
 /// Draw the quit button as well as the options, about, and screenshot button
-#[tracing::instrument(skip(central_panel_ui, app, ctx))]
+#[tracing::instrument(skip_all)]
 pub fn draw_bottom_row_buttons(
     central_panel_ui: &mut Ui,
     app: &mut HappyChartState,

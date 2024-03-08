@@ -163,7 +163,6 @@ impl HappyChartState {
     /// Returns a fraction relating to how far through the program opening animation we are, ranged from 0.0..=1.0
     /// 0.0 being that the animation has just started
     /// 1.0 being that the animation has concluded
-    #[tracing::instrument(skip_all)]
     pub fn get_animation_time_fraction(&self) -> f32 {
         if self.open_animation_animating {
             let animation_time = SystemTime::now()
@@ -285,7 +284,6 @@ impl HappyChartState {
     }
 
     /// Returns the Y line value relative to all the programs settings
-    #[tracing::instrument(skip_all)]
     pub fn get_day_line_y_value(&self) -> f32 {
         if self.program_options.move_day_lines_with_ui {
             self.central_ui_safezone_start

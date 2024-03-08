@@ -38,8 +38,6 @@ impl eframe::App for HappyChartState {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            let stat_coordinates = self.get_day_stat_coordinates();
-
             ui.input(|i| {
                 for event in &i.raw.events {
                     if let egui::Event::Screenshot {
@@ -59,18 +57,18 @@ impl eframe::App for HappyChartState {
             click_drag_zoom_detection(ui, self, pointer_interact_pos.as_ref());
 
             if self.program_options.draw_day_lines {
-                draw_day_lines(ui, self, ctx, &stat_coordinates);
+                draw_day_lines(ui, self, ctx);
             }
 
             if self.program_options.draw_daystat_lines {
-                draw_stat_line_segments(ui, self, &stat_coordinates);
+                draw_stat_line_segments(ui, self);
             }
 
             if self.program_options.draw_daystat_circles {
-                draw_stat_circles(ui, self, ctx, &stat_coordinates);
+                draw_stat_circles(ui, self, ctx);
             }
 
-            draw_stat_mouse_over_info(ui, self, ctx, &stat_coordinates);
+            draw_stat_mouse_over_info(ui, self, ctx);
 
             draw_auto_update_ui(ui, self, ctx);
 

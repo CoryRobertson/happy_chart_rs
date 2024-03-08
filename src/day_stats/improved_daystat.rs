@@ -15,7 +15,6 @@ pub struct ImprovedDayStat {
 }
 
 impl Default for ImprovedDayStat {
-    #[tracing::instrument]
     fn default() -> Self {
         Self {
             rating: 0.0,
@@ -27,7 +26,6 @@ impl Default for ImprovedDayStat {
 }
 
 impl Display for ImprovedDayStat {
-    #[tracing::instrument(skip_all)]
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str("Date: ")?;
         f.write_str(&format!(
@@ -91,19 +89,16 @@ impl ImprovedDayStat {
         &self.mood_tags
     }
 
-    #[tracing::instrument]
     pub fn get_current_time_system() -> DateTime<Local> {
         Local::now()
     }
 
-    #[tracing::instrument]
     #[allow(dead_code)]
     pub fn get_date_time(&self) -> DateTime<Local> {
         self.date
     }
 
     /// Simply subtracts the two timestamps, giving you a distance the stats are apart. timestamp being a unix timestamp
-    #[tracing::instrument]
     pub fn get_hour_difference(&self, compare_day_stat: &Self) -> i64 {
         (self.date.timestamp() - compare_day_stat.date.timestamp()).abs()
     }
@@ -111,7 +106,6 @@ impl ImprovedDayStat {
 
 #[allow(deprecated)]
 impl From<DayStat> for ImprovedDayStat {
-    #[tracing::instrument]
     fn from(value: DayStat) -> Self {
         let v = value.get_date_time().with_timezone(&Local);
         Self {
@@ -125,7 +119,6 @@ impl From<DayStat> for ImprovedDayStat {
 
 #[allow(deprecated)]
 impl From<ImprovedDayStat> for DayStat {
-    #[tracing::instrument]
     fn from(value: ImprovedDayStat) -> Self {
         let v = value.date.timestamp();
         Self {
@@ -138,7 +131,6 @@ impl From<ImprovedDayStat> for DayStat {
 
 #[allow(deprecated)]
 impl From<&ImprovedDayStat> for DayStat {
-    #[tracing::instrument]
     fn from(value: &ImprovedDayStat) -> Self {
         Self {
             rating: value.rating,
@@ -150,7 +142,6 @@ impl From<&ImprovedDayStat> for DayStat {
 
 #[allow(deprecated)]
 impl From<&DayStat> for ImprovedDayStat {
-    #[tracing::instrument]
     fn from(value: &DayStat) -> Self {
         Self {
             rating: value.rating,
