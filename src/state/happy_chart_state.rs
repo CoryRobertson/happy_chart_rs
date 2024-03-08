@@ -1,4 +1,5 @@
 use crate::common::auto_update_status::AutoUpdateStatus;
+use crate::common::math::improved_calculate_x;
 use crate::common::mood_tag::MoodTag;
 use crate::day_stats::improved_daystat::ImprovedDayStat;
 use crate::options::program_options::ProgramOptions;
@@ -13,7 +14,7 @@ use std::cell::Cell;
 use std::fs;
 use std::fs::DirEntry;
 use std::thread::JoinHandle;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 pub struct HappyChartState {
     pub rating: f64,
@@ -121,7 +122,7 @@ impl Default for UiDelta {
 impl HappyChartState {
     /// Magic number that makes day lines look just right
     const DAY_LINE_OFFSET: f32 = 10.0;
-    const OPEN_ANIMATION_DURATION: f32 = 1.5;
+    pub(crate) const OPEN_ANIMATION_DURATION: f32 = 1.5;
 
     const COMMON_GRAPH_STARTING_HEIGHT: f32 = 155.0;
 
@@ -159,6 +160,24 @@ impl HappyChartState {
         }
     }
 
+    /// Returns a fraction relating to how far through the program opening animation we are, ranged from 0.0..=1.0
+    /// 0.0 being that the animation has just started
+    /// 1.0 being that the animation has concluded
+    #[tracing::instrument(skip_all)]
+    pub fn get_animation_time_fraction(&self) -> f32 {
+        if self.open_animation_animating {
+            let animation_time = SystemTime::now()
+                .duration_since(self.program_open_time)
+                .unwrap_or(Duration::from_secs_f32(
+                    HappyChartState::OPEN_ANIMATION_DURATION,
+                ))
+                .as_secs_f32();
+            ((animation_time) / (HappyChartState::OPEN_ANIMATION_DURATION)).clamp(0.0, 1.0)
+        } else {
+            1.0
+        }
+    }
+
     /// Returns the index for the range of days to render in order to play nicely with the program open animation.
     #[tracing::instrument(skip_all)]
     pub fn get_day_index_animation(&self) -> usize {
@@ -166,11 +185,8 @@ impl HappyChartState {
             return self.days.len();
         }
 
-        let time = SystemTime::now()
-            .duration_since(self.program_open_time)
-            .map_or(Self::OPEN_ANIMATION_DURATION, |dur| dur.as_secs_f32());
         let len = self.days.len() as f32;
-        let frac = (time / Self::OPEN_ANIMATION_DURATION).clamp(0.0, 1.0);
+        let frac = self.get_animation_time_fraction();
         let idx = (len * frac) + 1.0; // we add 1 just encase there is a floating point issue, this should never happen, but it also doesn't hurt.
 
         (idx as usize).clamp(0, self.days.len())
@@ -195,6 +211,29 @@ impl HappyChartState {
                 println!("Removing {:?}, result: {:?}", entry, res);
             }
         }
+    }
+
+    /// Returns the x and y values of every day stat, so we only have to calculate it once every frame instead of multiple times
+    #[tracing::instrument(skip_all)]
+    pub fn get_day_stat_coordinates(&self) -> Vec<(f32, f32)> {
+        self.days
+            .iter()
+            .map(|stat| {
+                let x = improved_calculate_x(
+                    &self.days,
+                    stat,
+                    self.program_options.graph_x_scale,
+                    self.program_options.x_offset,
+                );
+                let y = (stat.get_rating() * self.get_animation_time_fraction()).mul_add(
+                    -self.program_options.graph_y_scale,
+                    crate::ui::central_screen::STAT_HEIGHT_CONSTANT_OFFSET,
+                ) - self.program_options.day_stat_height_offset
+                    + self.get_day_line_y_value();
+
+                (x, y)
+            })
+            .collect()
     }
 
     #[tracing::instrument(skip_all)]
@@ -245,6 +284,7 @@ impl HappyChartState {
         }
     }
 
+    /// Returns the Y line value relative to all the programs settings
     #[tracing::instrument(skip_all)]
     pub fn get_day_line_y_value(&self) -> f32 {
         if self.program_options.move_day_lines_with_ui {

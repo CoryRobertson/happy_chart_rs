@@ -1,5 +1,5 @@
 use crate::common::color::{get_tutorial_lowlight_glowing_color, tutorial_button_colors};
-use crate::common::math::{distance, improved_calculate_x};
+use crate::common::math::distance;
 use crate::common::mood_tag::MoodTag;
 use crate::common::quit;
 use crate::common::update::{should_show_update, update_program};
@@ -14,7 +14,7 @@ use eframe::epaint::{Color32, FontId, Rounding, Stroke};
 use egui::{Context, Id, LayerId, Layout, Order, Rangef, Ui, ViewportCommand};
 use self_update::cargo_crate_version;
 
-const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
+pub(crate) const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
 
 #[tracing::instrument(skip(central_panel_ui, app))]
 pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
@@ -164,7 +164,12 @@ pub fn click_drag_zoom_detection(
 
 /// Draw the lines that represent time itself, typically 24 hours
 #[tracing::instrument(skip(central_panel_ui, app))]
-pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Context) {
+pub fn draw_day_lines(
+    central_panel_ui: &Ui,
+    app: &HappyChartState,
+    ctx: &Context,
+    stat_cords: &[(f32, f32)],
+) {
     if app.days.len() > 1 {
         // range for calculating how many lines in both directions on the x-axis
         let range = {
@@ -218,35 +223,34 @@ pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Contex
                 Rangef::new(line_y_value_start, line_y_value_maximum),
                 Stroke::new(2.0, app.program_options.color_settings.day_line_color),
             );
+
+            // unsure if i like this, get more opinions on it, also try removing the open animation check to see if just having the lines end like that is nice or not
+            // if app.open_animation_animating {
+            //     if let Some((x,_)) = stat_cords[0..app.get_day_index_animation()].last() {
+            //         if !(0f32..*x).contains(&line_x_coordinate) {
+            //             break;
+            //         }
+            //     }
+            // }
         }
     }
 }
 
 /// Draw the lines between each stat like a graph
 #[tracing::instrument(skip(central_panel_ui, app))]
-pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
+pub fn draw_stat_line_segments(
+    central_panel_ui: &Ui,
+    app: &HappyChartState,
+    stat_cords: &[(f32, f32)],
+) {
     let mut prev_x = 0.0;
     let mut prev_y = 0.0;
     // draw lines loop, bottom layer
-    for (i, day) in app.days[0..app.get_day_index_animation()]
+    for (i, (x, y)) in stat_cords[0..app.get_day_index_animation()]
         .iter()
         .enumerate()
     {
-        let x: f32 = improved_calculate_x(
-            &app.days,
-            day,
-            app.program_options.graph_x_scale,
-            app.program_options.x_offset,
-        );
-
-        let y: f32 = day.get_rating().mul_add(
-            -app.program_options.graph_y_scale,
-            STAT_HEIGHT_CONSTANT_OFFSET,
-        ) - app.program_options.day_stat_height_offset;
-        let points = [
-            Pos2::new(prev_x, prev_y + app.get_day_line_y_value()),
-            Pos2::new(x, y + app.get_day_line_y_value()),
-        ];
+        let points = [Pos2::new(prev_x, prev_y), Pos2::new(*x, *y)];
 
         if (prev_x != 0.0 && prev_y != 0.0) || i == 1 {
             // draw line segments connecting the dots
@@ -256,14 +260,19 @@ pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
             );
         }
 
-        prev_x = x;
-        prev_y = y;
+        prev_x = *x;
+        prev_y = *y;
     }
 }
 
 /// draw the circled for each stat, separate color based on each stat's rating
 #[tracing::instrument(skip(central_panel_ui, app, ctx))]
-pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Context) {
+pub fn draw_stat_circles(
+    central_panel_ui: &Ui,
+    app: &HappyChartState,
+    ctx: &Context,
+    stat_cords: &[(f32, f32)],
+) {
     let mouse_pos = ctx
         .pointer_hover_pos()
         .map_or_else(|| Pos2::new(0.0, 0.0), |a| a);
@@ -275,17 +284,10 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Con
         .iter()
         .enumerate()
     {
-        let x: f32 = improved_calculate_x(
-            &app.days,
-            day,
-            app.program_options.graph_x_scale,
-            app.program_options.x_offset,
-        );
-        let y: f32 = day.get_rating().mul_add(
-            -app.program_options.graph_y_scale,
-            STAT_HEIGHT_CONSTANT_OFFSET,
-        ) - app.program_options.day_stat_height_offset
-            + app.get_day_line_y_value();
+        let (x, y) = match stat_cords.get(idx) {
+            None => continue,
+            Some((x, y)) => (*x, *y),
+        };
 
         let stat_outline_color =
             if distance(mouse_pos.x, mouse_pos.y, x, y) < dist_max && !moused_over {
@@ -333,6 +335,7 @@ pub fn draw_stat_mouse_over_info(
     central_panel_ui: &mut Ui,
     app: &mut HappyChartState,
     ctx: &Context,
+    stat_cords: &[(f32, f32)],
 ) {
     let mouse_pos = ctx
         .pointer_hover_pos()
@@ -351,17 +354,11 @@ pub fn draw_stat_mouse_over_info(
         .iter()
         .enumerate()
     {
-        let x: f32 = improved_calculate_x(
-            &app.days,
-            day,
-            app.program_options.graph_x_scale,
-            app.program_options.x_offset,
-        );
-        let y: f32 = day.get_rating().mul_add(
-            -app.program_options.graph_y_scale,
-            STAT_HEIGHT_CONSTANT_OFFSET,
-        ) - app.program_options.day_stat_height_offset
-            + app.get_day_line_y_value();
+        let (x, y) = match stat_cords.get(idx) {
+            None => continue,
+            Some((x, y)) => (*x, *y),
+        };
+
         let rect_pos1 = Pos2::new(520.0, 10.0);
         let rect_pos2 = Pos2::new(770.0, 160.0);
         let text = {
