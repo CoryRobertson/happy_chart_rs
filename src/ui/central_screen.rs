@@ -248,7 +248,7 @@ pub fn draw_stat_line_segments(central_panel_ui: &Ui, app: &HappyChartState) {
             app.program_options.x_offset,
         );
 
-        let y: f32 = day.get_rating().mul_add(
+        let y: f32 = (day.get_rating() * app.get_animation_time_fraction()).mul_add(
             -app.program_options.graph_y_scale,
             STAT_HEIGHT_CONSTANT_OFFSET,
         ) - app.program_options.day_stat_height_offset;
@@ -290,7 +290,7 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Con
             app.program_options.graph_x_scale,
             app.program_options.x_offset,
         );
-        let y: f32 = day.get_rating().mul_add(
+        let y: f32 = (day.get_rating() * app.get_animation_time_fraction()).mul_add(
             -app.program_options.graph_y_scale,
             STAT_HEIGHT_CONSTANT_OFFSET,
         ) - app.program_options.day_stat_height_offset
@@ -366,7 +366,7 @@ pub fn draw_stat_mouse_over_info(
             app.program_options.graph_x_scale,
             app.program_options.x_offset,
         );
-        let y: f32 = day.get_rating().mul_add(
+        let y: f32 = (day.get_rating() * app.get_animation_time_fraction()).mul_add(
             -app.program_options.graph_y_scale,
             STAT_HEIGHT_CONSTANT_OFFSET,
         ) - app.program_options.day_stat_height_offset
