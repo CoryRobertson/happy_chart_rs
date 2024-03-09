@@ -89,7 +89,7 @@ impl eframe::App for HappyChartState {
 
                 draw_color_options_menu(ui, self);
 
-                draw_graphing_options_menu(ui, self);
+                draw_graphing_options_menu(ui, self,ctx);
 
                 draw_stat_drawing_options_menu(ui, self);
 

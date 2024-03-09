@@ -1,3 +1,4 @@
+use std::io;
 use crate::common::auto_update_status::AutoUpdateStatus;
 use crate::common::backup::backup_program_state;
 use crate::common::toggle_ui_compact;
@@ -9,6 +10,7 @@ use chrono::Local;
 use eframe::epaint::Color32;
 use egui::{Context, RichText, Ui};
 use self_update::Status;
+use crate::common::math::improved_calculate_x;
 
 /// Draw an indicator in the options menu for if an update is taking place, or needed
 #[tracing::instrument(skip(options_panel_ui, app))]
@@ -76,7 +78,7 @@ pub fn draw_color_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartSt
 
 /// Graphing options collapsing menu
 #[tracing::instrument(skip(options_panel_ui, app))]
-pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState) {
+pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &Context) {
     options_panel_ui.collapsing("Graphing options", |options_panel_ui| {
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("Display day lines: ");
@@ -137,6 +139,22 @@ pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChar
         options_panel_ui
             .checkbox(&mut app.program_options.do_opening_animation,"Opening animation")
             .on_hover_text("Make the day stats draw in an animated way on program open.");
+
+        if app.days.len() > 1 && options_panel_ui.button("Reset graph scaling").clicked() {
+            if let Some(last_day) = app.days.last() {
+                let window_rect = ctx.screen_rect();
+                app.program_options.x_offset = 10.0;
+                let mut c = 1.0;
+                // I am so very sure there is a better way to do this, but this just makes so much sense in my head.
+                let new_scale = {
+                    let final_x = improved_calculate_x(&app.days,last_day,c,app.program_options.x_offset);
+                    let target_final_x = window_rect.max.x - 15.0;
+                    let frac = target_final_x / final_x;
+                    c * frac
+                };
+                app.program_options.graph_x_scale = new_scale;
+            }
+        }
 
     });
 }
