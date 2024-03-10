@@ -1,5 +1,5 @@
 use crate::common::auto_update_status::AutoUpdateStatus;
-use crate::common::math::improved_calculate_x;
+use crate::common::math::{calculate_centered_graph_scaling, improved_calculate_x};
 use crate::common::mood_tag::MoodTag;
 use crate::day_stats::improved_daystat::ImprovedDayStat;
 use crate::options::program_options::ProgramOptions;
@@ -15,6 +15,7 @@ use std::fs;
 use std::fs::DirEntry;
 use std::thread::JoinHandle;
 use std::time::{Duration, SystemTime};
+use egui::Context;
 
 pub struct HappyChartState {
     pub rating: f64,
@@ -175,6 +176,14 @@ impl HappyChartState {
         } else {
             1.0
         }
+    }
+
+    pub fn recenter_graph(&mut self, ctx: &Context, right_margin: f32, left_margin: f32) -> Option<()> {
+        let new_scaling = calculate_centered_graph_scaling(self,ctx,right_margin)?;
+        self.program_options.graph_x_scale = new_scaling;
+        // add a small margin on the left side for day stats to show at the beginning of the chart
+        self.program_options.x_offset = left_margin;
+        Some(())
     }
 
     /// Returns the index for the range of days to render in order to play nicely with the program open animation.

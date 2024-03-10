@@ -42,6 +42,9 @@ pub struct ProgramOptions {
     pub encrypt_save_file: bool,
 
     pub do_opening_animation: bool,
+
+    pub auto_center_margin_right_multiplier: f32,
+    pub auto_center_margin_left_multiplier: f32,
 }
 
 impl Default for ProgramOptions {
@@ -72,6 +75,8 @@ impl Default for ProgramOptions {
             move_day_lines_with_ui: true,
             encrypt_save_file: false,
             do_opening_animation: true,
+            auto_center_margin_right_multiplier: 20.0,
+            auto_center_margin_left_multiplier: 2.0,
         }
     }
 }

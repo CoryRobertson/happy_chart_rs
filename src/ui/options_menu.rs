@@ -10,7 +10,7 @@ use chrono::Local;
 use eframe::epaint::Color32;
 use egui::{Context, RichText, Ui};
 use self_update::Status;
-use crate::common::math::improved_calculate_x;
+use crate::common::math::{calculate_centered_graph_scaling, improved_calculate_x};
 
 /// Draw an indicator in the options menu for if an update is taking place, or needed
 #[tracing::instrument(skip(options_panel_ui, app))]
@@ -134,26 +134,34 @@ pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChar
         });
 
         options_panel_ui
-            .checkbox(&mut app.program_options.move_day_lines_with_ui,"Move Day lines with ui: ")
+            .checkbox(&mut app.program_options.move_day_lines_with_ui,"Move Day lines with ui")
             .on_hover_text("Make the day lines in the graph move with the ui instead of being in a static position.");
         options_panel_ui
             .checkbox(&mut app.program_options.do_opening_animation,"Opening animation")
             .on_hover_text("Make the day stats draw in an animated way on program open.");
 
-        if app.days.len() > 1 && options_panel_ui.button("Reset graph scaling").clicked() {
-            if let Some(last_day) = app.days.last() {
-                let window_rect = ctx.screen_rect();
-                app.program_options.x_offset = 10.0;
-                let mut c = 1.0;
-                // I am so very sure there is a better way to do this, but this just makes so much sense in my head.
-                let new_scale = {
-                    let final_x = improved_calculate_x(&app.days,last_day,c,app.program_options.x_offset);
-                    let target_final_x = window_rect.max.x - 15.0;
-                    let frac = target_final_x / final_x;
-                    c * frac
-                };
-                app.program_options.graph_x_scale = new_scale;
-            }
+        options_panel_ui.horizontal(|options_panel_ui| {
+            options_panel_ui.label("Auto center margin right: ");
+            options_panel_ui
+                .add(egui::Slider::new(
+                    &mut app.program_options.auto_center_margin_right_multiplier,
+                    -100.0..=100.0,
+                ))
+                .on_hover_text("The number of day stat radii that the auto center function uses to calculate a centered scale.");
+        });
+        options_panel_ui.horizontal(|options_panel_ui| {
+            options_panel_ui.label("Auto center margin left: ");
+            options_panel_ui
+                .add(egui::Slider::new(
+                    &mut app.program_options.auto_center_margin_left_multiplier,
+                    -100.0..=100.0,
+                ))
+                .on_hover_text("The number of day stat radii that the auto center function uses to calculate a centered scale.");
+        });
+
+        if app.days.len() >= 2 && options_panel_ui.button("Auto center graph").clicked() {
+            // calculate scaling that places the graph a good amount away from the right side of the screen, so there is room to add new stats and see them change
+            app.recenter_graph(ctx, app.program_options.daystat_circle_size*app.program_options.auto_center_margin_right_multiplier, app.program_options.daystat_circle_size * app.program_options.auto_center_margin_left_multiplier);
         }
 
     });
