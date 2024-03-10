@@ -80,3 +80,5 @@ impl Default for ProgramOptions {
         }
     }
 }
+
+// TODO: if the user has never changed the graph scaling themselves, we should auto scale ?
