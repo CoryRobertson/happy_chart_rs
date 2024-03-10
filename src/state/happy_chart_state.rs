@@ -8,6 +8,7 @@ use crate::state::state_stats::StateStats;
 use crate::state::tutorial_state::TutorialGoal;
 use crate::{BACKUP_FILENAME_PREFIX, BACKUP_FILE_EXTENSION, MANUAL_BACKUP_SUFFIX};
 use chrono::{DateTime, Local};
+use egui::Context;
 use self_update::update::Release;
 use self_update::Status;
 use std::cell::Cell;
@@ -15,7 +16,6 @@ use std::fs;
 use std::fs::DirEntry;
 use std::thread::JoinHandle;
 use std::time::{Duration, SystemTime};
-use egui::Context;
 
 pub struct HappyChartState {
     pub rating: f64,
@@ -178,8 +178,13 @@ impl HappyChartState {
         }
     }
 
-    pub fn recenter_graph(&mut self, ctx: &Context, right_margin: f32, left_margin: f32) -> Option<()> {
-        let new_scaling = calculate_centered_graph_scaling(self,ctx,right_margin)?;
+    pub fn recenter_graph(
+        &mut self,
+        ctx: &Context,
+        right_margin: f32,
+        left_margin: f32,
+    ) -> Option<()> {
+        let new_scaling = calculate_centered_graph_scaling(self, ctx, right_margin)?;
         self.program_options.graph_x_scale = new_scaling;
         // add a small margin on the left side for day stats to show at the beginning of the chart
         self.program_options.x_offset = left_margin;

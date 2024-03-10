@@ -543,3 +543,21 @@ pub fn draw_bottom_row_buttons(
         });
     });
 }
+
+pub fn draw_bottom_left_row_buttons(
+    central_panel_ui: &mut Ui,
+    app: &mut HappyChartState,
+    ctx: &Context,
+) {
+    central_panel_ui.with_layout(Layout::bottom_up(egui::Align::LEFT), |ui| {
+        if ui.button("Recenter graph").clicked() {
+            app.recenter_graph(
+                ctx,
+                app.program_options.daystat_circle_outline_radius
+                    * app.program_options.auto_center_margin_right_multiplier,
+                app.program_options.daystat_circle_outline_radius
+                    * app.program_options.auto_center_margin_left_multiplier,
+            );
+        }
+    });
+}

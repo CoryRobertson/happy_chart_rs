@@ -6,8 +6,9 @@ use crate::state::happy_chart_state::HappyChartState;
 use crate::state::tutorial_state::TutorialGoal;
 use crate::ui::about_screen::draw_about_page;
 use crate::ui::central_screen::{
-    click_drag_zoom_detection, draw_auto_update_ui, draw_bottom_row_buttons, draw_day_lines,
-    draw_stat_circles, draw_stat_line_segments, draw_stat_mouse_over_info, main_screen_button_ui,
+    click_drag_zoom_detection, draw_auto_update_ui, draw_bottom_left_row_buttons,
+    draw_bottom_row_buttons, draw_day_lines, draw_stat_circles, draw_stat_line_segments,
+    draw_stat_mouse_over_info, main_screen_button_ui,
 };
 use crate::ui::encryption::draw_decryption_screen;
 use crate::ui::error_screen::draw_error_screen;
@@ -73,6 +74,8 @@ impl eframe::App for HappyChartState {
             draw_auto_update_ui(ui, self, ctx);
 
             draw_bottom_row_buttons(ui, self, ctx);
+
+            draw_bottom_left_row_buttons(ui, self, ctx);
         });
 
         if self.showing_options_menu {
@@ -89,7 +92,7 @@ impl eframe::App for HappyChartState {
 
                 draw_color_options_menu(ui, self);
 
-                draw_graphing_options_menu(ui, self,ctx);
+                draw_graphing_options_menu(ui, self, ctx);
 
                 draw_stat_drawing_options_menu(ui, self);
 

@@ -1,4 +1,8 @@
-use std::io;
+use chrono::Local;
+use eframe::epaint::Color32;
+use egui::{Context, RichText, Ui};
+use self_update::Status;
+
 use crate::common::auto_update_status::AutoUpdateStatus;
 use crate::common::backup::backup_program_state;
 use crate::common::toggle_ui_compact;
@@ -6,11 +10,6 @@ use crate::options::color_setting::ColorSettings;
 use crate::options::program_options::ProgramOptions;
 use crate::state::happy_chart_state::HappyChartState;
 use crate::ui::encryption::draw_fix_encryption_keys_screen;
-use chrono::Local;
-use eframe::epaint::Color32;
-use egui::{Context, RichText, Ui};
-use self_update::Status;
-use crate::common::math::{calculate_centered_graph_scaling, improved_calculate_x};
 
 /// Draw an indicator in the options menu for if an update is taking place, or needed
 #[tracing::instrument(skip(options_panel_ui, app))]
@@ -78,7 +77,11 @@ pub fn draw_color_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartSt
 
 /// Graphing options collapsing menu
 #[tracing::instrument(skip(options_panel_ui, app))]
-pub fn draw_graphing_options_menu(options_panel_ui: &mut Ui, app: &mut HappyChartState, ctx: &Context) {
+pub fn draw_graphing_options_menu(
+    options_panel_ui: &mut Ui,
+    app: &mut HappyChartState,
+    ctx: &Context,
+) {
     options_panel_ui.collapsing("Graphing options", |options_panel_ui| {
         options_panel_ui.horizontal(|options_panel_ui| {
             options_panel_ui.label("Display day lines: ");

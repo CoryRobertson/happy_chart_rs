@@ -1,8 +1,8 @@
 use crate::state::happy_chart_state::HappyChartState;
+use crate::ui::help_screen::draw_help_dropdown;
 use crate::{BUILD_TIMESTAMP, GIT_DESCRIBE};
 use egui::Ui;
 use self_update::cargo_crate_version;
-use crate::ui::help_screen::draw_help_dropdown;
 
 /// About page info such as build date, program license, and other fun stats that are slightly extraneous
 #[tracing::instrument(skip(about_page_ui, app))]
@@ -34,7 +34,7 @@ pub fn draw_about_page(about_page_ui: &mut Ui, app: &mut HappyChartState) {
     ));
 
     about_page_ui.separator();
-    draw_help_dropdown(about_page_ui,app);
+    draw_help_dropdown(about_page_ui, app);
     about_page_ui.separator();
 
     if about_page_ui.button("Close").clicked() {
