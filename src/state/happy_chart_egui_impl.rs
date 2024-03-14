@@ -78,7 +78,7 @@ impl eframe::App for HappyChartState {
             draw_bottom_left_row_buttons(ui, self, ctx);
         });
 
-        if self.showing_options_menu {
+        if self.ui_states.showing_options_menu {
             egui::Window::new("Options").show(ctx, |ui| {
                 options_update_thread_block(ui, self);
 
@@ -145,24 +145,24 @@ impl eframe::App for HappyChartState {
                 }
 
                 if ui.button("Close Options Menu").clicked() {
-                    self.showing_options_menu = false;
+                    self.ui_states.showing_options_menu = false;
                 }
             });
         }
 
-        if self.showing_about_page {
+        if self.ui_states.showing_about_page {
             egui::Window::new("About").show(ctx, |ui| {
                 draw_about_page(ui, self);
             });
         }
 
-        if self.showing_mood_tag_selector {
+        if self.ui_states.showing_mood_tag_selector {
             egui::Window::new("Select mood").show(ctx, |ui| {
                 draw_mood_selector_screen(ctx, ui, self);
             });
         }
 
-        if self.showing_statistics_screen {
+        if self.ui_states.showing_statistics_screen {
             egui::Window::new("Stats").show(ctx, |ui| {
                 draw_previous_duration_stats_screen(ctx, ui, self);
             });

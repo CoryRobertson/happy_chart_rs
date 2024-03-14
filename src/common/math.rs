@@ -39,6 +39,7 @@ pub fn get_average_for_day_of_week(day_of_week: Weekday, days: &[ImprovedDayStat
 }
 
 /// Returns a graph x scale if one can be calculated, None returned if the day list length is less than 2
+#[tracing::instrument(skip(app, ctx))]
 pub fn calculate_centered_graph_scaling(
     app: &HappyChartState,
     ctx: &Context,

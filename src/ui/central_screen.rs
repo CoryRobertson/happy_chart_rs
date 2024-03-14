@@ -1,5 +1,5 @@
 use crate::common::color::{get_tutorial_lowlight_glowing_color, tutorial_button_colors};
-use crate::common::math::{distance, improved_calculate_x};
+use crate::common::math::{calculate_centered_graph_scaling, distance, improved_calculate_x};
 use crate::common::mood_tag::MoodTag;
 use crate::common::quit;
 use crate::common::update::{should_show_update, update_program};
@@ -11,7 +11,7 @@ use crate::{BUILD_TIMESTAMP, GIT_DESCRIBE};
 use chrono::Days;
 use eframe::emath::{Align2, Pos2, Rect, Vec2};
 use eframe::epaint::{Color32, FontId, Rounding, Stroke};
-use egui::{Context, Id, LayerId, Layout, Order, Rangef, Ui, ViewportCommand};
+use egui::{Context, Id, LayerId, Layout, Order, Rangef, RichText, Ui, ViewportCommand};
 use self_update::cargo_crate_version;
 
 pub(crate) const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
@@ -43,11 +43,11 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
             tutorial_button_colors(ui);
         }
 
-        if !app.showing_mood_tag_selector && ui.button("Select mood").clicked() {
+        if !app.ui_states.showing_mood_tag_selector && ui.button("Select mood").clicked() {
             if app.tutorial_state == TutorialGoal::OpenSelectMood {
                 app.tutorial_state = TutorialGoal::SelectAMood;
             }
-            app.showing_mood_tag_selector = true;
+            app.ui_states.showing_mood_tag_selector = true;
         }
 
         ui.style_mut().visuals.widgets.inactive = old_widget_visuals;
@@ -484,7 +484,7 @@ pub fn draw_bottom_row_buttons(
     ctx: &Context,
 ) {
     // quit button layout
-    central_panel_ui.with_layout(Layout::bottom_up(egui::Align::BOTTOM), |ui| {
+    central_panel_ui.with_layout(Layout::bottom_up(egui::Align::RIGHT), |ui| {
         if app.starting_length != app.days.len() {
             ui.visuals_mut().override_text_color = Option::from(Color32::RED);
         } else {
@@ -514,8 +514,8 @@ pub fn draw_bottom_row_buttons(
                 tutorial_button_colors(ui);
             }
 
-            if !app.showing_options_menu && ui.button("Options").clicked() {
-                app.showing_options_menu = true;
+            if !app.ui_states.showing_options_menu && ui.button("Options").clicked() {
+                app.ui_states.showing_options_menu = true;
                 if app.tutorial_state == TutorialGoal::OpenOptions {
                     app.tutorial_state = TutorialGoal::DoneWithTutorial;
                 }
@@ -523,12 +523,12 @@ pub fn draw_bottom_row_buttons(
 
             ui.style_mut().visuals.widgets.inactive = old_widget_visuals;
 
-            if !app.showing_about_page && ui.button("About").clicked() {
-                app.showing_about_page = true;
+            if !app.ui_states.showing_about_page && ui.button("About").clicked() {
+                app.ui_states.showing_about_page = true;
             }
 
-            if !app.showing_statistics_screen && ui.button("Stats").clicked() {
-                app.showing_statistics_screen = true;
+            if !app.ui_states.showing_statistics_screen && ui.button("Stats").clicked() {
+                app.ui_states.showing_statistics_screen = true;
             }
 
             if ui.button("Save Screenshot").clicked() {
@@ -544,13 +544,38 @@ pub fn draw_bottom_row_buttons(
     });
 }
 
+#[tracing::instrument(skip_all)]
 pub fn draw_bottom_left_row_buttons(
     central_panel_ui: &mut Ui,
     app: &mut HappyChartState,
     ctx: &Context,
 ) {
     central_panel_ui.with_layout(Layout::bottom_up(egui::Align::LEFT), |ui| {
-        if ui.button("Recenter graph").clicked() {
+        {
+            let text_color = Color32::from_rgba_premultiplied(100, 100, 100, 0);
+            ui.style_mut().visuals.widgets.inactive.bg_fill = text_color;
+            ui.style_mut().visuals.widgets.noninteractive.bg_fill = text_color;
+            ui.style_mut().visuals.widgets.inactive.weak_bg_fill = Color32::TRANSPARENT;
+            ui.style_mut().visuals.widgets.hovered.weak_bg_fill = Color32::TRANSPARENT;
+            ui.style_mut().visuals.widgets.active.weak_bg_fill = Color32::TRANSPARENT;
+            ui.style_mut().visuals.widgets.inactive.fg_stroke = Stroke::new(2.0, text_color);
+        }
+        let checkbox_text = if app.ui_states.showing_graph_controls {
+            ""
+        } else {
+            "Show Graph Controls"
+        };
+
+        ui.checkbox(&mut app.ui_states.showing_graph_controls, RichText::new(checkbox_text).color(Color32::DARK_GRAY));
+
+        if !app.ui_states.showing_graph_controls {
+            return;
+        }
+
+        // scope these cause it makes the code look pretty :)
+
+
+        if ui.button(RichText::new("Recenter graph").color(Color32::DARK_GRAY)).on_hover_text("You can also middle click the numbers for most of these options to set them to probably good default values.").clicked() {
             app.recenter_graph(
                 ctx,
                 app.program_options.daystat_circle_outline_radius
@@ -559,5 +584,45 @@ pub fn draw_bottom_left_row_buttons(
                     * app.program_options.auto_center_margin_left_multiplier,
             );
         }
+
+        ui.horizontal(|ui| {
+            ui.label(RichText::new("Graph X offset:").color(Color32::DARK_GRAY));
+            if ui.add(egui::DragValue::new(&mut app.program_options.x_offset))
+                .on_hover_text("You can also right click and drag the graph itself :)").middle_clicked() {
+                app.program_options.x_offset = 10.0;
+            }
+        });
+
+        ui.horizontal(|ui| {
+            ui.label(RichText::new("Graph Y offset:").color(Color32::DARK_GRAY));
+            if ui.add(egui::DragValue::new(&mut app.program_options.day_stat_height_offset)).middle_clicked() {
+                app.program_options.day_stat_height_offset = 0.0;
+            }
+        });
+
+        ui.horizontal(|ui| {
+            ui.label(RichText::new("Graph screen height offset:").color(Color32::DARK_GRAY));
+            if ui.add(egui::DragValue::new(&mut app.program_options.day_line_height_offset)).middle_clicked() {
+                app.program_options.day_line_height_offset = 0.0;
+            }
+        });
+
+        ui.horizontal(|ui| {
+            ui.label(RichText::new("Graph X-Scale:").color(Color32::DARK_GRAY));
+            if ui.add(egui::Slider::new(&mut app.program_options.graph_x_scale,0.01..=10.0).drag_value_speed(0.1)).middle_clicked() {
+                if let Some(new_scaling) = calculate_centered_graph_scaling(app,ctx,app.program_options.daystat_circle_outline_radius
+                    * app.program_options.auto_center_margin_right_multiplier) {
+                    app.program_options.graph_x_scale = new_scaling;
+                }
+            }
+        });
+
+        ui.horizontal(|ui| {
+            ui.label(RichText::new("Graph Y-Scale:").color(Color32::DARK_GRAY));
+            if ui.add(egui::Slider::new(&mut app.program_options.graph_y_scale,0.5..=5.0))
+                .on_hover_text("You can also right click and left click at the same time and drag the graph to scale it in a funny way :)").middle_clicked() {
+                app.program_options.graph_y_scale = 2.8;
+            }
+        });
     });
 }

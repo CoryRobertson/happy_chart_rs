@@ -87,6 +87,6 @@ pub fn draw_mood_selector_screen(_ctx: &Context, ui: &mut Ui, app: &mut HappyCha
         app.mood_selection_list.clear();
     }
     if ui.button("Close").clicked() {
-        app.showing_mood_tag_selector = false;
+        app.ui_states.showing_mood_tag_selector = false;
     }
 }

@@ -38,6 +38,6 @@ pub fn draw_about_page(about_page_ui: &mut Ui, app: &mut HappyChartState) {
     about_page_ui.separator();
 
     if about_page_ui.button("Close").clicked() {
-        app.showing_about_page = false;
+        app.ui_states.showing_about_page = false;
     }
 }

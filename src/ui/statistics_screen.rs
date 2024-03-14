@@ -119,6 +119,6 @@ pub fn draw_previous_duration_stats_screen(_ctx: &Context, ui: &mut Ui, app: &mu
     }
 
     if ui.button("Close").clicked() {
-        app.showing_statistics_screen = false;
+        app.ui_states.showing_statistics_screen = false;
     }
 }

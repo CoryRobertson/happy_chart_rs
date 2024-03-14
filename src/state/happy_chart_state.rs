@@ -24,7 +24,7 @@ pub struct HappyChartState {
     pub note_input: String,
     /// The length of days recorded since the last session. Used to determine if the user has made changes to the day list
     pub starting_length: usize,
-    pub showing_options_menu: bool,
+
     pub program_options: ProgramOptions,
     /// The status on updating the program, see the enum for more information
     pub update_status: AutoUpdateStatus,
@@ -44,17 +44,12 @@ pub struct HappyChartState {
     /// A string of text to search through all day stats to check if they contain this string, the stats are highlighted when they contain it
     pub filter_term: String,
 
-    pub showing_about_page: bool,
-
     pub stats: StateStats,
 
     /// List of error states that are present, we show the user every item in this list if any exist
     pub error_states: Vec<HappyChartError>,
 
-    pub showing_mood_tag_selector: bool,
     pub mood_selection_list: Vec<MoodTag>,
-
-    pub showing_statistics_screen: bool,
 
     pub tutorial_state: TutorialGoal,
 
@@ -70,6 +65,30 @@ pub struct HappyChartState {
 
     /// Index of the desired note to edit
     pub note_edit_selected: Option<usize>,
+
+    pub ui_states: UIStates,
+}
+
+#[derive(Debug, Clone)]
+pub struct UIStates {
+    pub showing_options_menu: bool,
+    pub showing_about_page: bool,
+    pub showing_mood_tag_selector: bool,
+    pub showing_statistics_screen: bool,
+    pub showing_graph_controls: bool,
+}
+
+#[allow(clippy::derivable_impls)]
+impl Default for UIStates {
+    fn default() -> Self {
+        Self {
+            showing_options_menu: false,
+            showing_about_page: false,
+            showing_mood_tag_selector: false,
+            showing_statistics_screen: false,
+            showing_graph_controls: false,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -135,7 +154,6 @@ impl HappyChartState {
             first_load: true,
             note_input: String::new(),
             starting_length: 0,
-            showing_options_menu: false,
             program_options: ProgramOptions::default(),
             update_status: AutoUpdateStatus::NotChecked,
             update_thread: Cell::new(None),
@@ -145,12 +163,9 @@ impl HappyChartState {
             auto_update_seen_version: None,
             last_backup_date: Local::now(),
             filter_term: String::new(),
-            showing_about_page: false,
             stats: StateStats::new(),
             error_states: vec![],
-            showing_mood_tag_selector: false,
             mood_selection_list: vec![],
-            showing_statistics_screen: false,
             tutorial_state: TutorialGoal::default(),
             encryption_key: "".to_string(),
             encryption_key_second_check: "".to_string(),
@@ -158,6 +173,7 @@ impl HappyChartState {
             open_animation_animating: true,
             central_ui_safezone_start: 0.0,
             note_edit_selected: None,
+            ui_states: UIStates::default(),
         }
     }
 
@@ -178,6 +194,7 @@ impl HappyChartState {
         }
     }
 
+    #[tracing::instrument(skip(ctx, self))]
     pub fn recenter_graph(
         &mut self,
         ctx: &Context,
