@@ -7,7 +7,7 @@ pub fn export_stats_to_csv(path: PathBuf, app: &mut HappyChartState) {
     match csv::WriterBuilder::new().from_path(&path) {
         Ok(mut export_writer) => {
             app.days.iter().for_each(|day_stat| {
-                let written_data = &[
+                let written_data: &[String; 5] = &[
                     day_stat.get_date().to_string(),
                     day_stat.get_rating().to_string(),
                     day_stat.get_note().to_string(),
@@ -21,9 +21,17 @@ pub fn export_stats_to_csv(path: PathBuf, app: &mut HappyChartState) {
                             }
                         },
                     ),
+                    day_stat.get_activities().iter().enumerate().fold(
+                        String::new(),
+                        |acc, (index, act)| {
+                            if index == day_stat.get_activities().len() - 1 {
+                                format!("{}{}", acc, act.get_activity_name())
+                            } else {
+                                format!("{}{},", acc, act.get_activity_name())
+                            }
+                        },
+                    ),
                 ];
-
-                // println!("{:?}", written_data);
 
                 match export_writer.write_record(written_data) {
                     Ok(_) => {}

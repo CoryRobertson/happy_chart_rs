@@ -87,6 +87,13 @@ impl ImprovedDayStat {
         }
     }
 
+    pub fn get_activities_mut(&mut self) -> &mut Vec<Activity> {
+        &mut self.activities
+    }
+    pub fn get_moods_mut(&mut self) -> &mut Vec<MoodTag> {
+        &mut self.mood_tags
+    }
+
     pub fn modify_rating(&mut self) -> &mut f32 {
         &mut self.rating
     }
@@ -105,6 +112,9 @@ impl ImprovedDayStat {
 
     pub fn get_mood_tags(&self) -> &[MoodTag] {
         &self.mood_tags
+    }
+    pub fn get_activities(&self) -> &[Activity] {
+        &self.activities
     }
 
     pub fn get_current_time_system() -> DateTime<Local> {
