@@ -42,4 +42,4 @@ I would also love to know if anyone uses this program, and what they do and don'
 I love working on this program, if you have any ideas, please feel free to send a pull request, or create an issue. I will always consider them!
 
 <3
-![image](https://i.imgur.com/QHpn7mU.png)
+![image](https://raw.githubusercontent.com/CoryRobertson/happy_chart_rs/master/assets/HappyChartImage2.png)
