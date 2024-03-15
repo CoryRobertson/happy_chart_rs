@@ -17,7 +17,7 @@ use self_update::cargo_crate_version;
 pub(crate) const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
 
 #[tracing::instrument(skip_all)]
-pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState) {
+pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState, _ctx: &Context) {
     central_panel_ui.horizontal(|ui| {
         ui.label("Rating: ");
 
@@ -50,16 +50,16 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
             app.ui_states.showing_mood_tag_selector = true;
         }
 
-        ui.style_mut().visuals.widgets.inactive = old_widget_visuals;
-
-        if !app.mood_selection_list.is_empty() {
-            app.mood_selection_list.iter().for_each(|mood| {
-                ui.label(&mood.get_text());
-            });
+        if !app.ui_states.activity_ui_state.show_activity_screen
+            && ui.button("Select Activities").clicked()
+        {
+            app.ui_states.activity_ui_state.show_activity_screen = true;
         }
+
+        ui.style_mut().visuals.widgets.inactive = old_widget_visuals;
     });
 
-    central_panel_ui.horizontal(|ui| {
+    central_panel_ui.horizontal_top(|ui| {
         ui.label("Note: ");
 
         if matches!(app.tutorial_state, TutorialGoal::WriteNote) {
@@ -69,6 +69,57 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
 
         ui.text_edit_multiline(&mut app.note_input)
             .on_hover_text("The note to add to the next journal entry.");
+
+        egui::Grid::new("Selected note modifier grid").show(ui, |ui| {
+            if !app.mood_selection_list.is_empty() {
+                ui.horizontal_wrapped(|ui| {
+                    egui::Grid::new("Mood text grid")
+                        .striped(true)
+                        .show(ui, |ui| {
+                            let row_width = 6;
+                            app.mood_selection_list
+                                .iter()
+                                .enumerate()
+                                .for_each(|(index, mood)| {
+                                    let _text_rect = ui.label(&mood.get_text()).rect;
+
+                                    if index != 0 && index % row_width == (row_width - 1) {
+                                        ui.end_row();
+                                    }
+                                });
+                        });
+                });
+                ui.end_row();
+            }
+
+            if !app
+                .ui_states
+                .activity_ui_state
+                .added_activity_list
+                .get_activity_list()
+                .is_empty()
+            {
+                ui.horizontal_wrapped(|ui| {
+                    egui::Grid::new("Activity text grid")
+                        .striped(true)
+                        .show(ui, |ui| {
+                            let row_width = 6;
+                            app.ui_states
+                                .activity_ui_state
+                                .added_activity_list
+                                .get_activity_list()
+                                .iter()
+                                .enumerate()
+                                .for_each(|(index, act)| {
+                                    let _text_rect = ui.label(act.get_activity_name()).rect;
+                                    if index != 0 && index % row_width == (row_width - 1) {
+                                        ui.end_row();
+                                    }
+                                });
+                        });
+                });
+            }
+        });
     });
 
     let old_widget_visuals = central_panel_ui.style().visuals.widgets.inactive;
@@ -83,6 +134,11 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
             ImprovedDayStat::get_current_time_system(),
             &app.note_input,
             app.mood_selection_list.clone(),
+            app.ui_states
+                .activity_ui_state
+                .added_activity_list
+                .get_activity_list()
+                .to_vec(),
         ));
 
         if matches!(app.tutorial_state, TutorialGoal::AddDay) {
@@ -186,6 +242,7 @@ pub fn draw_day_lines(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Contex
                 .checked_add_days(Days::new(1))
                 .unwrap_or_default(),
             "",
+            vec![],
             vec![],
         ); // fake day that starts from where the first day is, with one day added
 

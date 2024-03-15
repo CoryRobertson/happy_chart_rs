@@ -1,4 +1,5 @@
 pub mod about_screen;
+pub mod activity_screen;
 pub mod central_screen;
 pub(crate) mod encryption;
 pub mod error_screen;

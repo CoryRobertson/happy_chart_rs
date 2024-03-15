@@ -3,6 +3,7 @@ use crate::common::math::{calculate_centered_graph_scaling, improved_calculate_x
 use crate::common::mood_tag::MoodTag;
 use crate::day_stats::improved_daystat::ImprovedDayStat;
 use crate::options::program_options::ProgramOptions;
+use crate::state::activities::ActivityUIState;
 use crate::state::error_states::HappyChartError;
 use crate::state::state_stats::StateStats;
 use crate::state::tutorial_state::TutorialGoal;
@@ -76,6 +77,7 @@ pub struct UIStates {
     pub showing_mood_tag_selector: bool,
     pub showing_statistics_screen: bool,
     pub showing_graph_controls: bool,
+    pub activity_ui_state: ActivityUIState,
 }
 
 #[allow(clippy::derivable_impls)]
@@ -87,6 +89,7 @@ impl Default for UIStates {
             showing_mood_tag_selector: false,
             showing_statistics_screen: false,
             showing_graph_controls: false,
+            activity_ui_state: ActivityUIState::default(),
         }
     }
 }

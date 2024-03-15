@@ -1,6 +1,7 @@
 #[allow(deprecated)]
 use crate::day_stats::daystat::DayStat;
 use crate::prelude::MoodTag;
+use crate::state::activities::Activity;
 use chrono::{DateTime, Datelike, Local, Timelike};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -12,6 +13,7 @@ pub struct ImprovedDayStat {
     date: DateTime<Local>,
     note: String,
     mood_tags: Vec<MoodTag>,
+    activities: Vec<Activity>,
 }
 
 impl Default for ImprovedDayStat {
@@ -21,6 +23,7 @@ impl Default for ImprovedDayStat {
             date: Local::now(),
             note: "DEFAULT NOTE".to_string(),
             mood_tags: vec![],
+            activities: vec![],
         }
     }
 }
@@ -47,12 +50,20 @@ impl Display for ImprovedDayStat {
         f.write_str("Rating: ")?;
         f.write_str(&self.rating.to_string())?;
         f.write_str("\n")?;
-        f.write_str(&self.note)?;
-        f.write_str("\n")?;
+        if !self.note.is_empty() {
+            f.write_str(&self.note)?;
+            f.write_str("\n")?;
+        }
         if !self.mood_tags.is_empty() {
             f.write_str("Mood tags:\n")?;
             for mood in &self.mood_tags {
                 f.write_str(&format!("\t{:?}\n", mood))?;
+            }
+        }
+        if !self.activities.is_empty() {
+            f.write_str("Activities:\n")?;
+            for act in &self.activities {
+                f.write_str(&format!("\t{}\n", act))?;
             }
         }
         Ok(())
@@ -60,12 +71,19 @@ impl Display for ImprovedDayStat {
 }
 
 impl ImprovedDayStat {
-    pub fn new(rating: f32, date: DateTime<Local>, note: &str, mood_tags: Vec<MoodTag>) -> Self {
+    pub fn new(
+        rating: f32,
+        date: DateTime<Local>,
+        note: &str,
+        mood_tags: Vec<MoodTag>,
+        activities: Vec<Activity>,
+    ) -> Self {
         Self {
             rating,
             date,
             note: note.to_string(),
             mood_tags,
+            activities,
         }
     }
 
@@ -113,6 +131,7 @@ impl From<DayStat> for ImprovedDayStat {
             date: v,
             note: value.note,
             mood_tags: vec![],
+            activities: vec![],
         }
     }
 }
@@ -148,6 +167,7 @@ impl From<&DayStat> for ImprovedDayStat {
             date: value.get_date_time().with_timezone(&Local),
             note: value.note.clone(),
             mood_tags: vec![],
+            activities: vec![],
         }
     }
 }

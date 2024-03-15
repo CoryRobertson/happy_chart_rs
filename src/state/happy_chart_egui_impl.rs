@@ -5,6 +5,7 @@ use crate::state::error_states::HappyChartError;
 use crate::state::happy_chart_state::HappyChartState;
 use crate::state::tutorial_state::TutorialGoal;
 use crate::ui::about_screen::draw_about_page;
+use crate::ui::activity_screen::draw_activity_selector_screen;
 use crate::ui::central_screen::{
     click_drag_zoom_detection, draw_auto_update_ui, draw_bottom_left_row_buttons,
     draw_bottom_row_buttons, draw_day_lines, draw_stat_circles, draw_stat_line_segments,
@@ -53,7 +54,7 @@ impl eframe::App for HappyChartState {
 
             let pointer_interact_pos = ctx.pointer_interact_pos();
 
-            main_screen_button_ui(ui, self);
+            main_screen_button_ui(ui, self, ctx);
 
             click_drag_zoom_detection(ui, self, pointer_interact_pos.as_ref());
 
@@ -136,7 +137,9 @@ impl eframe::App for HappyChartState {
                                 d,
                             )
                         })
-                        .map(|(rating, date)| ImprovedDayStat::new(rating, date, "", vec![]))
+                        .map(|(rating, date)| {
+                            ImprovedDayStat::new(rating, date, "", vec![], vec![])
+                        })
                         .collect::<Vec<ImprovedDayStat>>();
 
                     self.days = day_stats;
@@ -202,6 +205,12 @@ impl eframe::App for HappyChartState {
         if self.note_edit_selected.is_some() {
             egui::Window::new("Note editor").show(ctx, |ui| {
                 draw_note_edit_screen(ui, self);
+            });
+        }
+
+        if self.ui_states.activity_ui_state.show_activity_screen {
+            egui::Window::new("Activities").show(ctx, |ui| {
+                draw_activity_selector_screen(ui, ctx, self);
             });
         }
     }

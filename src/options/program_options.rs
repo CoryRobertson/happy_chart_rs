@@ -1,4 +1,5 @@
 use crate::options::color_setting::ColorSettings;
+use crate::state::activities::ActivitySelectionList;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -45,6 +46,8 @@ pub struct ProgramOptions {
 
     pub auto_center_margin_right_multiplier: f32,
     pub auto_center_margin_left_multiplier: f32,
+
+    pub activity_list: ActivitySelectionList,
 }
 
 impl Default for ProgramOptions {
@@ -77,6 +80,7 @@ impl Default for ProgramOptions {
             do_opening_animation: true,
             auto_center_margin_right_multiplier: 20.0,
             auto_center_margin_left_multiplier: 2.0,
+            activity_list: ActivitySelectionList::default(),
         }
     }
 }
