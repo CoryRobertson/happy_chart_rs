@@ -71,7 +71,7 @@ impl Default for ActivityUIState {
             show_activity_screen: false,
             edit_mode: false,
             add_or_remove_mode: true,
-            activity_creat_text: "".to_string(),
+            activity_creat_text: String::new(),
             added_activity_list: ActivitySelectionList::default(),
         }
     }

@@ -14,7 +14,7 @@ use eframe::epaint::{Color32, FontId, Rounding, Stroke};
 use egui::{Context, Id, LayerId, Layout, Order, Rangef, RichText, Ui, ViewportCommand};
 use self_update::cargo_crate_version;
 
-pub(crate) const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
+pub const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
 
 #[tracing::instrument(skip_all)]
 pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState, _ctx: &Context) {
@@ -138,7 +138,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
                 .activity_ui_state
                 .added_activity_list
                 .get_activity_list()
-                .to_vec(),
+                .clone(),
         ));
 
         if matches!(app.tutorial_state, TutorialGoal::AddDay) {

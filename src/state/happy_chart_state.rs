@@ -170,8 +170,8 @@ impl HappyChartState {
             error_states: vec![],
             mood_selection_list: vec![],
             tutorial_state: TutorialGoal::default(),
-            encryption_key: "".to_string(),
-            encryption_key_second_check: "".to_string(),
+            encryption_key: String::new(),
+            encryption_key_second_check: String::new(),
             program_open_time: SystemTime::now(),
             open_animation_animating: true,
             central_ui_safezone_start: 0.0,
@@ -187,11 +187,9 @@ impl HappyChartState {
         if self.open_animation_animating {
             let animation_time = SystemTime::now()
                 .duration_since(self.program_open_time)
-                .unwrap_or(Duration::from_secs_f32(
-                    HappyChartState::OPEN_ANIMATION_DURATION,
-                ))
+                .unwrap_or(Duration::from_secs_f32(Self::OPEN_ANIMATION_DURATION))
                 .as_secs_f32();
-            ((animation_time) / (HappyChartState::OPEN_ANIMATION_DURATION)).clamp(0.0, 1.0)
+            ((animation_time) / (Self::OPEN_ANIMATION_DURATION)).clamp(0.0, 1.0)
         } else {
             1.0
         }
@@ -220,7 +218,7 @@ impl HappyChartState {
 
         let len = self.days.len() as f32;
         let frac = self.get_animation_time_fraction();
-        let idx = (len * frac) + 1.0; // we add 1 just encase there is a floating point issue, this should never happen, but it also doesn't hurt.
+        let idx = len.mul_add(frac, 1.0); // we add 1 just encase there is a floating point issue, this should never happen, but it also doesn't hurt.
 
         (idx as usize).clamp(0, self.days.len())
     }

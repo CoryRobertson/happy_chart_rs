@@ -14,7 +14,7 @@ pub fn draw_note_edit_screen(ui: &mut Ui, app: &mut HappyChartState) {
                 .signed_duration_since(Local::now())
                 .num_days()
                 .abs()
-                > NOTE_OLD_NUM_DAYS as i64
+                > i64::from(NOTE_OLD_NUM_DAYS)
             {
                 ui.label(RichText::new(format!("This note is older than {} days, it is not recommended to edit old notes as your memory of them may not be representative.", NOTE_OLD_NUM_DAYS)).color(Color32::LIGHT_RED));
             }

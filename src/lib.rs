@@ -1,3 +1,5 @@
+#![deny(clippy::suboptimal_flops, clippy::cast_lossless)]
+#![allow(clippy::uninlined_format_args)]
 pub(crate) mod common;
 pub(crate) mod day_stats;
 pub(crate) mod options;

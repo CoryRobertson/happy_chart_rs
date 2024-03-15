@@ -11,16 +11,16 @@ use egui::{Context, ViewportCommand};
 use self_update::cargo_crate_version;
 use std::sync::Arc;
 
-pub(crate) mod auto_update_status;
-pub(crate) mod backup;
-pub(crate) mod color;
-pub(crate) mod encryption;
-pub(crate) mod export;
-pub(crate) mod last_session;
-pub(crate) mod math;
-pub(crate) mod mood_tag;
-pub(crate) mod save;
-pub(crate) mod update;
+pub mod auto_update_status;
+pub mod backup;
+pub mod color;
+pub mod encryption;
+pub mod export;
+pub mod last_session;
+pub mod math;
+pub mod mood_tag;
+pub mod save;
+pub mod update;
 
 /// Quit function run when the user clicks the quit button
 #[tracing::instrument(skip(ctx, app))]

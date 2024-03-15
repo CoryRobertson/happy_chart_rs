@@ -130,8 +130,9 @@ impl eframe::App for HappyChartState {
                         .enumerate()
                         .map(|(index, d)| {
                             (
-                                ((((index as f32) / day_count as f32) * PI * 2.0).sin() * 50.0)
-                                    + 50.0, // convert index into a ratio out of the length,
+                                (((index as f32) / day_count as f32) * PI * 2.0)
+                                    .sin()
+                                    .mul_add(50.0, 50.0), // convert index into a ratio out of the length,
                                 // then make it wrap around an entire cycle of sin by multiplying it by 2PI,
                                 // then make it have an amplitude of 50 by multiplying it by 50, and adding 50, so it doesn't go negative
                                 d,
