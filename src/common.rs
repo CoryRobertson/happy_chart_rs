@@ -126,6 +126,7 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context, load_save: bool) {
     app.stats.avg_weekdays.calc_averages(&app.days);
     app.stats
         .calc_streak(&app.days, app.program_options.streak_leniency);
+    app.stats.activity_stats.calc_stats(&app.days);
 }
 
 #[tracing::instrument(skip(image))]

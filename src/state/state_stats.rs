@@ -1,13 +1,121 @@
 use crate::common::math::get_average_for_day_of_week;
 use crate::day_stats::improved_daystat::ImprovedDayStat;
+use crate::state::activities::Activity;
 use chrono::Weekday;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug)]
 pub struct StateStats {
     pub avg_weekdays: WeekdayAverages,
     pub longest_streak: Days,
+    pub activity_stats: ActivityStats,
+}
+
+#[derive(Debug)]
+pub struct ActivityStats {
+    pub top_three_common_happy_activities: Vec<Activity>,
+    pub top_three_common_sad_activities: Vec<Activity>,
+    pub average_rating_for_happy_activity_days: f32,
+    pub average_rating_for_sad_activity_days: f32,
+}
+
+impl ActivityStats {
+    pub const fn new() -> Self {
+        Self {
+            top_three_common_happy_activities: vec![],
+            top_three_common_sad_activities: vec![],
+            average_rating_for_happy_activity_days: 0.0,
+            average_rating_for_sad_activity_days: 0.0,
+        }
+    }
+
+    pub fn calc_stats(&mut self, days: &[ImprovedDayStat]) {
+        let mut day_stats_sorted_by_rating = days
+            .iter()
+            .filter(|day| !day.get_activities().is_empty())
+            .collect::<Vec<&ImprovedDayStat>>();
+        day_stats_sorted_by_rating
+            .sort_by(|day1, day2| day2.get_rating().total_cmp(&day1.get_rating()));
+
+        let day_stat_count = (days.len() as f32 * 0.25) as usize;
+        let top_stats_with_activities = day_stats_sorted_by_rating
+            .iter()
+            .take(day_stat_count)
+            .collect::<Vec<&&ImprovedDayStat>>();
+
+        let mut top_activity_map: HashMap<&Activity, u32> = HashMap::new();
+        top_stats_with_activities.iter().for_each(|stat| {
+            stat.get_activities()
+                .iter()
+                .for_each(|act| match top_activity_map.get_mut(act) {
+                    None => {
+                        top_activity_map.insert(act, 1);
+                    }
+                    Some(count) => {
+                        *count += 1;
+                    }
+                });
+        });
+        let mut top_activity_list = top_activity_map
+            .into_iter()
+            .collect::<Vec<(&Activity, u32)>>();
+        top_activity_list.sort_by_key(|(_, count)| *count);
+
+        let bottom_stats_with_activities = day_stats_sorted_by_rating
+            .iter()
+            .rev()
+            .take(day_stat_count)
+            .collect::<Vec<&&ImprovedDayStat>>();
+
+        let mut bottom_activity_map: HashMap<&Activity, u32> = HashMap::new();
+        bottom_stats_with_activities.iter().for_each(|stat| {
+            stat.get_activities()
+                .iter()
+                .for_each(|act| match bottom_activity_map.get_mut(act) {
+                    None => {
+                        bottom_activity_map.insert(act, 1);
+                    }
+                    Some(count) => {
+                        *count += 1;
+                    }
+                });
+        });
+        let mut bottom_activity_list = bottom_activity_map
+            .into_iter()
+            .collect::<Vec<(&Activity, u32)>>();
+        bottom_activity_list.sort_by_key(|(_, count)| *count);
+
+        let happy_avg_rating: f32 = top_stats_with_activities
+            .iter()
+            .map(|d| d.get_rating())
+            .sum::<f32>()
+            / top_stats_with_activities.len() as f32;
+        let sad_avg_rating: f32 = bottom_stats_with_activities
+            .iter()
+            .map(|d| d.get_rating())
+            .sum::<f32>()
+            / bottom_stats_with_activities.len() as f32;
+
+        top_activity_list.sort_by_key(|(_, c)| *c);
+        top_activity_list.sort_by_key(|(a, _)| a.get_activity_name());
+
+        bottom_activity_list.sort_by_key(|(_, c)| *c);
+        bottom_activity_list.sort_by_key(|(a, _)| a.get_activity_name());
+
+        self.top_three_common_happy_activities = top_activity_list
+            .into_iter()
+            .map(|(d, _)| (d.clone()))
+            .collect();
+        self.top_three_common_sad_activities = bottom_activity_list
+            .into_iter()
+            .rev()
+            .map(|(d, _)| (d.clone()))
+            .collect();
+        self.average_rating_for_happy_activity_days = happy_avg_rating;
+        self.average_rating_for_sad_activity_days = sad_avg_rating;
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -49,6 +157,7 @@ impl StateStats {
                 streak_start_index: 0,
                 streak_end_index: 0,
             },
+            activity_stats: ActivityStats::new(),
         }
     }
 

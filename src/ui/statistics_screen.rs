@@ -118,6 +118,29 @@ pub fn draw_previous_duration_stats_screen(_ctx: &Context, ui: &mut Ui, app: &mu
         // TODO: heatmap using a calendar widget to show quality on each day average?
     }
 
+    ui.separator();
+    ui.label(format!(
+        "Common good day activities: {}",
+        app.stats.activity_stats.top_three_common_happy_activities.iter().fold(String::new(),|a,b| {format!("{} {}", a, b.get_activity_name())})
+    ));
+    ui.label(format!(
+        "Average rating for good days: {:.2}",
+        app.stats
+            .activity_stats
+            .average_rating_for_happy_activity_days
+    ));
+    ui.label(format!(
+        "Common bad day activities: {}",
+        app.stats.activity_stats.top_three_common_sad_activities.iter().fold(String::new(),|a,b| {format!("{} {}", a, b.get_activity_name())})
+    ));
+    ui.label(format!(
+        "Average rating for bad days: {:.2}",
+        app.stats
+            .activity_stats
+            .average_rating_for_sad_activity_days
+    ));
+
+    ui.separator();
     if ui.button("Close").clicked() {
         app.ui_states.showing_statistics_screen = false;
     }

@@ -23,6 +23,7 @@ use crate::ui::statistics_screen::draw_previous_duration_stats_screen;
 use crate::ui::tutorial_screen::draw_tutorial_screen;
 use eframe::Frame;
 use egui::Context;
+use rand::Rng;
 
 /// Update loop for egui
 impl eframe::App for HappyChartState {
@@ -139,7 +140,20 @@ impl eframe::App for HappyChartState {
                             )
                         })
                         .map(|(rating, date)| {
-                            ImprovedDayStat::new(rating, date, "", vec![], vec![])
+                            ImprovedDayStat::new(rating, date, "", vec![], {
+                                let mut act_list = vec![];
+                                let activity_possiblility_list =
+                                    self.program_options.activity_list.get_activity_list();
+                                let max_count = activity_possiblility_list.len();
+                                use rand::prelude::thread_rng;
+                                for _ in 0..thread_rng().gen_range(0..max_count) {
+                                    let index = thread_rng().gen_range(0..max_count);
+                                    if let Some(act) = activity_possiblility_list.get(index) {
+                                        act_list.push(act.clone());
+                                    }
+                                }
+                                act_list
+                            })
                         })
                         .collect::<Vec<ImprovedDayStat>>();
 

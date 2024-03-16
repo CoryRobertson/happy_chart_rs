@@ -148,6 +148,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
         app.stats.avg_weekdays.calc_averages(&app.days);
         app.stats
             .calc_streak(&app.days, app.program_options.streak_leniency);
+        app.stats.activity_stats.calc_stats(&app.days);
         println!(
             "day added with rating {} and date {}",
             app.rating,
@@ -586,6 +587,9 @@ pub fn draw_bottom_row_buttons(
 
             if !app.ui_states.showing_statistics_screen && ui.button("Stats").clicked() {
                 app.ui_states.showing_statistics_screen = true;
+                app.stats.avg_weekdays.calc_averages(&app.days);
+                app.stats.calc_streak(&app.days,app.program_options.streak_leniency);
+                app.stats.activity_stats.calc_stats(&app.days);
             }
 
             if ui.button("Save Screenshot").clicked() {

@@ -10,7 +10,7 @@ pub struct ActivityUIState {
     pub added_activity_list: ActivitySelectionList,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Ord, PartialOrd, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub struct Activity(String);
 
 impl Display for Activity {
