@@ -145,10 +145,8 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
             app.tutorial_state = TutorialGoal::OpenOptions;
         }
 
-        app.stats.avg_weekdays.calc_averages(&app.days);
         app.stats
-            .calc_streak(&app.days, app.program_options.streak_leniency);
-        app.stats.activity_stats.calc_stats(&app.days);
+            .calc_all_stats(&app.days, app.program_options.streak_leniency);
         println!(
             "day added with rating {} and date {}",
             app.rating,
@@ -160,7 +158,8 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
 
     if central_panel_ui.button("Remove day").clicked() && !app.days.is_empty() {
         app.days.remove(app.days.len() - 1);
-        app.stats.avg_weekdays.calc_averages(&app.days);
+        app.stats
+            .calc_all_stats(&app.days, app.program_options.streak_leniency);
     }
 
     let mut bottom_search_rect = None;
@@ -358,8 +357,8 @@ pub fn draw_stat_circles(central_panel_ui: &Ui, app: &HappyChartState, ctx: &Con
             if distance(mouse_pos.x, mouse_pos.y, x, y) < dist_max && !moused_over {
                 moused_over = true;
                 app.program_options.color_settings.stat_mouse_over_color
-            } else if idx >= app.stats.longest_streak.streak_start_index
-                && idx < app.stats.longest_streak.streak_end_index
+            } else if idx >= app.stats.get_streak_stats().streak_start_index
+                && idx < app.stats.get_streak_stats().streak_end_index
                 && app.program_options.show_streak
             {
                 app.program_options.color_settings.stat_outline_streak_color
@@ -587,9 +586,7 @@ pub fn draw_bottom_row_buttons(
 
             if !app.ui_states.showing_statistics_screen && ui.button("Stats").clicked() {
                 app.ui_states.showing_statistics_screen = true;
-                app.stats.avg_weekdays.calc_averages(&app.days);
-                app.stats.calc_streak(&app.days,app.program_options.streak_leniency);
-                app.stats.activity_stats.calc_stats(&app.days);
+                app.stats.calc_all_stats(&app.days,app.program_options.streak_leniency);
             }
 
             if ui.button("Save Screenshot").clicked() {

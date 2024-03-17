@@ -8,17 +8,19 @@ use std::fmt::{Display, Formatter};
 
 #[derive(Debug)]
 pub struct StateStats {
-    pub avg_weekdays: WeekdayAverages,
-    pub longest_streak: Days,
-    pub activity_stats: ActivityStats,
+    avg_weekdays: WeekdayAverages,
+    longest_streak: Days,
+    activity_stats: ActivityStats,
 }
 
 #[derive(Debug)]
 pub struct ActivityStats {
-    pub top_three_common_happy_activities: Vec<Activity>,
-    pub top_three_common_sad_activities: Vec<Activity>,
+    pub top_three_common_happy_activities: Vec<(Activity, u32)>,
+    pub top_three_common_sad_activities: Vec<(Activity, u32)>,
     pub average_rating_for_happy_activity_days: f32,
     pub average_rating_for_sad_activity_days: f32,
+    pub day_stats_counted_happy: usize,
+    pub day_stats_counted_sad: usize,
 }
 
 impl ActivityStats {
@@ -28,10 +30,13 @@ impl ActivityStats {
             top_three_common_sad_activities: vec![],
             average_rating_for_happy_activity_days: 0.0,
             average_rating_for_sad_activity_days: 0.0,
+            day_stats_counted_happy: 0,
+            day_stats_counted_sad: 0,
         }
     }
 
-    pub fn calc_stats(&mut self, days: &[ImprovedDayStat]) {
+    #[tracing::instrument]
+    fn calc_stats(&mut self, days: &[ImprovedDayStat]) {
         let mut day_stats_sorted_by_rating = days
             .iter()
             .filter(|day| !day.get_activities().is_empty())
@@ -44,6 +49,8 @@ impl ActivityStats {
             .iter()
             .take(day_stat_count)
             .collect::<Vec<&&ImprovedDayStat>>();
+
+        self.day_stats_counted_happy = top_stats_with_activities.len();
 
         let mut top_activity_map: HashMap<&Activity, u32> = HashMap::new();
         top_stats_with_activities.iter().for_each(|stat| {
@@ -58,6 +65,7 @@ impl ActivityStats {
                     }
                 });
         });
+
         let mut top_activity_list = top_activity_map
             .into_iter()
             .collect::<Vec<(&Activity, u32)>>();
@@ -68,6 +76,8 @@ impl ActivityStats {
             .rev()
             .take(day_stat_count)
             .collect::<Vec<&&ImprovedDayStat>>();
+
+        self.day_stats_counted_sad = bottom_stats_with_activities.len();
 
         let mut bottom_activity_map: HashMap<&Activity, u32> = HashMap::new();
         bottom_stats_with_activities.iter().for_each(|stat| {
@@ -106,12 +116,12 @@ impl ActivityStats {
 
         self.top_three_common_happy_activities = top_activity_list
             .into_iter()
-            .map(|(d, _)| (d.clone()))
+            .map(|(d, c)| (d.clone(), c))
             .collect();
         self.top_three_common_sad_activities = bottom_activity_list
             .into_iter()
             .rev()
-            .map(|(d, _)| (d.clone()))
+            .map(|(d, c)| (d.clone(), c))
             .collect();
         self.average_rating_for_happy_activity_days = happy_avg_rating;
         self.average_rating_for_sad_activity_days = sad_avg_rating;
@@ -161,9 +171,28 @@ impl StateStats {
         }
     }
 
+    pub fn get_avgs_stats(&self) -> &WeekdayAverages {
+        &self.avg_weekdays
+    }
+
+    pub fn get_streak_stats(&self) -> &Days {
+        &self.longest_streak
+    }
+
+    pub fn get_activity_stats(&self) -> &ActivityStats {
+        &self.activity_stats
+    }
+
+    #[tracing::instrument(skip_all)]
+    pub fn calc_all_stats(&mut self, days: &[ImprovedDayStat], leniency: u32) {
+        self.avg_weekdays.calc_averages(days);
+        self.activity_stats.calc_stats(days);
+        self.calc_streak(days, leniency);
+    }
+
     /// Calculate the longest streak present in the day stat list
-    #[tracing::instrument]
-    pub fn calc_streak(&mut self, list: &[ImprovedDayStat], leniency: u32) {
+    #[tracing::instrument(skip_all)]
+    fn calc_streak(&mut self, list: &[ImprovedDayStat], leniency: u32) {
         let mut streak_start_index: usize = 0;
         let mut streak_end_index: usize = 0;
         let mut current_max = 0u32;
@@ -235,7 +264,7 @@ impl WeekdayAverages {
     }
 
     /// Calculate all averages and set them in the stats
-    #[tracing::instrument]
+    #[tracing::instrument(skip_all)]
     pub fn calc_averages(&mut self, list: &[ImprovedDayStat]) {
         self.avg_monday = get_average_for_day_of_week(Weekday::Mon, list);
         self.avg_tuesday = get_average_for_day_of_week(Weekday::Tue, list);

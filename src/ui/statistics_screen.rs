@@ -81,62 +81,77 @@ pub fn draw_previous_duration_stats_screen(_ctx: &Context, ui: &mut Ui, app: &mu
     if !app.days.is_empty() {
         ui.label(format!(
             "Average sunday: {:.0}",
-            app.stats.avg_weekdays.avg_sunday
+            app.stats.get_avgs_stats().avg_sunday
         ));
         ui.label(format!(
             "Average monday: {:.0}",
-            app.stats.avg_weekdays.avg_monday
+            app.stats.get_avgs_stats().avg_monday
         ));
         ui.label(format!(
             "Average tuesday: {:.0}",
-            app.stats.avg_weekdays.avg_tuesday
+            app.stats.get_avgs_stats().avg_tuesday
         ));
         ui.label(format!(
             "Average wednesday: {:.0}",
-            app.stats.avg_weekdays.avg_wednesday
+            app.stats.get_avgs_stats().avg_wednesday
         ));
         ui.label(format!(
             "Average thursday: {:.0}",
-            app.stats.avg_weekdays.avg_thursday
+            app.stats.get_avgs_stats().avg_thursday
         ));
         ui.label(format!(
             "Average friday: {:.0}",
-            app.stats.avg_weekdays.avg_friday
+            app.stats.get_avgs_stats().avg_friday
         ));
         ui.label(format!(
             "Average saturday: {:.0}",
-            app.stats.avg_weekdays.avg_saturday
+            app.stats.get_avgs_stats().avg_saturday
         ));
         ui.label(format!(
             "Longest streak {}",
-            app.stats.longest_streak.longest_streak
+            app.stats.get_streak_stats().longest_streak
         ));
         ui.label(format!(
             "Streak start-end {}-{}",
-            app.stats.longest_streak.streak_start_index, app.stats.longest_streak.streak_end_index
+            app.stats.get_streak_stats().streak_start_index,
+            app.stats.get_streak_stats().streak_end_index
         ));
         // TODO: heatmap using a calendar widget to show quality on each day average?
     }
 
     ui.separator();
     ui.label(format!(
-        "Common good day activities: {}",
-        app.stats.activity_stats.top_three_common_happy_activities.iter().fold(String::new(),|a,b| {format!("{} {}", a, b.get_activity_name())})
+        "Common good day activities: [{}]{}",
+        app.stats.get_activity_stats().day_stats_counted_happy,
+        app.stats
+            .get_activity_stats()
+            .top_three_common_happy_activities
+            .iter()
+            .fold(String::new(), |a, (act, count)| {
+                format!("{}\n\t({}) \"{}\"", a, count, act.get_activity_name())
+            })
     ));
     ui.label(format!(
         "Average rating for good days: {:.2}",
         app.stats
-            .activity_stats
+            .get_activity_stats()
             .average_rating_for_happy_activity_days
     ));
     ui.label(format!(
-        "Common bad day activities: {}",
-        app.stats.activity_stats.top_three_common_sad_activities.iter().fold(String::new(),|a,b| {format!("{} {}", a, b.get_activity_name())})
+        "Common bad day activities: [{}]{}",
+        app.stats.get_activity_stats().day_stats_counted_sad,
+        app.stats
+            .get_activity_stats()
+            .top_three_common_sad_activities
+            .iter()
+            .fold(String::new(), |a, (act, count)| {
+                format!("{}\n\t({}) \"{}\"", a, count, act.get_activity_name())
+            })
     ));
     ui.label(format!(
         "Average rating for bad days: {:.2}",
         app.stats
-            .activity_stats
+            .get_activity_stats()
             .average_rating_for_sad_activity_days
     ));
 

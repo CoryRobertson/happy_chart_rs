@@ -226,7 +226,7 @@ pub fn draw_stat_drawing_options_menu(options_panel_ui: &mut Ui, app: &mut Happy
                 egui::DragValue::new(&mut app.program_options.streak_leniency)
                     .speed(0.1),
             ).on_hover_text("The number of hours before a streak is considered broken").changed() {
-                app.stats.calc_streak(&app.days,app.program_options.streak_leniency);
+                app.stats.calc_all_stats(&app.days,app.program_options.streak_leniency);
             }
         });
         options_panel_ui.horizontal(|options_panel_ui| {

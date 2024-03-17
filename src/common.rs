@@ -123,10 +123,8 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context, load_save: bool) {
     }
 
     app.remove_old_backup_files();
-    app.stats.avg_weekdays.calc_averages(&app.days);
     app.stats
-        .calc_streak(&app.days, app.program_options.streak_leniency);
-    app.stats.activity_stats.calc_stats(&app.days);
+        .calc_all_stats(&app.days, app.program_options.streak_leniency);
 }
 
 #[tracing::instrument(skip(image))]
