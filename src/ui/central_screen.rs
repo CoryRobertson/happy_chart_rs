@@ -541,7 +541,7 @@ pub fn draw_bottom_row_buttons(
     ctx: &Context,
 ) {
     // quit button layout
-    central_panel_ui.with_layout(Layout::bottom_up(egui::Align::RIGHT), |ui| {
+    central_panel_ui.with_layout(Layout::bottom_up(egui::Align::BOTTOM), |ui| {
         if app.starting_length != app.days.len() {
             ui.visuals_mut().override_text_color = Option::from(Color32::RED);
         } else {
