@@ -119,6 +119,8 @@ pub fn draw_previous_duration_stats_screen(_ctx: &Context, ui: &mut Ui, app: &mu
         // TODO: heatmap using a calendar widget to show quality on each day average?
     }
 
+    // TODO: the remaining portion of the stats page needs to be a scrollable since it can vary in length greatly
+
     ui.separator();
     ui.label(format!(
         "Common good day activities: [{}]{}",
