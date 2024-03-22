@@ -119,43 +119,47 @@ pub fn draw_previous_duration_stats_screen(_ctx: &Context, ui: &mut Ui, app: &mu
         // TODO: heatmap using a calendar widget to show quality on each day average?
     }
 
-    // TODO: the remaining portion of the stats page needs to be a scrollable since it can vary in length greatly
-
-    ui.separator();
-    ui.label(format!(
-        "Common good day activities: [{}]{}",
-        app.stats.get_activity_stats().day_stats_counted_happy,
-        app.stats
-            .get_activity_stats()
-            .top_three_common_happy_activities
-            .iter()
-            .fold(String::new(), |a, (act, count)| {
-                format!("{}\n\t({}) \"{}\"", a, count, act.get_activity_name())
-            })
-    ));
-    ui.label(format!(
-        "Average rating for good days: {:.2}",
-        app.stats
-            .get_activity_stats()
-            .average_rating_for_happy_activity_days
-    ));
-    ui.label(format!(
-        "Common bad day activities: [{}]{}",
-        app.stats.get_activity_stats().day_stats_counted_sad,
-        app.stats
-            .get_activity_stats()
-            .top_three_common_sad_activities
-            .iter()
-            .fold(String::new(), |a, (act, count)| {
-                format!("{}\n\t({}) \"{}\"", a, count, act.get_activity_name())
-            })
-    ));
-    ui.label(format!(
-        "Average rating for bad days: {:.2}",
-        app.stats
-            .get_activity_stats()
-            .average_rating_for_sad_activity_days
-    ));
+    ui.collapsing("Activity Stats", |ui| {
+        egui::ScrollArea::vertical()
+            .max_height(300.0)
+            .show(ui,|ui| {
+                ui.separator();
+                ui.label(format!(
+                    "Common good day activities: [{}]{}",
+                    app.stats.get_activity_stats().day_stats_counted_happy,
+                    app.stats
+                        .get_activity_stats()
+                        .top_three_common_happy_activities
+                        .iter()
+                        .fold(String::new(), |a, (act, count)| {
+                            format!("{}\n\t({}) \"{}\"", a, count, act.get_activity_name())
+                        })
+                ));
+                ui.label(format!(
+                    "Average rating for good days: {:.2}",
+                    app.stats
+                        .get_activity_stats()
+                        .average_rating_for_happy_activity_days
+                ));
+                ui.label(format!(
+                    "Common bad day activities: [{}]{}",
+                    app.stats.get_activity_stats().day_stats_counted_sad,
+                    app.stats
+                        .get_activity_stats()
+                        .top_three_common_sad_activities
+                        .iter()
+                        .fold(String::new(), |a, (act, count)| {
+                            format!("{}\n\t({}) \"{}\"", a, count, act.get_activity_name())
+                        })
+                ));
+                ui.label(format!(
+                    "Average rating for bad days: {:.2}",
+                    app.stats
+                        .get_activity_stats()
+                        .average_rating_for_sad_activity_days
+                ));
+            });
+    });
 
     ui.separator();
     if ui.button("Close").clicked() {
