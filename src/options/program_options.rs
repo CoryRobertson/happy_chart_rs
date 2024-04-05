@@ -1,5 +1,6 @@
 use crate::options::color_setting::ColorSettings;
 use crate::state::activities::ActivitySelectionList;
+use crate::state::prompt_states::UserPromptStates;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -48,6 +49,8 @@ pub struct ProgramOptions {
     pub auto_center_margin_left_multiplier: f32,
 
     pub activity_list: ActivitySelectionList,
+    pub log_to_file: bool,
+    pub user_prompts: UserPromptStates,
 }
 
 impl Default for ProgramOptions {
@@ -81,6 +84,8 @@ impl Default for ProgramOptions {
             auto_center_margin_right_multiplier: 20.0,
             auto_center_margin_left_multiplier: 2.0,
             activity_list: ActivitySelectionList::default(),
+            log_to_file: false,
+            user_prompts: UserPromptStates::default(),
         }
     }
 }

@@ -151,11 +151,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
 
         app.stats
             .calc_all_stats(&app.days, app.program_options.streak_leniency);
-        info!(
-            "Day added with rating {} and date {}",
-            app.rating,
-            ImprovedDayStat::get_current_time_system()
-        );
+        info!("Day added, new day stat length: {}", app.days.len());
     }
 
     central_panel_ui.style_mut().visuals.widgets.inactive = old_widget_visuals;

@@ -1,15 +1,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(clippy::uninlined_format_args)]
+
 use eframe::NativeOptions;
 use egui::{Vec2, ViewportBuilder};
 use happy_chart_rs::prelude::{read_last_session_save_file, HappyChartState};
-#[cfg(feature = "tracing")]
-use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 
 #[tracing::instrument]
 fn main() {
-    tracing_subscriber::fmt::init();
-
     #[cfg(feature = "tracing")]
     tracing::subscriber::set_global_default(
         tracing_subscriber::registry().with(tracing_tracy::TracyLayer::default()),

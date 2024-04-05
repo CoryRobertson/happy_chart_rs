@@ -9,3 +9,4 @@ pub mod note_edit_screen;
 pub mod options_menu;
 pub mod statistics_screen;
 pub mod tutorial_screen;
+pub mod user_prompt_screens;

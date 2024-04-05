@@ -1,6 +1,6 @@
 use crate::common::export::export_stats_to_csv;
 use crate::common::update::update_program;
-use crate::common::{first_load, handle_screenshot_event};
+use crate::common::{first_load, handle_screenshot_event, set_file_logging_state};
 use crate::state::error_states::HappyChartError;
 use crate::state::happy_chart_state::HappyChartState;
 use crate::state::tutorial_state::TutorialGoal;
@@ -21,6 +21,7 @@ use crate::ui::options_menu::{
 };
 use crate::ui::statistics_screen::draw_previous_duration_stats_screen;
 use crate::ui::tutorial_screen::draw_tutorial_screen;
+use crate::ui::user_prompt_screens::draw_user_prompts;
 use eframe::Frame;
 use egui::Context;
 use rand::Rng;
@@ -163,6 +164,13 @@ impl eframe::App for HappyChartState {
                     self.program_options.graph_x_scale = ((100.0 / day_count as f32) / 3.0) * 0.9;
                 }
 
+                if ui
+                    .checkbox(&mut self.program_options.log_to_file, "Log to file")
+                    .changed()
+                {
+                    set_file_logging_state(self.program_options.log_to_file);
+                }
+
                 if ui.button("Close Options Menu").clicked() {
                     self.ui_states.showing_options_menu = false;
                 }
@@ -230,5 +238,7 @@ impl eframe::App for HappyChartState {
                 draw_activity_selector_screen(ui, ctx, self);
             });
         }
+
+        draw_user_prompts(ctx, self);
     }
 }

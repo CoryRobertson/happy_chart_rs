@@ -15,7 +15,7 @@ pub mod prelude {
 }
 
 // TODO: use source engine / half-life menu sounds when clicking and mousing over buttons
-// TODO: make the tracing subscriber log to a file?
+
 pub(crate) const SAVE_FILE_NAME: &str = "save.ser";
 pub(crate) const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
 pub(crate) const LAST_SESSION_FILE_NAME: &str = "happy_chart_last_session.ser";
@@ -24,7 +24,7 @@ pub(crate) const MANUAL_BACKUP_SUFFIX: &str = "_manual";
 pub(crate) const BACKUP_FILE_EXTENSION: &str = "zip";
 pub(crate) const GIT_DESCRIBE: &str = env!("VERGEN_GIT_DESCRIBE");
 pub(crate) const BUILD_TIMESTAMP: &str = env!("VERGEN_BUILD_TIMESTAMP");
-
 pub(crate) const MIN_ENCRYPT_KEY_LENGTH: usize = 4;
 pub(crate) const MAX_ENCRYPT_KEY_LENGTH: usize = 32;
 pub(crate) const NOTE_OLD_NUM_DAYS: u32 = 3;
+pub(crate) const LOG_FILE_NAME: &str = "happy_chart_rs.log";

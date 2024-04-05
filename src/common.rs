@@ -4,13 +4,17 @@ use crate::common::save::{read_last_session_save_file, read_save_file, save_prog
 use crate::common::update::get_release_list;
 use crate::state::error_states::HappyChartError;
 use crate::state::happy_chart_state::HappyChartState;
+use crate::LOG_FILE_NAME;
 use chrono::Local;
 use eframe::egui;
 use eframe::epaint::ColorImage;
 use egui::{Context, ViewportCommand};
 use self_update::cargo_crate_version;
+use std::fs::OpenOptions;
 use std::sync::Arc;
 use tracing::{error, info};
+use tracing_subscriber::fmt;
+use tracing_subscriber::layer::SubscriberExt;
 
 pub mod auto_update_status;
 pub mod backup;
@@ -129,9 +133,64 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context, load_save: bool) {
         }
     }
 
+    set_file_logging_state(app.program_options.log_to_file);
+
     app.remove_old_backup_files();
     app.stats
         .calc_all_stats(&app.days, app.program_options.streak_leniency);
+}
+
+/// Changes to this state take a single program restart due to tracing requiring such for a global default.
+/// This can be circumvented but is insignificant anyway.
+#[tracing::instrument]
+pub fn set_file_logging_state(log_to_file: bool) {
+    info!("File logging set to: {}", log_to_file);
+    if log_to_file {
+        let log_file = match OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(LOG_FILE_NAME)
+        {
+            Err(e) => {
+                error!("Error opening log file: {}", e);
+                return;
+            }
+            Ok(f) => {
+                info!("Successfully opened log file");
+                f
+            }
+        };
+
+        let s = tracing_subscriber::Registry::default()
+            .with(fmt::layer().with_ansi(true))
+            .with(
+                fmt::layer()
+                    .pretty()
+                    .with_ansi(false)
+                    .with_writer(log_file)
+                    .compact(),
+            );
+
+        match tracing::subscriber::set_global_default(s) {
+            Err(e) => {
+                error!("Failed to attach file log tracing subscriber: {}", e);
+            }
+            Ok(_) => {
+                info!("Successfully attached file log tracing subscriber");
+            }
+        }
+    } else {
+        match fmt::try_init() {
+            Ok(_) => {
+                info!("Successfully attached console log tracing subscriber")
+            }
+            Err(e) => {
+                // this cant be seen if there is an error, so im not sure why, but I guess ill still do this
+                eprintln!("Error setting up tracing subscriber to console {}", e);
+                error!("Error setting up tracing subscriber to console {}", e);
+            }
+        }
+    }
 }
 
 #[tracing::instrument(skip(image))]

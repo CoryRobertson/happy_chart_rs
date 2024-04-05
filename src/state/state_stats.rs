@@ -36,7 +36,7 @@ impl ActivityStats {
         }
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip_all)]
     fn calc_stats(&mut self, days: &[ImprovedDayStat]) {
         info!("Calculating stats for days");
 
