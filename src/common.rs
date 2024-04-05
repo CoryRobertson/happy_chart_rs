@@ -182,7 +182,7 @@ pub fn set_file_logging_state(log_to_file: bool) {
     } else {
         match fmt::try_init() {
             Ok(_) => {
-                info!("Successfully attached console log tracing subscriber")
+                info!("Successfully attached console log tracing subscriber");
             }
             Err(e) => {
                 // this cant be seen if there is an error, so im not sure why, but I guess ill still do this
