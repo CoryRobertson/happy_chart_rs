@@ -17,6 +17,7 @@ use std::fs;
 use std::fs::DirEntry;
 use std::thread::JoinHandle;
 use std::time::{Duration, SystemTime};
+use tracing::{debug, error, info};
 
 pub struct HappyChartState {
     pub rating: f64,
@@ -225,6 +226,7 @@ impl HappyChartState {
 
     #[tracing::instrument(skip_all)]
     pub fn remove_old_backup_files(&self) {
+        info!("Removing old backup files");
         let list = self.get_backup_file_list();
 
         // only remove old backup files if the number of old backups exceeds the amount allowed
@@ -239,9 +241,17 @@ impl HappyChartState {
                 }
                 let res = fs::remove_file(entry.path());
                 removed_count += 1;
-                println!("Removing {:?}, result: {:?}", entry, res);
+                match res {
+                    Ok(_) => {
+                        info!("Removing {:?}", entry);
+                    }
+                    Err(e) => {
+                        error!("Error removing {:?} {:?}", entry, e);
+                    }
+                }
             }
         }
+        info!("Removed {} total backup files", removed_count);
     }
 
     /// Returns the x and y values of every day stat, so we only have to calculate it once every frame instead of multiple times
@@ -273,13 +283,14 @@ impl HappyChartState {
             return vec![];
         }
 
-        #[cfg(debug_assertions)]
-        println!("{:?}", self.program_options.backup_save_path);
+        debug!(
+            "Backup save path: {:?}",
+            self.program_options.backup_save_path
+        );
         match fs::read_dir(&self.program_options.backup_save_path) {
             Ok(dir_list) => dir_list
                 .filter_map(|item| {
-                    #[cfg(debug_assertions)]
-                    println!("{:?}", item);
+                    debug!("{:?}", item);
                     item.ok()
                 })
                 .filter(|entry| {
@@ -293,13 +304,12 @@ impl HappyChartState {
                                 if let Ok(created_time) = meta_data.created() {
                                     let dt: DateTime<Local> = created_time.into();
                                     let days = Local::now().signed_duration_since(dt).num_days();
+                                    let hours = Local::now().signed_duration_since(dt).num_hours();
+                                    debug!(
+                                        "Backup: {} age: {} days hours: {}",
+                                        f_name, days, hours
+                                    );
 
-                                    #[cfg(debug_assertions)]
-                                    {
-                                        let hours =
-                                            Local::now().signed_duration_since(dt).num_hours();
-                                        println!("{} age: {} days hours: {}", f_name, days, hours);
-                                    }
                                     keep =
                                         days > i64::from(self.program_options.backup_age_keep_days);
                                 }

@@ -11,6 +11,7 @@ use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
+use tracing::info;
 use zip::write::FileOptions;
 use zip::CompressionMethod;
 
@@ -43,13 +44,12 @@ pub fn backup_program_state(
     save_program_state(ctx, app)?;
     let _ = fs::create_dir_all(&app.program_options.backup_save_path);
     let archive_file_name = get_backup_file_name(&time, is_manual);
-    let file = File::create(
-        app.program_options
-            .backup_save_path
-            .clone()
-            .join(Path::new(&archive_file_name)),
-    )
-    .map_err(HappyChartError::SaveBackupIO)?;
+    let archive_path = app
+        .program_options
+        .backup_save_path
+        .clone()
+        .join(Path::new(&archive_file_name));
+    let file = File::create(&archive_path).map_err(HappyChartError::SaveBackupIO)?;
 
     let mut arch = zip::ZipWriter::new(file);
     let options = FileOptions::default().compression_method(CompressionMethod::Deflated);
@@ -74,6 +74,8 @@ pub fn backup_program_state(
     let _ = last_session_file.read_to_end(&mut last_session_file_bytes);
     let _ = arch.write_all(&last_session_file_bytes);
     let _ = arch.finish();
+
+    info!("Successfully saved backup in path {:?}", archive_path);
 
     Ok(())
 }

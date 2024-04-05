@@ -2,6 +2,7 @@ use crate::prelude::HappyChartState;
 use crate::NOTE_OLD_NUM_DAYS;
 use chrono::Local;
 use egui::{Color32, RichText, Ui};
+use tracing::info;
 
 #[tracing::instrument(skip_all)]
 pub fn draw_note_edit_screen(ui: &mut Ui, app: &mut HappyChartState) {
@@ -25,10 +26,12 @@ pub fn draw_note_edit_screen(ui: &mut Ui, app: &mut HappyChartState) {
             });
             ui.add_space(8.0);
             if ui.button("Set selected moods").on_hover_text("Sets moods that are currently selected from the mood selection screen to this day stat").clicked() {
+                info!("Moods modified on day stat");
                 *note.get_moods_mut() = app.mood_selection_list.clone();
             }
             ui.add_space(8.0);
             if ui.button("Set selected activities").on_hover_text("Sets activities that are currently selected from the activities selection screen to this day stat").clicked() {
+                info!("Activities modified on day stat");
                 *note.get_activities_mut() = app.ui_states.activity_ui_state.added_activity_list.get_activity_list().clone();
             }
         }
@@ -36,6 +39,7 @@ pub fn draw_note_edit_screen(ui: &mut Ui, app: &mut HappyChartState) {
 
     ui.separator();
     if ui.button("Close edit screen").clicked() {
+        info!("Edit note screen closed");
         app.note_edit_selected = None;
     }
 }

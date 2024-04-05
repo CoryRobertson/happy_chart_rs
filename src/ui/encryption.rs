@@ -6,6 +6,7 @@ use crate::state::error_states::HappyChartError;
 use crate::{MAX_ENCRYPT_KEY_LENGTH, MIN_ENCRYPT_KEY_LENGTH};
 use eframe::epaint::Color32;
 use egui::{Context, RichText, TextEdit, Ui};
+use tracing::info;
 
 #[tracing::instrument(skip_all)]
 pub fn draw_decryption_screen(
@@ -33,6 +34,7 @@ pub fn draw_decryption_screen(
         if unlock_button.clicked()
             || (!app.encryption_key.is_empty() && key_input_resp.lost_focus())
         {
+            info!("Unlock button clicked");
             let decrypted_save = decrypt_save_file(app, encrypted_data)?;
 
             // set the second key equal to the first key so after the user unlocks the save file, they don't have to re-type their password

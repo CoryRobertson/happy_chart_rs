@@ -24,6 +24,7 @@ use crate::ui::tutorial_screen::draw_tutorial_screen;
 use eframe::Frame;
 use egui::Context;
 use rand::Rng;
+use tracing::error;
 
 /// Update loop for egui
 impl eframe::App for HappyChartState {
@@ -194,6 +195,7 @@ impl eframe::App for HappyChartState {
             {
                 egui::Window::new("Unlock your save file").show(ctx, |ui| {
                     if let Err(err) = draw_decryption_screen(ui, self, ctx) {
+                        error!("Error decrypting save file: {:?}", err);
                         self.error_states.push(err);
                     }
                     if self

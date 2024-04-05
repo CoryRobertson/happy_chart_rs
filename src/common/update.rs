@@ -4,9 +4,11 @@ use self_update::{cargo_crate_version, Status};
 use std::error::Error;
 use std::thread;
 use std::thread::JoinHandle;
+use tracing::{debug, error, info};
 
 #[tracing::instrument]
 pub fn update_program() -> JoinHandle<Result<Status, String>> {
+    info!("Spawning update program thread");
     thread::spawn(|| {
         match self_update::backends::github::UpdateBuilder::new()
             .repo_owner("CoryRobertson")
@@ -19,22 +21,28 @@ pub fn update_program() -> JoinHandle<Result<Status, String>> {
         {
             Ok(updater) => match updater.update() {
                 Ok(status) => Ok(status),
-                Err(err) => Err(err.to_string()),
+                Err(err) => {
+                    error!("Error updating happy chart: {:?}", err);
+                    Err(err.to_string())
+                }
             },
-            Err(err) => Err(err.to_string()),
+            Err(err) => {
+                error!("Error creating update builder: {:?}", err);
+                Err(err.to_string())
+            }
         }
     })
 }
 
 #[tracing::instrument]
 pub fn get_release_list() -> Result<Vec<Release>, Box<dyn Error>> {
+    info!("Getting release list");
     let list = self_update::backends::github::ReleaseList::configure()
         .repo_owner("CoryRobertson")
         .repo_name("happy_chart_rs")
         .build()?
         .fetch()?;
-    #[cfg(debug_assertions)]
-    println!("{:?}", list);
+    debug!("{:?}", list);
     Ok(list)
 }
 

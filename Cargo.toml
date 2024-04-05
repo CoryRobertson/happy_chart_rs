@@ -17,8 +17,8 @@ strip = true
 lto = true
 
 [dependencies]
-eframe = { version = "0.26.2", features = ["serde", "accesskit"]}
-egui = { version = "0.26.2", features = ["serde", "accesskit"]}
+eframe = { version = "0.27.2", features = ["serde", "accesskit"]}
+egui = { version = "0.27.2", features = ["serde", "accesskit"]}
 serde = { version = "1.0.197", features = ["derive"] }
 chrono = { version = "0.4.35", features = ["serde"] }
 chrono-tz = { version = "0.8.6", features = ["serde"] }
@@ -32,7 +32,7 @@ self_update = { version = "0.39.0", features = ["archive-zip","compression-flate
 zip = "^0.6.6"
 tracing = { version = "0.1.40" }
 tracing-tracy = { version = "0.11.0", optional = true, features = ["default","flush-on-exit"]}
-tracing-subscriber = "0.3.18"
+tracing-subscriber = {  version = "0.3.18", features = ["fmt"] }
 strum = "0.26.2"
 strum_macros = "0.26.2"
 csv = "1.3.0"

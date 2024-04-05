@@ -2,6 +2,7 @@ use crate::common::color::tutorial_button_colors;
 use crate::prelude::HappyChartState;
 use crate::state::tutorial_state::TutorialGoal;
 use egui::{Context, Ui};
+use tracing::info;
 
 #[tracing::instrument(skip_all)]
 pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartState) {
@@ -20,6 +21,7 @@ pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartStat
                 ui.label("For starters, click");
                 tutorial_button_colors(ui);
                 if ui.button("here").clicked() {
+                    info!("Tutorial state {:?} advanced", &app.tutorial_state);
                     app.tutorial_state = TutorialGoal::AddRating(false);
                 }
                 ui.label("to start the tutorial.");
@@ -36,6 +38,7 @@ pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartStat
                     ui.label("Click");
                     tutorial_button_colors(ui);
                     if ui.button("here").clicked() {
+                        info!("Tutorial state {:?} advanced", &app.tutorial_state);
                         app.tutorial_state = TutorialGoal::OpenSelectMood;
                     }
                     ui.label(" to go to the next step in the tutorial.");
@@ -58,6 +61,7 @@ pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartStat
                 ui.label("Click");
                 tutorial_button_colors(ui);
                 if !app.mood_selection_list.is_empty() && ui.button("here").clicked() {
+                    info!("Tutorial state {:?} advanced",&app.tutorial_state);
                     app.tutorial_state = TutorialGoal::WriteNote;
                 }
                 ui.label("once you are happy with your mood selection, to advance to the next tutorial step.");
@@ -71,6 +75,7 @@ pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartStat
                 ui.label("Click");
                 tutorial_button_colors(ui);
                 if ui.button("here").clicked() {
+                    info!("Tutorial state {:?} advanced", &app.tutorial_state);
                     app.tutorial_state = TutorialGoal::AddDay;
                 }
                 ui.label("once you are happy with your note, to go to the next tutorial step.");
@@ -100,6 +105,10 @@ pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartStat
             ui.separator();
             tutorial_button_colors(ui);
             if ui.button("Close tutorial").clicked() {
+                info!(
+                    "Tutorial state {:?} advanced and closed",
+                    &app.tutorial_state
+                );
                 app.tutorial_state = TutorialGoal::TutorialClosed;
             }
         }
@@ -113,6 +122,7 @@ pub fn draw_tutorial_screen(ctx: &Context, ui: &mut Ui, app: &mut HappyChartStat
             .on_hover_text("You can restart the tutorial through the options menu. :)")
             .clicked()
         {
+            info!("Tutorial skipped");
             app.tutorial_state = TutorialGoal::TutorialClosed;
         }
     }

@@ -5,6 +5,7 @@ use chrono::Weekday;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
+use tracing::info;
 
 #[derive(Debug)]
 pub struct StateStats {
@@ -37,6 +38,8 @@ impl ActivityStats {
 
     #[tracing::instrument]
     fn calc_stats(&mut self, days: &[ImprovedDayStat]) {
+        info!("Calculating stats for days");
+
         let mut day_stats_sorted_by_rating = days
             .iter()
             .filter(|day| !day.get_activities().is_empty())
@@ -185,6 +188,7 @@ impl StateStats {
 
     #[tracing::instrument(skip_all)]
     pub fn calc_all_stats(&mut self, days: &[ImprovedDayStat], leniency: u32) {
+        info!("Calculating all stats");
         self.avg_weekdays.calc_averages(days);
         self.activity_stats.calc_stats(days);
         self.calc_streak(days, leniency);
@@ -193,22 +197,13 @@ impl StateStats {
     /// Calculate the longest streak present in the day stat list
     #[tracing::instrument(skip_all)]
     fn calc_streak(&mut self, list: &[ImprovedDayStat], leniency: u32) {
+        info!("Calculating streak");
         let mut streak_start_index: usize = 0;
         let mut streak_end_index: usize = 0;
         let mut current_max = 0u32;
 
         for day_index in 0..list.len() {
             let remaining_days = &list[day_index..];
-
-            #[cfg(debug_assertions)]
-            println!(
-                "{} {} {} {} {}",
-                day_index,
-                current_max,
-                streak_start_index,
-                streak_end_index,
-                remaining_days.len()
-            );
 
             let mut highest = 0;
             if let Some(mut prev_day) = remaining_days.first() {
@@ -266,6 +261,7 @@ impl WeekdayAverages {
     /// Calculate all averages and set them in the stats
     #[tracing::instrument(skip_all)]
     pub fn calc_averages(&mut self, list: &[ImprovedDayStat]) {
+        info!("Calculating average ratings for each day");
         self.avg_monday = get_average_for_day_of_week(Weekday::Mon, list);
         self.avg_tuesday = get_average_for_day_of_week(Weekday::Tue, list);
         self.avg_wednesday = get_average_for_day_of_week(Weekday::Wed, list);

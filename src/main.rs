@@ -8,6 +8,8 @@ use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 
 #[tracing::instrument]
 fn main() {
+    tracing_subscriber::fmt::init();
+
     #[cfg(feature = "tracing")]
     tracing::subscriber::set_global_default(
         tracing_subscriber::registry().with(tracing_tracy::TracyLayer::default()),

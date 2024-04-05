@@ -13,6 +13,7 @@ use eframe::emath::{Align2, Pos2, Rect, Vec2};
 use eframe::epaint::{Color32, FontId, Rounding, Stroke};
 use egui::{Context, Id, LayerId, Layout, Order, Rangef, RichText, Ui, ViewportCommand};
 use self_update::cargo_crate_version;
+use tracing::{error, info};
 
 pub const STAT_HEIGHT_CONSTANT_OFFSET: f32 = 280f32;
 
@@ -44,6 +45,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
         }
 
         if !app.ui_states.showing_mood_tag_selector && ui.button("Select mood").clicked() {
+            info!("Mood selector menu opened");
             if app.tutorial_state == TutorialGoal::OpenSelectMood {
                 app.tutorial_state = TutorialGoal::SelectAMood;
             }
@@ -53,6 +55,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
         if !app.ui_states.activity_ui_state.show_activity_screen
             && ui.button("Select Activities").clicked()
         {
+            info!("Activities menu opened");
             app.ui_states.activity_ui_state.show_activity_screen = true;
         }
 
@@ -129,6 +132,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
     }
 
     if central_panel_ui.button("Add day").clicked() {
+        info!("Day added");
         app.days.push(ImprovedDayStat::new(
             app.rating as f32,
             ImprovedDayStat::get_current_time_system(),
@@ -147,8 +151,8 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
 
         app.stats
             .calc_all_stats(&app.days, app.program_options.streak_leniency);
-        println!(
-            "day added with rating {} and date {}",
+        info!(
+            "Day added with rating {} and date {}",
             app.rating,
             ImprovedDayStat::get_current_time_system()
         );
@@ -157,6 +161,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
     central_panel_ui.style_mut().visuals.widgets.inactive = old_widget_visuals;
 
     if central_panel_ui.button("Remove day").clicked() && !app.days.is_empty() {
+        info!("Day removed");
         app.days.remove(app.days.len() - 1);
         app.stats
             .calc_all_stats(&app.days, app.program_options.streak_leniency);
@@ -471,6 +476,7 @@ pub fn draw_stat_mouse_over_info(
             );
 
             if select_note {
+                info!("Note selected to edit: {}", idx);
                 app.note_edit_selected = Some(idx);
             }
         }
@@ -485,6 +491,7 @@ pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState,
     if let (should_show, Some(release)) = (update_touple.0, update_touple.1.cloned()) {
         if should_show {
             if central_panel_ui.button("Dismiss update").clicked() {
+                info!("Update dismissed: {:?}", release);
                 app.auto_update_seen_version = Some(release.version.to_string());
                 return;
             }
@@ -497,6 +504,7 @@ pub fn draw_auto_update_ui(central_panel_ui: &mut Ui, app: &mut HappyChartState,
             app.central_ui_safezone_start = pos.y;
 
             if update_button.clicked() {
+                info!("Update button clicked");
                 app.update_thread.replace(Some(update_program()));
                 app.auto_update_seen_version = Some(release.version.to_string());
             }
@@ -555,10 +563,12 @@ pub fn draw_bottom_row_buttons(
                 .on_disabled_hover_text("There are outstanding errors present, please resolve them in order to Save & Quit");
 
             if quit_button.clicked() {
+                info!("Quit button clicked");
                 // Only let the user quit the program through save and quit if there are no outstanding errors
                 if app.error_states.is_empty() {
                     // attempt to quit the application, but present an error state if one occurs during the quit process
                     if let Err(err) = quit(ctx, app) {
+                        error!("Error during quit program sequence: {}",err);
                         app.error_states.push(err);
                     }
                 }
@@ -572,6 +582,7 @@ pub fn draw_bottom_row_buttons(
             }
 
             if !app.ui_states.showing_options_menu && ui.button("Options").clicked() {
+                info!("Options button clicked");
                 app.ui_states.showing_options_menu = true;
                 if app.tutorial_state == TutorialGoal::OpenOptions {
                     app.tutorial_state = TutorialGoal::DoneWithTutorial;
@@ -581,22 +592,25 @@ pub fn draw_bottom_row_buttons(
             ui.style_mut().visuals.widgets.inactive = old_widget_visuals;
 
             if !app.ui_states.showing_about_page && ui.button("About").clicked() {
+                info!("About button clicked");
                 app.ui_states.showing_about_page = true;
             }
 
             if !app.ui_states.showing_statistics_screen && ui.button("Stats").clicked() {
+                info!("Stats screen opened");
                 app.ui_states.showing_statistics_screen = true;
                 app.stats.calc_all_stats(&app.days,app.program_options.streak_leniency);
             }
 
             if ui.button("Save Screenshot").clicked() {
+                info!("Screenshot button clicked");
                 // frame.request_screenshot();
                 ctx.send_viewport_cmd(ViewportCommand::Screenshot);
             }
 
             if quit_button.hovered() {
-                ui.label(egui::RichText::new(BUILD_TIMESTAMP).color(Color32::from_rgb(80, 80, 80)));
-                ui.label(egui::RichText::new(GIT_DESCRIBE).color(Color32::from_rgb(80, 80, 80)));
+                ui.label(RichText::new(BUILD_TIMESTAMP).color(Color32::from_rgb(80, 80, 80)));
+                ui.label(RichText::new(GIT_DESCRIBE).color(Color32::from_rgb(80, 80, 80)));
             }
         });
     });
@@ -634,6 +648,7 @@ pub fn draw_bottom_left_row_buttons(
 
 
         if ui.button(RichText::new("Recenter graph").color(Color32::DARK_GRAY)).on_hover_text("You can also middle click the numbers for most of these options to set them to probably good default values.").clicked() {
+            info!("Graph recenter button clicked");
             app.recenter_graph(
                 ctx,
                 app.program_options.daystat_circle_outline_radius

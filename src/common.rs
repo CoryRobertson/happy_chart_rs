@@ -10,6 +10,7 @@ use eframe::epaint::ColorImage;
 use egui::{Context, ViewportCommand};
 use self_update::cargo_crate_version;
 use std::sync::Arc;
+use tracing::{error, info};
 
 pub mod auto_update_status;
 pub mod backup;
@@ -25,15 +26,18 @@ pub mod update;
 /// Quit function run when the user clicks the quit button
 #[tracing::instrument(skip(ctx, app))]
 pub fn quit(ctx: &Context, app: &HappyChartState) -> Result<(), HappyChartError> {
+    info!("Quit program sequence started");
     save_program_state(ctx, app)?;
 
     ctx.send_viewport_cmd(ViewportCommand::Close);
+    info!("Quit program sequence completed");
     Ok(())
 }
 
 /// First load governs error states on its own, no need to read output
 #[tracing::instrument(skip(app, ctx))]
 pub fn first_load(app: &mut HappyChartState, ctx: &Context, load_save: bool) {
+    info!("Running program startup");
     // all data we need to read one time on launch, all of this most of the time is unchanging throughout usage of the program, so it can only be recalculated on launch
     // for example, day quality averages do not need to change between launches
     app.first_load = false;
@@ -44,6 +48,7 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context, load_save: bool) {
                 app.days = save_file_days;
             }
             Err(err) => {
+                error!("Error reading save file: {}", err);
                 app.error_states.push(err);
             }
         }
@@ -81,14 +86,14 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context, load_save: bool) {
                             &release.version,
                         ) {
                             if greater_bump {
-                                println!(
+                                info!(
                                     "Update available! {} {} {}",
                                     release.name, release.version, release.date
                                 );
                                 app.update_available = Some(release.clone());
                                 app.update_status = AutoUpdateStatus::OutOfDate;
                             } else {
-                                println!("No update available.");
+                                info!("No update available.");
                                 app.update_status =
                                     AutoUpdateStatus::UpToDate(cargo_crate_version!().to_string());
                             }
@@ -96,6 +101,7 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context, load_save: bool) {
                     }
                 }
                 Err(err) => {
+                    error!("Error getting release list: {}", err);
                     if !app.program_options.disable_update_list_error_showing {
                         app.error_states
                             .push(HappyChartError::UpdateReleaseList(err));
@@ -116,6 +122,7 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context, load_save: bool) {
                     app.last_backup_date = Local::now();
                 }
                 Err(err) => {
+                    error!("Error backing up program state: {:?}", err);
                     app.error_states.push(err);
                 }
             }
@@ -129,17 +136,31 @@ pub fn first_load(app: &mut HappyChartState, ctx: &Context, load_save: bool) {
 
 #[tracing::instrument(skip(image))]
 pub fn handle_screenshot_event(image: &Arc<ColorImage>) {
-    if let Some(path) = rfd::FileDialog::new()
+    info!("Saving screenshot");
+
+    match rfd::FileDialog::new()
         .add_filter("Image", &["png", "jpeg", "jpg", "bmp", "tiff"])
         .save_file()
     {
-        let _ = image::save_buffer(
-            path,
-            image.as_raw(),
-            u32::try_from(image.width()).unwrap_or(u32::MAX),
-            u32::try_from(image.height()).unwrap_or(u32::MAX),
-            image::ColorType::Rgba8,
-        );
+        None => {
+            info!("No save path selected");
+        }
+        Some(path) => {
+            match image::save_buffer(
+                path,
+                image.as_raw(),
+                u32::try_from(image.width()).unwrap_or(u32::MAX),
+                u32::try_from(image.height()).unwrap_or(u32::MAX),
+                image::ColorType::Rgba8,
+            ) {
+                Ok(_) => {
+                    info!("Screenshot save successful");
+                }
+                Err(err) => {
+                    error!("Screenshot save error: {}", err);
+                }
+            }
+        }
     }
 }
 

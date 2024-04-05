@@ -1,6 +1,7 @@
 use crate::prelude::HappyChartState;
 use crate::state::activities::Activity;
 use egui::{Context, Ui};
+use tracing::info;
 
 #[tracing::instrument(skip_all)]
 pub fn draw_activity_selector_screen(ui: &mut Ui, _ctx: &Context, app: &mut HappyChartState) {
@@ -109,6 +110,7 @@ pub fn draw_activity_selector_screen(ui: &mut Ui, _ctx: &Context, app: &mut Happ
 
     ui.horizontal(|ui| {
         if app.ui_states.activity_ui_state.show_activity_screen && ui.button("Close").clicked() {
+            info!("Activity selection screen closed");
             app.ui_states.activity_ui_state.show_activity_screen = false;
         }
         ui.checkbox(&mut app.ui_states.activity_ui_state.edit_mode, "Edit Mode");

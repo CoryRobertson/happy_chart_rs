@@ -14,6 +14,8 @@ pub mod prelude {
     pub use crate::state::happy_chart_state::HappyChartState;
 }
 
+// TODO: use source engine / half-life menu sounds when clicking and mousing over buttons
+// TODO: make the tracing subscriber log to a file?
 pub(crate) const SAVE_FILE_NAME: &str = "save.ser";
 pub(crate) const NEW_SAVE_FILE_NAME: &str = "happy_chart_save.ser";
 pub(crate) const LAST_SESSION_FILE_NAME: &str = "happy_chart_last_session.ser";

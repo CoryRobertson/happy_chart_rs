@@ -4,6 +4,7 @@ use crate::state::happy_chart_state::HappyChartState;
 use crate::ui::encryption::draw_fix_encryption_keys_screen;
 use crate::{MAX_ENCRYPT_KEY_LENGTH, MIN_ENCRYPT_KEY_LENGTH};
 use egui::Ui;
+use tracing::info;
 
 #[tracing::instrument(skip(ui, app))]
 pub fn draw_error_screen(app: &mut HappyChartState, ui: &mut Ui) {
@@ -143,6 +144,7 @@ pub fn draw_error_screen(app: &mut HappyChartState, ui: &mut Ui) {
         .on_hover_text("This screen will pop up again if a new error occurs")
         .clicked()
     {
+        info!("Errors cleared: {:?}", app.error_states);
         app.error_states.clear();
     }
 }

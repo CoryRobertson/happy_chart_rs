@@ -122,7 +122,7 @@ pub fn draw_previous_duration_stats_screen(_ctx: &Context, ui: &mut Ui, app: &mu
     ui.collapsing("Activity Stats", |ui| {
         egui::ScrollArea::vertical()
             .max_height(300.0)
-            .show(ui,|ui| {
+            .show(ui, |ui| {
                 ui.separator();
                 ui.label(format!(
                     "Common good day activities: [{}]{}",

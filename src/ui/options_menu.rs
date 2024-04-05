@@ -2,6 +2,7 @@ use chrono::Local;
 use eframe::epaint::Color32;
 use egui::{Context, RichText, Ui};
 use self_update::Status;
+use tracing::error;
 
 use crate::common::auto_update_status::AutoUpdateStatus;
 use crate::common::backup::backup_program_state;
@@ -294,6 +295,7 @@ pub fn draw_backup_settings_options_menu(
 
         if options_panel_ui.button("Backup program state").on_hover_text("Compress the save state and the last session data into a zip file titled with the current date.").clicked() {
             if let Err(err) = backup_program_state(ctx, app, true) {
+                error!("Error backing up program state: {}",err);
                 app.error_states.push(err);
             }
             app.last_backup_date = Local::now();

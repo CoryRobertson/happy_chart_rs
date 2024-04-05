@@ -1,8 +1,10 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+  <configuration default="false" name="Run debug log" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
     <option name="command" value="run --package happy_chart_rs --bin happy_chart_rs" />
     <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-    <envs />
+    <envs>
+      <env name="RUST_LOG" value="debug" />
+    </envs>
     <option name="emulateTerminal" value="false" />
     <option name="channel" value="DEFAULT" />
     <option name="requiredFeatures" value="true" />

@@ -1,9 +1,11 @@
 use crate::prelude::HappyChartState;
 use crate::state::error_states::HappyChartError;
 use std::path::PathBuf;
+use tracing::{error, info};
 
 #[tracing::instrument(skip_all)]
 pub fn export_stats_to_csv(path: PathBuf, app: &mut HappyChartState) {
+    info!("Exporting stats to csv at path: {:?}", path);
     match csv::WriterBuilder::new().from_path(&path) {
         Ok(mut export_writer) => {
             app.days.iter().for_each(|day_stat| {
@@ -48,6 +50,7 @@ pub fn export_stats_to_csv(path: PathBuf, app: &mut HappyChartState) {
             }
         }
         Err(export_error) => {
+            error!("Error creating csv writer: {:?}", export_error);
             app.error_states.push(HappyChartError::ExportIO(
                 std::io::Error::from(export_error),
                 Some(path),

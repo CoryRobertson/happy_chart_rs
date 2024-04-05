@@ -7,6 +7,7 @@ use crate::state::tutorial_state::TutorialGoal;
 use egui::scroll_area::ScrollBarVisibility;
 use egui::{Context, ScrollArea, Ui};
 use strum::IntoEnumIterator;
+use tracing::info;
 
 #[tracing::instrument(skip_all)]
 pub fn draw_mood_selector_screen(_ctx: &Context, ui: &mut Ui, app: &mut HappyChartState) {
@@ -91,6 +92,7 @@ pub fn draw_mood_selector_screen(_ctx: &Context, ui: &mut Ui, app: &mut HappyCha
         app.mood_selection_list.clear();
     }
     if ui.button("Close").clicked() {
+        info!("Mood selection screen closed");
         app.ui_states.showing_mood_tag_selector = false;
     }
 }

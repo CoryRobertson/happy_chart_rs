@@ -2,12 +2,14 @@ use crate::prelude::{HappyChartState, ImprovedDayStat};
 use crate::state::error_states::HappyChartError;
 use crate::{MAX_ENCRYPT_KEY_LENGTH, MIN_ENCRYPT_KEY_LENGTH};
 use cocoon::MiniCocoon;
+use tracing::info;
 
 #[tracing::instrument(skip_all)]
 pub fn decrypt_save_file(
     app: &HappyChartState,
     encrypted_data: &[u8],
 ) -> Result<Vec<ImprovedDayStat>, HappyChartError> {
+    info!("Decrypting save file");
     let mut key = app.encryption_key.to_string();
     if key.len() < 32 {
         key.push_str("00000000000000000000000000000000");
@@ -17,6 +19,8 @@ pub fn decrypt_save_file(
     let unwrapped = cocoon
         .unwrap(encrypted_data)
         .map_err(HappyChartError::DecryptionError)?;
+
+    info!("Successfully decrypted save file, deserializing now.");
 
     serde_json::from_slice::<Vec<ImprovedDayStat>>(&unwrapped)
         .map_err(|err| HappyChartError::Deserialization(err, None))
