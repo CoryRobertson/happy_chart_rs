@@ -1,6 +1,6 @@
 [package]
 name = "happy_chart_rs"
-version = "1.17.1"
+version = "1.17.2"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "A subjective day quality charting program"
