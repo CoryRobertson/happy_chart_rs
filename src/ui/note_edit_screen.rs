@@ -6,6 +6,8 @@ use tracing::info;
 
 #[tracing::instrument(skip_all)]
 pub fn draw_note_edit_screen(ui: &mut Ui, app: &mut HappyChartState) {
+    let mut note_to_delete: Option<usize> = None;
+
     if let Some(index) = app.note_edit_selected {
         if let Some(note) = app.days.get_mut(index) {
             ui.label(note.to_string());
@@ -34,7 +36,23 @@ pub fn draw_note_edit_screen(ui: &mut Ui, app: &mut HappyChartState) {
                 info!("Activities modified on day stat");
                 *note.get_activities_mut() = app.ui_states.activity_ui_state.added_activity_list.get_activity_list().clone();
             }
+            ui.add_space(8.0);
+            if ui
+                .button("Delete note")
+                .on_hover_text("Requires a double click just incase.")
+                .double_clicked()
+            {
+                note_to_delete = Some(index);
+            }
         }
+    }
+
+    if let Some(idx) = note_to_delete {
+        info!("Removing note from list: {}", idx);
+        app.days.remove(idx);
+        app.note_edit_selected = None;
+        app.stats
+            .calc_all_stats(&app.days, app.program_options.streak_leniency);
     }
 
     ui.separator();
