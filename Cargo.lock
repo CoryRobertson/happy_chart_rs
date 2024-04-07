@@ -2221,6 +2221,7 @@ dependencies = [
  "tracing-subscriber",
  "tracing-tracy",
  "vergen",
+ "walkdir",
  "winres",
  "zip",
 ]

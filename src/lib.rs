@@ -28,3 +28,4 @@ pub(crate) const MIN_ENCRYPT_KEY_LENGTH: usize = 4;
 pub(crate) const MAX_ENCRYPT_KEY_LENGTH: usize = 32;
 pub(crate) const NOTE_OLD_NUM_DAYS: u32 = 3;
 pub(crate) const LOG_FILE_NAME: &str = "happy_chart_rs.log";
+pub(crate) const BUILD_HASH: &str = env!("SOURCE_CODE_HASH");

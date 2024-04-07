@@ -44,6 +44,7 @@ tracing = ["dep:tracing-tracy"]
 
 [build-dependencies]
 vergen = { version = "8.2.6", features = ["build","git","gitcl"] }
+walkdir = "2.5.0"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1.12"
