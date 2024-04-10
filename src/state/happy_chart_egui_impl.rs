@@ -13,6 +13,7 @@ use crate::ui::central_screen::{
 };
 use crate::ui::encryption::draw_decryption_screen;
 use crate::ui::error_screen::draw_error_screen;
+use crate::ui::feedback_screen::draw_feedback_window;
 use crate::ui::mood_selector_menu::draw_mood_selector_screen;
 use crate::ui::note_edit_screen::draw_note_edit_screen;
 use crate::ui::options_menu::{
@@ -238,6 +239,8 @@ impl eframe::App for HappyChartState {
                 draw_activity_selector_screen(ui, ctx, self);
             });
         }
+
+        draw_feedback_window(ctx, self);
 
         draw_user_prompts(ctx, self);
     }

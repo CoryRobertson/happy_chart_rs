@@ -1,3 +1,4 @@
+use reqwest::blocking::Response;
 use serde::{Deserialize, Serialize};
 use std::cell::Cell;
 use std::fmt::{Debug, Formatter};
@@ -8,7 +9,8 @@ use strum_macros::EnumIter;
 pub struct FeedbackUiState {
     pub happy_chart_feedback: HappyChartFeedback,
     pub showing_feedback_screen: bool,
-    pub submit_thread: Cell<Option<JoinHandle<()>>>,
+    pub submit_thread: Cell<Option<JoinHandle<reqwest::Result<Response>>>>,
+    pub response: Option<Response>,
 }
 
 impl Debug for FeedbackUiState {
@@ -47,7 +49,7 @@ impl Default for HappyChartFeedback {
     fn default() -> Self {
         Self {
             message: Message("".to_string()),
-            rating: FeedbackRating::VeryPositive,
+            rating: FeedbackRating::default(),
         }
     }
 }
@@ -56,11 +58,23 @@ impl Default for HappyChartFeedback {
 pub struct Message(pub String);
 
 #[derive(
-    Serialize, Deserialize, Debug, Clone, Copy, EnumIter, Ord, PartialOrd, Eq, PartialEq, Hash,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    EnumIter,
+    Ord,
+    PartialOrd,
+    Eq,
+    PartialEq,
+    Hash,
+    Default,
 )]
 pub enum FeedbackRating {
     VeryPositive,
     SomewhatPositive,
+    #[default]
     Neutral,
     SomewhatNegative,
     VeryNegative,
