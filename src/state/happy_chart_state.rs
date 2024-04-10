@@ -7,6 +7,7 @@ use crate::state::activities::ActivityUIState;
 use crate::state::error_states::HappyChartError;
 use crate::state::state_stats::StateStats;
 use crate::state::tutorial_state::TutorialGoal;
+use crate::user_feedback::FeedbackUiState;
 use crate::{BACKUP_FILENAME_PREFIX, BACKUP_FILE_EXTENSION, MANUAL_BACKUP_SUFFIX};
 use chrono::{DateTime, Local};
 use egui::Context;
@@ -71,7 +72,7 @@ pub struct HappyChartState {
     pub ui_states: UIStates,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct UIStates {
     pub showing_options_menu: bool,
     pub showing_about_page: bool,
@@ -79,6 +80,7 @@ pub struct UIStates {
     pub showing_statistics_screen: bool,
     pub showing_graph_controls: bool,
     pub activity_ui_state: ActivityUIState,
+    pub feedback_state: FeedbackUiState,
 }
 
 #[allow(clippy::derivable_impls)]
@@ -91,6 +93,7 @@ impl Default for UIStates {
             showing_statistics_screen: false,
             showing_graph_controls: false,
             activity_ui_state: ActivityUIState::default(),
+            feedback_state: FeedbackUiState::default(),
         }
     }
 }

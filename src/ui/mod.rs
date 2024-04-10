@@ -3,6 +3,7 @@ pub mod activity_screen;
 pub mod central_screen;
 pub mod encryption;
 pub mod error_screen;
+pub mod feedback_screen;
 pub mod help_screen;
 pub mod mood_selector_menu;
 pub mod note_edit_screen;

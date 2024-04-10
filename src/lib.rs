@@ -5,6 +5,7 @@ pub(crate) mod day_stats;
 pub(crate) mod options;
 pub(crate) mod state;
 pub(crate) mod ui;
+pub(crate) mod user_feedback;
 
 pub mod prelude {
     pub use crate::common::mood_tag::*;

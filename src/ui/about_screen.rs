@@ -38,6 +38,10 @@ pub fn draw_about_page(about_page_ui: &mut Ui, app: &mut HappyChartState) {
     draw_help_dropdown(about_page_ui, app);
     about_page_ui.separator();
 
+    if !app.ui_states.feedback_state.showing_feedback_screen && about_page_ui.button("Send feedback").clicked() {
+        app.ui_states.feedback_state.showing_feedback_screen = true;
+    }
+
     if about_page_ui.button("Close").clicked() {
         app.ui_states.showing_about_page = false;
     }
