@@ -13,6 +13,7 @@ pub mod prelude {
     pub use crate::common::save::read_save_file;
     pub use crate::day_stats::improved_daystat::*;
     pub use crate::state::happy_chart_state::HappyChartState;
+    pub use crate::user_feedback::*;
 }
 
 // TODO: use source engine / half-life menu sounds when clicking and mousing over buttons
