@@ -146,7 +146,7 @@ impl eframe::App for HappyChartState {
                                 let mut act_list = vec![];
                                 let activity_possiblility_list =
                                     self.program_options.activity_list.get_activity_list();
-                                let max_count = activity_possiblility_list.len();
+                                let max_count = activity_possiblility_list.len().max(1);
                                 use rand::prelude::thread_rng;
                                 for _ in 0..thread_rng().gen_range(0..max_count) {
                                     let index = thread_rng().gen_range(0..max_count);

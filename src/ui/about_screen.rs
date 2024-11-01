@@ -1,6 +1,6 @@
 use crate::state::happy_chart_state::HappyChartState;
 use crate::ui::help_screen::draw_help_dropdown;
-use crate::{BUILD_TIMESTAMP, GIT_DESCRIBE};
+use crate::{BUILD_HASH, BUILD_TIMESTAMP, GIT_DESCRIBE};
 use egui::Ui;
 use self_update::cargo_crate_version;
 
@@ -20,6 +20,7 @@ pub fn draw_about_page(about_page_ui: &mut Ui, app: &mut HappyChartState) {
     about_page_ui.label(format!("Cargo crate version: {}", cargo_crate_version!()));
     about_page_ui.label(format!("Git describe: {}", GIT_DESCRIBE));
     about_page_ui.label(format!("BUILD_TIMESTAMP: {}", BUILD_TIMESTAMP));
+    about_page_ui.label(format!("BUILD HASH: {}", BUILD_HASH));
 
     about_page_ui.separator();
     about_page_ui.label(format!("Last backup date: {}", app.last_backup_date));
