@@ -10,7 +10,7 @@ use crate::common::toggle_ui_compact;
 use crate::options::color_setting::ColorSettings;
 use crate::options::program_options::ProgramOptions;
 use crate::state::happy_chart_state::HappyChartState;
-use crate::ui::encryption::draw_fix_encryption_keys_screen;
+use crate::ui::encryption_screen::draw_fix_encryption_keys_screen;
 
 /// Draw an indicator in the options menu for if an update is taking place, or needed
 #[tracing::instrument(skip(options_panel_ui, app))]

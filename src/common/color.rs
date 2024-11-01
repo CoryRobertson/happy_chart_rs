@@ -40,3 +40,23 @@ pub fn get_tutorial_lowlight_glowing_color(offset: u8) -> Color32 {
         _ => Color32::DARK_GRAY,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::common::color::{
+        get_tutorial_highlight_glowing_color, get_tutorial_lowlight_glowing_color,
+    };
+    use proptest::prelude::*;
+
+    proptest! {
+        #[test]
+        fn test_lowlight_tutorial(offset: u8) {
+            let _ = get_tutorial_lowlight_glowing_color(offset);
+        }
+
+        #[test]
+        fn test_highlight_tutorial(offset: u8) {
+            let _ = get_tutorial_highlight_glowing_color(offset);
+        }
+    }
+}

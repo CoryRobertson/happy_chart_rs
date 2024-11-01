@@ -23,7 +23,7 @@ fn main() {
     eframe::run_native(
         "Happy Chart",
         native_options,
-        Box::new(|cc| Box::new(HappyChartState::new(cc))),
+        Box::new(|cc| Ok(Box::new(HappyChartState::new(cc)))),
     )
     .expect("Failed to run egui app");
 }

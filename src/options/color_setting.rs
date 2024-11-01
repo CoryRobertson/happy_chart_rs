@@ -74,3 +74,17 @@ impl Default for ColorSettings {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::options::color_setting::get_shape_color_from_rating;
+    use proptest::prelude::*;
+
+    // having fun playing with proptests mostly, this will likely not be useful even a little ;)
+    proptest! {
+        #[test]
+        fn test_color_rating(rating in 0f32..=100f32) {
+            let _ = get_shape_color_from_rating(rating);
+        }
+    }
+}

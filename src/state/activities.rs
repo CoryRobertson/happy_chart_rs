@@ -6,7 +6,7 @@ pub struct ActivityUIState {
     pub show_activity_screen: bool,
     pub edit_mode: bool,
     pub add_or_remove_mode: bool,
-    pub activity_creat_text: String,
+    pub activity_create_text: String,
     pub added_activity_list: ActivitySelectionList,
 }
 
@@ -71,7 +71,7 @@ impl Default for ActivityUIState {
             show_activity_screen: false,
             edit_mode: false,
             add_or_remove_mode: true,
-            activity_creat_text: String::new(),
+            activity_create_text: String::new(),
             added_activity_list: ActivitySelectionList::default(),
         }
     }

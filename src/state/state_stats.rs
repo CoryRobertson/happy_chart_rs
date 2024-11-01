@@ -24,6 +24,12 @@ pub struct ActivityStats {
     pub day_stats_counted_sad: usize,
 }
 
+impl Default for ActivityStats {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ActivityStats {
     pub const fn new() -> Self {
         Self {
@@ -47,6 +53,7 @@ impl ActivityStats {
         day_stats_sorted_by_rating
             .sort_by(|day1, day2| day2.get_rating().total_cmp(&day1.get_rating()));
 
+        // number of days to iterate through so only recent stats are used -> only use 25% of the total stats
         let day_stat_count = (days.len() as f32 * 0.25) as usize;
         let top_stats_with_activities = day_stats_sorted_by_rating
             .iter()
@@ -55,20 +62,10 @@ impl ActivityStats {
 
         self.day_stats_counted_happy = top_stats_with_activities.len();
 
-        let mut top_activity_map: HashMap<&Activity, u32> = HashMap::new();
-        top_stats_with_activities.iter().for_each(|stat| {
-            stat.get_activities()
-                .iter()
-                .for_each(|act| match top_activity_map.get_mut(act) {
-                    None => {
-                        top_activity_map.insert(act, 1);
-                    }
-                    Some(count) => {
-                        *count += 1;
-                    }
-                });
-        });
+        // count how many times each given activity appears in all stats rated as top stats that also have activities attached
+        let top_activity_map = ActivityStats::count_activities(&top_stats_with_activities);
 
+        // sort a list of all activities by how many times they appear
         let mut top_activity_list = top_activity_map
             .into_iter()
             .collect::<Vec<(&Activity, u32)>>();
@@ -82,34 +79,14 @@ impl ActivityStats {
 
         self.day_stats_counted_sad = bottom_stats_with_activities.len();
 
-        let mut bottom_activity_map: HashMap<&Activity, u32> = HashMap::new();
-        bottom_stats_with_activities.iter().for_each(|stat| {
-            stat.get_activities()
-                .iter()
-                .for_each(|act| match bottom_activity_map.get_mut(act) {
-                    None => {
-                        bottom_activity_map.insert(act, 1);
-                    }
-                    Some(count) => {
-                        *count += 1;
-                    }
-                });
-        });
+        let bottom_activity_map = ActivityStats::count_activities(&bottom_stats_with_activities);
         let mut bottom_activity_list = bottom_activity_map
             .into_iter()
             .collect::<Vec<(&Activity, u32)>>();
         bottom_activity_list.sort_by_key(|(_, count)| *count);
 
-        let happy_avg_rating: f32 = top_stats_with_activities
-            .iter()
-            .map(|d| d.get_rating())
-            .sum::<f32>()
-            / top_stats_with_activities.len() as f32;
-        let sad_avg_rating: f32 = bottom_stats_with_activities
-            .iter()
-            .map(|d| d.get_rating())
-            .sum::<f32>()
-            / bottom_stats_with_activities.len() as f32;
+        let happy_avg_rating: f32 = ActivityStats::average_rating(&top_stats_with_activities);
+        let sad_avg_rating: f32 = ActivityStats::average_rating(&bottom_stats_with_activities);
 
         top_activity_list.sort_by_key(|(_, c)| *c);
         top_activity_list.sort_by_key(|(a, _)| a.get_activity_name());
@@ -128,6 +105,28 @@ impl ActivityStats {
             .collect();
         self.average_rating_for_happy_activity_days = happy_avg_rating;
         self.average_rating_for_sad_activity_days = sad_avg_rating;
+    }
+
+    fn count_activities<'a>(days: &'a [&&ImprovedDayStat]) -> HashMap<&'a Activity, u32> {
+        let mut activity_map: HashMap<&Activity, u32> = HashMap::new();
+        days.iter().for_each(|stat| {
+            stat.get_activities()
+                .iter()
+                .for_each(|act| match activity_map.get_mut(act) {
+                    None => {
+                        activity_map.insert(act, 1);
+                    }
+                    Some(count) => {
+                        *count += 1;
+                    }
+                });
+        });
+
+        activity_map
+    }
+
+    fn average_rating(stats: &[&&ImprovedDayStat]) -> f32 {
+        stats.iter().map(|d| d.get_rating()).sum::<f32>() / stats.len() as f32
     }
 }
 

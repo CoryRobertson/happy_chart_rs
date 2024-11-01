@@ -71,7 +71,7 @@ pub fn draw_mood_selector_screen(_ctx: &Context, ui: &mut Ui, app: &mut HappyCha
                     for (index, mood) in mood_iteration_list {
                         if app.mood_selection_list.contains(&mood) {
                             ui.label(mood.get_text());
-                        } else if ui.button(&mood.get_text()).clicked() {
+                        } else if ui.button(mood.get_text()).clicked() {
                             app.mood_selection_list.push(mood);
                             app.mood_selection_list.dedup();
                         }

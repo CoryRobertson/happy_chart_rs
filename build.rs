@@ -1,11 +1,18 @@
 use std::error::Error;
-use vergen::EmitBuilder;
-
+use vergen_git2::Emitter;
 #[cfg(target_os = "windows")]
 use winres::WindowsResource;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    EmitBuilder::builder().all_build().all_git().emit()?;
+    let git2 = vergen_git2::Git2Builder::all_git()?;
+    let build = vergen::BuildBuilder::all_build()?;
+
+    Emitter::new()
+        .add_instructions(&git2)?
+        .add_instructions(&build)?
+        .emit()?;
+
+    // EmitBuilder::builder().all_build().all_git().emit()?;
     #[cfg(target_os = "windows")] // conditionally set icon of program on windows
     {
         WindowsResource::new()

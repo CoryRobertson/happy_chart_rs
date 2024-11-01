@@ -9,14 +9,14 @@ pub fn draw_activity_selector_screen(ui: &mut Ui, _ctx: &Context, app: &mut Happ
         if app.ui_states.activity_ui_state.add_or_remove_mode {
             ui.horizontal(|ui| {
                 ui.label("Activity name:");
-                ui.text_edit_singleline(&mut app.ui_states.activity_ui_state.activity_creat_text);
+                ui.text_edit_singleline(&mut app.ui_states.activity_ui_state.activity_create_text);
                 if ui.button("Add new activity").clicked() {
                     app.program_options
                         .activity_list
                         .add_new_activity(Activity::new(
                             app.ui_states
                                 .activity_ui_state
-                                .activity_creat_text
+                                .activity_create_text
                                 .as_str()
                                 .trim(),
                         ));

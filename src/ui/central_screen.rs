@@ -84,7 +84,7 @@ pub fn main_screen_button_ui(central_panel_ui: &mut Ui, app: &mut HappyChartStat
                                 .iter()
                                 .enumerate()
                                 .for_each(|(index, mood)| {
-                                    let _text_rect = ui.label(&mood.get_text()).rect;
+                                    let _text_rect = ui.label(mood.get_text()).rect;
 
                                     if index != 0 && index % row_width == (row_width - 1) {
                                         ui.end_row();

@@ -22,7 +22,7 @@ pub fn draw_previous_duration_stats_screen(_ctx: &Context, ui: &mut Ui, app: &mu
                 .sum::<f32>()
                 / last_month_stat_list.len() as f32;
 
-            ui.label(&format!(
+            ui.label(format!(
                 "Average day rating over the last month: {:.02}",
                 average_rating
             ));
@@ -64,7 +64,7 @@ pub fn draw_previous_duration_stats_screen(_ctx: &Context, ui: &mut Ui, app: &mu
 
             ui.label("Most common mood tags in the last month: ");
             for (index, (mood_tag, mood_count)) in list.iter().enumerate().take(3) {
-                ui.label(&format!(
+                ui.label(format!(
                     "{}. {} {}",
                     index + 1,
                     mood_tag.get_text(),

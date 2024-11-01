@@ -11,7 +11,7 @@ use crate::ui::central_screen::{
     draw_bottom_row_buttons, draw_day_lines, draw_stat_circles, draw_stat_line_segments,
     draw_stat_mouse_over_info, main_screen_button_ui,
 };
-use crate::ui::encryption::draw_decryption_screen;
+use crate::ui::encryption_screen::draw_decryption_screen;
 use crate::ui::error_screen::draw_error_screen;
 use crate::ui::mood_selector_menu::draw_mood_selector_screen;
 use crate::ui::note_edit_screen::draw_note_edit_screen;

@@ -1,7 +1,7 @@
 use crate::options::program_options::ProgramOptions;
 use crate::state::error_states::HappyChartError;
 use crate::state::happy_chart_state::HappyChartState;
-use crate::ui::encryption::draw_fix_encryption_keys_screen;
+use crate::ui::encryption_screen::draw_fix_encryption_keys_screen;
 use crate::{MAX_ENCRYPT_KEY_LENGTH, MIN_ENCRYPT_KEY_LENGTH};
 use egui::Ui;
 use tracing::info;
@@ -100,7 +100,7 @@ pub fn draw_error_screen(app: &mut HappyChartState, ui: &mut Ui) {
                     }
                 }
 
-                ui.label(&format!("The full IO error is: {}", export_io_error));
+                ui.label(format!("The full IO error is: {}", export_io_error));
             }
             HappyChartError::EncryptedSaveFile(_) => {
                 ui.label("Your save file is encrypted.");
