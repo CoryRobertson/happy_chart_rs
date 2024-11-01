@@ -1,5 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Run debug log" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+    <option name="buildProfileId" value="dev" />
     <option name="command" value="run --package happy_chart_rs --bin happy_chart_rs" />
     <option name="workingDirectory" value="file://$PROJECT_DIR$" />
     <envs>
